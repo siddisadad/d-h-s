@@ -1,51 +1,19 @@
-import '/flutter_flow/flutter_flow_theme.dart';
-import '/flutter_flow/flutter_flow_util.dart';
+import '../../core/design_system/theme/app_theme.dart';
+import '../../core/utils/extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'step_indicator_model.dart';
-export 'step_indicator_model.dart';
 
-class StepIndicatorWidget extends StatefulWidget {
+class StepIndicatorWidget extends StatelessWidget {
   const StepIndicatorWidget({
     super.key,
-    String? label,
-    String? number,
-    bool? active,
-  })  : this.label = label ?? 'Customer',
-        this.number = number ?? '1',
-        this.active = active ?? true;
+    this.label = 'Customer',
+    this.number = '1',
+    this.active = true,
+  });
 
   final String label;
   final String number;
   final bool active;
-
-  @override
-  State<StepIndicatorWidget> createState() => _StepIndicatorWidgetState();
-}
-
-class _StepIndicatorWidgetState extends State<StepIndicatorWidget> {
-  late StepIndicatorModel _model;
-
-  @override
-  void setState(VoidCallback callback) {
-    super.setState(callback);
-    _model.onUpdate();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _model = createModel(context, () => StepIndicatorModel());
-
-    WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
-  }
-
-  @override
-  void dispose() {
-    _model.maybeDispose();
-
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,93 +26,53 @@ class _StepIndicatorWidgetState extends State<StepIndicatorWidget> {
           width: 24.0,
           height: 24.0,
           decoration: BoxDecoration(
-            color: valueOrDefault<Color>(
-              valueOrDefault<bool>(
-                widget.active,
-                true,
-              )
-                  ? FlutterFlowTheme.of(context).primary
-                  : FlutterFlowTheme.of(context).secondaryBackground,
-              FlutterFlowTheme.of(context).primary,
-            ),
+            color: active
+                ? context.colorScheme.primary
+                : context.colorScheme.surface,
             borderRadius: BorderRadius.circular(9999.0),
             shape: BoxShape.rectangle,
             border: Border.all(
-              color: valueOrDefault<Color>(
-                valueOrDefault<bool>(
-                  widget.active,
-                  true,
-                )
-                    ? FlutterFlowTheme.of(context).primary
-                    : FlutterFlowTheme.of(context).alternate,
-                FlutterFlowTheme.of(context).primary,
-              ),
-              width: valueOrDefault<double>(
-                valueOrDefault<bool>(
-                  widget.active,
-                  true,
-                )
-                    ? 1.0
-                    : 1.0,
-                1.0,
-              ),
+              color: active
+                  ? context.colorScheme.primary
+                  : context.colorScheme.outline,
+              width: 1.0,
             ),
           ),
-          alignment: AlignmentDirectional(0.0, 0.0),
+          alignment: const AlignmentDirectional(0.0, 0.0),
           child: Text(
-            valueOrDefault<String>(
-              widget.number,
-              '1',
+            number,
+            style: context.textTheme.labelSmall!.override(
+              font: GoogleFonts.inter(
+                fontWeight: FontWeight.bold,
+                fontStyle: context.textTheme.labelSmall!.fontStyle,
+              ),
+              color: active
+                  ? context.colorScheme.onPrimary
+                  : context.textTheme.bodySmall!.color,
+              letterSpacing: 0.0,
+              fontWeight: FontWeight.bold,
+              fontStyle: context.textTheme.labelSmall!.fontStyle,
+              lineHeight: 1.45,
             ),
-            style: FlutterFlowTheme.of(context).labelSmall.override(
-                  font: GoogleFonts.inter(
-                    fontWeight: FontWeight.bold,
-                    fontStyle:
-                        FlutterFlowTheme.of(context).labelSmall.fontStyle,
-                  ),
-                  color: valueOrDefault<Color>(
-                    valueOrDefault<bool>(
-                      widget.active,
-                      true,
-                    )
-                        ? FlutterFlowTheme.of(context).onPrimary
-                        : FlutterFlowTheme.of(context).secondaryText,
-                    FlutterFlowTheme.of(context).onPrimary,
-                  ),
-                  letterSpacing: 0.0,
-                  fontWeight: FontWeight.bold,
-                  fontStyle: FlutterFlowTheme.of(context).labelSmall.fontStyle,
-                  lineHeight: 1.45,
-                ),
           ),
         ),
         Text(
-          valueOrDefault<String>(
-            widget.label,
-            'Customer',
+          label,
+          style: context.textTheme.labelSmall!.override(
+            font: GoogleFonts.inter(
+              fontWeight: context.textTheme.labelSmall!.fontWeight,
+              fontStyle: context.textTheme.labelSmall!.fontStyle,
+            ),
+            color: active
+                ? context.colorScheme.onSurface
+                : context.textTheme.bodySmall!.color,
+            letterSpacing: 0.0,
+            fontWeight: context.textTheme.labelSmall!.fontWeight,
+            fontStyle: context.textTheme.labelSmall!.fontStyle,
+            lineHeight: 1.45,
           ),
-          style: FlutterFlowTheme.of(context).labelSmall.override(
-                font: GoogleFonts.inter(
-                  fontWeight:
-                      FlutterFlowTheme.of(context).labelSmall.fontWeight,
-                  fontStyle: FlutterFlowTheme.of(context).labelSmall.fontStyle,
-                ),
-                color: valueOrDefault<Color>(
-                  valueOrDefault<bool>(
-                    widget.active,
-                    true,
-                  )
-                      ? FlutterFlowTheme.of(context).primaryText
-                      : FlutterFlowTheme.of(context).secondaryText,
-                  FlutterFlowTheme.of(context).primaryText,
-                ),
-                letterSpacing: 0.0,
-                fontWeight: FlutterFlowTheme.of(context).labelSmall.fontWeight,
-                fontStyle: FlutterFlowTheme.of(context).labelSmall.fontStyle,
-                lineHeight: 1.45,
-              ),
         ),
-      ].divide(SizedBox(width: 8.0)),
+      ].divide(SizedBox(width: context.tokens.space8)),
     );
   }
 }

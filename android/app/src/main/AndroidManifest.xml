@@ -2,10 +2,17 @@
     package="com.mycompany.deshmukhsteelerp"
     xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET"/>
-
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <queries>
+        <package android:name="com.whatsapp" />
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="whatsapp" />
+        </intent>
+    </queries>
 
     <application
-        android:label="Deshmukh Steel ERP"
+        android:label="DHS ERP"
         tools:replace="android:label"
         android:icon="@mipmap/ic_launcher"
         android:requestLegacyExternalStorage="true">
@@ -46,6 +53,12 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="deshmukhsteelerp" android:host="deshmukhsteelerp.com" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="deshmukhsteelerp.com" />
             </intent-filter>
 
         </activity>

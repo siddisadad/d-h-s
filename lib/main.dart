@@ -1,109 +1,63 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
-import 'auth/firebase_auth/firebase_user_provider.dart';
-import 'auth/firebase_auth/auth_util.dart';
-
-import 'backend/firebase/firebase_config.dart';
-import '/flutter_flow/flutter_flow_theme.dart';
-import 'flutter_flow/flutter_flow_util.dart';
+import 'core/design_system/theme/app_theme.dart';
+import 'core/router/app_router.dart';
+import 'core/providers/startup_provider.dart';
+import 'core/utils/logger.dart';
+import 'core/widgets/error_boundary.dart';
+import 'features/authentication/presentation/providers/auth_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  GoRouter.optionURLReflectsImperativeAPIs = true;
+  
+  // 1. Initialize Logger with error reporting link
+  Log.init(onGlobalError: (error, stack) {
+    GlobalErrorBoundary.reportError?.call(error, stack);
+  });
+
   usePathUrlStrategy();
 
-  await initFirebase();
-
-  await FlutterFlowTheme.initialize();
-
-  runApp(MyApp());
+  runApp(
+    const ProviderScope(
+      child: GlobalErrorBoundary(
+        child: MyApp(),
+      ),
+    ),
+  );
 }
 
-class MyApp extends StatefulWidget {
-  // This widget is the root of your application.
-  @override
-  State<MyApp> createState() => _MyAppState();
-
-  static _MyAppState of(BuildContext context) =>
-      context.findAncestorStateOfType<_MyAppState>()!;
-}
-
-class MyAppScrollBehavior extends MaterialScrollBehavior {
-  @override
-  Set<PointerDeviceKind> get dragDevices => {
-        PointerDeviceKind.touch,
-        PointerDeviceKind.mouse,
-        PointerDeviceKind.trackpad,
-      };
-}
-
-class _MyAppState extends State<MyApp> {
-  ThemeMode _themeMode = FlutterFlowTheme.themeMode;
-
-  late AppStateNotifier _appStateNotifier;
-  late GoRouter _router;
-  String getRoute([RouteMatch? routeMatch]) {
-    final RouteMatch lastMatch =
-        routeMatch ?? _router.routerDelegate.currentConfiguration.last;
-    final RouteMatchList matchList = lastMatch is ImperativeRouteMatch
-        ? lastMatch.matches
-        : _router.routerDelegate.currentConfiguration;
-    return matchList.uri.path;
-  }
-
-  List<String> getRouteStack() =>
-      _router.routerDelegate.currentConfiguration.matches
-          .map((e) => getRoute(e))
-          .toList();
-  late Stream<BaseAuthUser> userStream;
+class MyApp extends ConsumerWidget {
+  const MyApp({super.key});
 
   @override
-  void initState() {
-    super.initState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(appRouterWidgetProvider);
 
-    _appStateNotifier = AppStateNotifier.instance;
-    _router = createRouter(_appStateNotifier);
-    userStream = deshmukhSteelERPFirebaseUserStream()
-      ..listen((user) {
-        _appStateNotifier.update(user);
-      });
-    jwtTokenStream.listen((_) {});
-    Future.delayed(
-      Duration(milliseconds: 1000),
-      () => _appStateNotifier.stopShowingSplashImage(),
-    );
-  }
-
-  void setThemeMode(ThemeMode mode) => safeSetState(() {
-        _themeMode = mode;
-        FlutterFlowTheme.saveThemeMode(mode);
-      });
-
-  @override
-  Widget build(BuildContext context) {
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      title: 'Deshmukh Steel ERP',
-      scrollBehavior: MyAppScrollBehavior(),
-      localizationsDelegates: [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('en', '')],
-      theme: ThemeData(
-        brightness: Brightness.light,
-        useMaterial3: false,
-      ),
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        useMaterial3: false,
-      ),
-      themeMode: _themeMode,
-      routerConfig: _router,
+      title: 'Deshmukh Hardware & Steel ERP',
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.light,
+      routerConfig: router,
+      builder: (context, child) {
+        return Consumer(
+          builder: (context, ref, _) {
+            final startupAsync = ref.watch(startupProvider);
+            final authAsync = ref.watch(authProvider);
+
+            if (startupAsync.isLoading || authAsync.isLoading) {
+              return const Scaffold(
+                body: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            }
+            return child!;
+          },
+        );
+      },
     );
   }
 }

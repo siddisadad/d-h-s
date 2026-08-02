@@ -1,113 +1,61 @@
-import '/flutter_flow/flutter_flow_theme.dart';
-import '/flutter_flow/flutter_flow_util.dart';
+import '../../core/design_system/theme/app_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'inventory_stat_card_model.dart';
-export 'inventory_stat_card_model.dart';
 
-class InventoryStatCardWidget extends StatefulWidget {
-  const InventoryStatCardWidget({
-    super.key,
-    String? label,
-    String? value,
-  })  : this.label = label ?? 'Total Items',
-        this.value = value ?? '1,284';
-
+class InventoryStatCardWidget extends StatelessWidget {
   final String label;
   final String value;
+  final IconData? icon;
+  final Color? color;
 
-  @override
-  State<InventoryStatCardWidget> createState() =>
-      _InventoryStatCardWidgetState();
-}
-
-class _InventoryStatCardWidgetState extends State<InventoryStatCardWidget> {
-  late InventoryStatCardModel _model;
-
-  @override
-  void setState(VoidCallback callback) {
-    super.setState(callback);
-    _model.onUpdate();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _model = createModel(context, () => InventoryStatCardModel());
-
-    WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
-  }
-
-  @override
-  void dispose() {
-    _model.maybeDispose();
-
-    super.dispose();
-  }
+  const InventoryStatCardWidget({
+    super.key,
+    required this.label,
+    required this.value,
+    this.icon,
+    this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final primaryColor = color ?? AppColors.primary;
+
     return Container(
+      padding: EdgeInsets.all(tokens.space16),
       decoration: BoxDecoration(
-        color: FlutterFlowTheme.of(context).secondaryBackground,
-        borderRadius: BorderRadius.circular(16.0),
-        shape: BoxShape.rectangle,
-        border: Border.all(
-          color: FlutterFlowTheme.of(context).alternate,
-          width: 1.0,
-        ),
+        color: context.colorScheme.surface,
+        borderRadius: BorderRadius.circular(tokens.radiusMd),
+        border: Border.all(color: context.theme.dividerColor),
+        boxShadow: [tokens.shadowSm],
       ),
-      child: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Container(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
+              if (icon != null) ...[
+                Icon(icon, size: 16, color: primaryColor),
+                SizedBox(width: tokens.space8),
+              ],
               Text(
-                valueOrDefault<String>(
-                  widget.label,
-                  'Total Items',
+                label.toUpperCase(),
+                style: context.textTheme.labelSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.1,
                 ),
-                style: FlutterFlowTheme.of(context).labelSmall.override(
-                      font: GoogleFonts.inter(
-                        fontWeight:
-                            FlutterFlowTheme.of(context).labelSmall.fontWeight,
-                        fontStyle:
-                            FlutterFlowTheme.of(context).labelSmall.fontStyle,
-                      ),
-                      color: FlutterFlowTheme.of(context).secondaryText,
-                      letterSpacing: 0.0,
-                      fontWeight:
-                          FlutterFlowTheme.of(context).labelSmall.fontWeight,
-                      fontStyle:
-                          FlutterFlowTheme.of(context).labelSmall.fontStyle,
-                      lineHeight: 1.45,
-                    ),
               ),
-              Text(
-                valueOrDefault<String>(
-                  widget.value,
-                  '1,284',
-                ),
-                style: FlutterFlowTheme.of(context).titleMedium.override(
-                      font: GoogleFonts.plusJakartaSans(
-                        fontWeight: FontWeight.bold,
-                        fontStyle:
-                            FlutterFlowTheme.of(context).titleMedium.fontStyle,
-                      ),
-                      color: FlutterFlowTheme.of(context).primaryText,
-                      letterSpacing: 0.0,
-                      fontWeight: FontWeight.bold,
-                      fontStyle:
-                          FlutterFlowTheme.of(context).titleMedium.fontStyle,
-                      lineHeight: 1.5,
-                    ),
-              ),
-            ].divide(SizedBox(height: 4.0)),
+            ],
           ),
-        ),
+          SizedBox(height: tokens.space8),
+          Text(
+            value,
+            style: context.textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: primaryColor,
+              fontSize: 24,
+            ),
+          ),
+        ],
       ),
     );
   }

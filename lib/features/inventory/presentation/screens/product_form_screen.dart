@@ -1,0 +1,209 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/design_system/theme/app_theme.dart';
+import '../../../../core/widgets/custom_button.dart';
+import '../../../../core/widgets/custom_text_field.dart';
+import '../../domain/entities/product.dart';
+import '../providers/inventory_provider.dart';
+
+class ProductFormScreen extends ConsumerStatefulWidget {
+  final Product? product;
+  const ProductFormScreen({super.key, this.product});
+
+  @override
+  ConsumerState<ProductFormScreen> createState() => _ProductFormScreenState();
+}
+
+class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController _nameController;
+  late TextEditingController _skuController;
+  late TextEditingController _priceController;
+  late TextEditingController _stockController;
+  String _selectedCategory = 'Steel';
+  String _selectedUnit = 'Kg';
+
+  final List<String> _categories = ['Steel', 'Power Tools', 'Plumbing', 'Electrical'];
+  final List<String> _units = ['Kg', 'Piece', 'Meter', 'Reel', 'MT'];
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.product?.name);
+    _skuController = TextEditingController(text: widget.product?.sku);
+    _priceController = TextEditingController(text: widget.product?.price.replaceAll('₹', ''));
+    _stockController = TextEditingController(text: widget.product?.stock.replaceAll(',', ''));
+    
+    if (widget.product != null) {
+      if (_categories.contains(widget.product!.category)) {
+        _selectedCategory = widget.product!.category;
+      }
+      if (_units.contains(widget.product!.unit)) {
+        _selectedUnit = widget.product!.unit;
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _skuController.dispose();
+    _priceController.dispose();
+    _stockController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveProduct() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final newProduct = Product(
+      name: _nameController.text.trim(),
+      sku: _skuController.text.trim(),
+      category: _selectedCategory,
+      price: '₹${_priceController.text.trim()}',
+      stock: _stockController.text.trim(),
+      unit: _selectedUnit,
+      isLowStock: (double.tryParse(_stockController.text.trim()) ?? 0) < 50,
+    );
+
+    try {
+      if (widget.product == null) {
+        await ref.read(inventoryNotifierProvider.notifier).addProduct(newProduct);
+      } else {
+        await ref.read(inventoryNotifierProvider.notifier).updateProduct(newProduct);
+      }
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final isEdit = widget.product != null;
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: Text(isEdit ? 'EDIT PRODUCT' : 'ADD NEW PRODUCT'),
+      ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(tokens.space24),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CustomTextField(
+                label: 'Product Name',
+                hint: 'e.g. Tata Tiscon TMT Bar',
+                controller: _nameController,
+                validator: (val) => val == null || val.isEmpty ? 'Required' : null,
+              ),
+              SizedBox(height: tokens.space20),
+              CustomTextField(
+                label: 'SKU / Item Code',
+                hint: 'e.g. STEEL-TMT-12',
+                controller: _skuController,
+                enabled: !isEdit, 
+                validator: (val) => val == null || val.isEmpty ? 'Required' : null,
+              ),
+              SizedBox(height: tokens.space20),
+              _buildDropdown(
+                label: 'Category',
+                value: _selectedCategory,
+                items: _categories,
+                onChanged: (val) => setState(() => _selectedCategory = val!),
+              ),
+              SizedBox(height: tokens.space20),
+              Row(
+                children: [
+                  Expanded(
+                    child: CustomTextField(
+                      label: 'Price (₹)',
+                      hint: '0.00',
+                      controller: _priceController,
+                      keyboardType: TextInputType.number,
+                      validator: (val) => val == null || val.isEmpty ? 'Required' : null,
+                    ),
+                  ),
+                  SizedBox(width: tokens.space16),
+                  Expanded(
+                    child: _buildDropdown(
+                      label: 'Unit',
+                      value: _selectedUnit,
+                      items: _units,
+                      onChanged: (val) => setState(() => _selectedUnit = val!),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: tokens.space20),
+              CustomTextField(
+                label: 'Current Stock',
+                hint: '0',
+                controller: _stockController,
+                keyboardType: TextInputType.number,
+                validator: (val) => val == null || val.isEmpty ? 'Required' : null,
+              ),
+              SizedBox(height: tokens.space32),
+              CustomButton(
+                text: isEdit ? 'Update Product' : 'Create Product',
+                fullWidth: true,
+                onPressed: _saveProduct,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDropdown({
+    required String label,
+    required String value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: context.textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: context.colorScheme.onSurface.withValues(alpha: 0.8),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: value,
+              isExpanded: true,
+              icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
+              items: items.map((String item) {
+                return DropdownMenuItem(
+                  value: item,
+                  child: Text(item, style: context.textTheme.bodyLarge),
+                );
+              }).toList(),
+              onChanged: onChanged,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

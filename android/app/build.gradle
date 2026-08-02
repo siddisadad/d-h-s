@@ -2,8 +2,8 @@ plugins {
    id "com.android.application"
    id "kotlin-android"
    id "dev.flutter.flutter-gradle-plugin"
-   id "com.google.gms.google-services"  // Google Services plugin
-
+   id "com.google.gms.google-services"
+   id "com.google.firebase.firebase-perf"
 }
 
 def localProperties = new Properties()
@@ -32,7 +32,7 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace "com.mycompany.deshmukhsteelerp"
-    compileSdkVersion 36
+    compileSdkVersion 35
     ndkVersion "28.2.13676358"
 
     compileOptions {
@@ -58,7 +58,7 @@ android {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId "com.mycompany.deshmukhsteelerp"
         minSdkVersion 23
-        targetSdkVersion 36
+        targetSdkVersion 35
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }

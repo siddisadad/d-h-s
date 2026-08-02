@@ -1,20 +1,16 @@
-import '/flutter_flow/flutter_flow_theme.dart';
-import '/flutter_flow/flutter_flow_util.dart';
+import '../../core/design_system/theme/app_theme.dart';
+import '../../core/utils/extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'nav_item_model.dart';
-export 'nav_item_model.dart';
 
-class NavItemWidget extends StatefulWidget {
+class NavItemWidget extends StatelessWidget {
   const NavItemWidget({
     super.key,
-    String? label,
+    this.label = 'Home',
     this.icon,
-    String? target,
-    bool? selected,
-  })  : this.label = label ?? 'Home',
-        this.target = target ?? 'MainDashboard',
-        this.selected = selected ?? true;
+    this.target = 'MainDashboard',
+    this.selected = true,
+  });
 
   final String label;
   final Widget? icon;
@@ -22,72 +18,32 @@ class NavItemWidget extends StatefulWidget {
   final bool selected;
 
   @override
-  State<NavItemWidget> createState() => _NavItemWidgetState();
-}
-
-class _NavItemWidgetState extends State<NavItemWidget> {
-  late NavItemModel _model;
-
-  @override
-  void setState(VoidCallback callback) {
-    super.setState(callback);
-    _model.onUpdate();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _model = createModel(context, () => NavItemModel());
-
-    WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
-  }
-
-  @override
-  void dispose() {
-    _model.maybeDispose();
-
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsetsDirectional.fromSTEB(8.0, 4.0, 8.0, 4.0),
+      padding: const EdgeInsetsDirectional.fromSTEB(8.0, 4.0, 8.0, 4.0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          widget.icon!,
+          if (icon != null) icon!,
           Text(
-            valueOrDefault<String>(
-              widget.label,
-              'Home',
+            label,
+            style: context.textTheme.bodyMedium!.override(
+              font: GoogleFonts.inter(
+                fontWeight: context.textTheme.bodyMedium!.fontWeight,
+                fontStyle: context.textTheme.bodyMedium!.fontStyle,
+              ),
+              color: selected
+                  ? context.colorScheme.primary
+                  : context.textTheme.bodySmall!.color,
+              letterSpacing: 0.0,
+              fontWeight: context.textTheme.bodyMedium!.fontWeight,
+              fontStyle: context.textTheme.bodyMedium!.fontStyle,
+              lineHeight: 1.43,
             ),
-            style: FlutterFlowTheme.of(context).bodyMedium.override(
-                  font: GoogleFonts.inter(
-                    fontWeight:
-                        FlutterFlowTheme.of(context).bodyMedium.fontWeight,
-                    fontStyle:
-                        FlutterFlowTheme.of(context).bodyMedium.fontStyle,
-                  ),
-                  color: valueOrDefault<Color>(
-                    valueOrDefault<bool>(
-                      widget.selected,
-                      true,
-                    )
-                        ? FlutterFlowTheme.of(context).primary
-                        : FlutterFlowTheme.of(context).secondaryText,
-                    FlutterFlowTheme.of(context).primary,
-                  ),
-                  letterSpacing: 0.0,
-                  fontWeight:
-                      FlutterFlowTheme.of(context).bodyMedium.fontWeight,
-                  fontStyle: FlutterFlowTheme.of(context).bodyMedium.fontStyle,
-                  lineHeight: 1.43,
-                ),
           ),
-        ].divide(SizedBox(height: 2.0)),
+        ].divide(const SizedBox(height: 2.0)),
       ),
     );
   }

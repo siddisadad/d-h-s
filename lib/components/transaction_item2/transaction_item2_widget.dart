@@ -1,25 +1,18 @@
-import '/flutter_flow/flutter_flow_theme.dart';
-import '/flutter_flow/flutter_flow_util.dart';
+import '../../core/design_system/theme/app_theme.dart';
+import '../../core/utils/extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'transaction_item2_model.dart';
-export 'transaction_item2_model.dart';
 
-class TransactionItem2Widget extends StatefulWidget {
+class TransactionItem2Widget extends StatelessWidget {
   const TransactionItem2Widget({
     super.key,
-    String? amount,
-    String? category,
-    String? date,
-    String? status,
-    String? title,
-    String? type,
-  })  : this.amount = amount ?? '+₹ 45,200',
-        this.category = category ?? 'Hardware',
-        this.date = date ?? 'Today, 02:30 PM',
-        this.status = status ?? 'Bank Transfer',
-        this.title = title ?? 'Sales Invoice #8821',
-        this.type = type ?? 'income';
+    this.amount = '+₹ 45,200',
+    this.category = 'Hardware',
+    this.date = 'Today, 02:30 PM',
+    this.status = 'Bank Transfer',
+    this.title = 'Sales Invoice #8821',
+    this.type = 'income',
+  });
 
   final String amount;
   final String category;
@@ -29,260 +22,120 @@ class TransactionItem2Widget extends StatefulWidget {
   final String type;
 
   @override
-  State<TransactionItem2Widget> createState() => _TransactionItem2WidgetState();
-}
-
-class _TransactionItem2WidgetState extends State<TransactionItem2Widget> {
-  late TransactionItem2Model _model;
-
-  @override
-  void setState(VoidCallback callback) {
-    super.setState(callback);
-    _model.onUpdate();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _model = createModel(context, () => TransactionItem2Model());
-
-    WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
-  }
-
-  @override
-  void dispose() {
-    _model.maybeDispose();
-
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final isIncome = type == 'income';
+    final accentColor = isIncome ? AppColors.success : context.colorScheme.error;
+
     return Padding(
-      padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 8.0),
+      padding: const EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 8.0),
       child: Container(
-        child: Container(
-          decoration: BoxDecoration(
-            color: FlutterFlowTheme.of(context).secondaryBackground,
-            borderRadius: BorderRadius.circular(16.0),
-            shape: BoxShape.rectangle,
-            border: Border.all(
-              color: FlutterFlowTheme.of(context).alternate,
-              width: 1.0,
-            ),
+        decoration: BoxDecoration(
+          color: context.colorScheme.surface,
+          borderRadius: BorderRadius.circular(16.0),
+          shape: BoxShape.rectangle,
+          border: Border.all(
+            color: context.colorScheme.outline,
+            width: 1.0,
           ),
-          child: Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Container(
-              child: Row(
-                mainAxisSize: MainAxisSize.max,
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 44.0,
-                    height: 44.0,
-                    decoration: BoxDecoration(
-                      color: valueOrDefault<Color>(
-                        valueOrDefault<String>(
-                                  widget.type,
-                                  'income',
-                                ) ==
-                                'income'
-                            ? FlutterFlowTheme.of(context).success10
-                            : FlutterFlowTheme.of(context).error10,
-                        FlutterFlowTheme.of(context).success10,
-                      ),
-                      borderRadius: BorderRadius.circular(12.0),
-                      shape: BoxShape.rectangle,
-                    ),
-                    alignment: AlignmentDirectional(0.0, 0.0),
-                    child: Container(
-                      width: 24.0,
-                      height: 24.0,
-                      child: Stack(
-                        alignment: AlignmentDirectional(0.0, 0.0),
-                        children: [
-                          if (valueOrDefault<bool>(
-                            valueOrDefault<String>(
-                                      widget.type,
-                                      'income',
-                                    ) ==
-                                    'income'
-                                ? true
-                                : false,
-                            true,
-                          ))
-                            Icon(
-                              Icons.add_chart_rounded,
-                              color: valueOrDefault<Color>(
-                                valueOrDefault<String>(
-                                          widget.type,
-                                          'income',
-                                        ) ==
-                                        'income'
-                                    ? FlutterFlowTheme.of(context).success
-                                    : FlutterFlowTheme.of(context).error,
-                                FlutterFlowTheme.of(context).success,
-                              ),
-                              size: 24.0,
-                            ),
-                          if (valueOrDefault<bool>(
-                            valueOrDefault<String>(
-                                      widget.type,
-                                      'income',
-                                    ) ==
-                                    'income'
-                                ? false
-                                : true,
-                            false,
-                          ))
-                            Icon(
-                              Icons.payments_rounded,
-                              color: valueOrDefault<Color>(
-                                valueOrDefault<String>(
-                                          widget.type,
-                                          'income',
-                                        ) ==
-                                        'income'
-                                    ? FlutterFlowTheme.of(context).success
-                                    : FlutterFlowTheme.of(context).error,
-                                FlutterFlowTheme.of(context).success,
-                              ),
-                              size: 24.0,
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 1,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          valueOrDefault<String>(
-                            widget.title,
-                            'Sales Invoice #8821',
-                          ),
-                          maxLines: 1,
-                          style: FlutterFlowTheme.of(context)
-                              .bodyMedium
-                              .override(
-                                font: GoogleFonts.inter(
-                                  fontWeight: FontWeight.w600,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .bodyMedium
-                                      .fontStyle,
-                                ),
-                                color: FlutterFlowTheme.of(context).primaryText,
-                                letterSpacing: 0.0,
-                                fontWeight: FontWeight.w600,
-                                fontStyle: FlutterFlowTheme.of(context)
-                                    .bodyMedium
-                                    .fontStyle,
-                                lineHeight: 1.43,
-                              ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          valueOrDefault<String>(
-                            '${widget.category} • ${widget.date}',
-                            'Hardware • Today, 02:30 PM',
-                          ),
-                          style: FlutterFlowTheme.of(context)
-                              .bodySmall
-                              .override(
-                                font: GoogleFonts.inter(
-                                  fontWeight: FlutterFlowTheme.of(context)
-                                      .bodySmall
-                                      .fontWeight,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .bodySmall
-                                      .fontStyle,
-                                ),
-                                color:
-                                    FlutterFlowTheme.of(context).secondaryText,
-                                letterSpacing: 0.0,
-                                fontWeight: FlutterFlowTheme.of(context)
-                                    .bodySmall
-                                    .fontWeight,
-                                fontStyle: FlutterFlowTheme.of(context)
-                                    .bodySmall
-                                    .fontStyle,
-                                lineHeight: 1.33,
-                              ),
-                        ),
-                      ].divide(SizedBox(height: 4.0)),
-                    ),
-                  ),
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        valueOrDefault<String>(
-                          widget.amount,
-                          '+₹ 45,200',
-                        ),
-                        style: FlutterFlowTheme.of(context).bodyMedium.override(
-                              font: GoogleFonts.inter(
-                                fontWeight: FontWeight.bold,
-                                fontStyle: FlutterFlowTheme.of(context)
-                                    .bodyMedium
-                                    .fontStyle,
-                              ),
-                              color: valueOrDefault<Color>(
-                                valueOrDefault<String>(
-                                          widget.type,
-                                          'income',
-                                        ) ==
-                                        'income'
-                                    ? FlutterFlowTheme.of(context).success
-                                    : FlutterFlowTheme.of(context).error,
-                                FlutterFlowTheme.of(context).success,
-                              ),
-                              letterSpacing: 0.0,
-                              fontWeight: FontWeight.bold,
-                              fontStyle: FlutterFlowTheme.of(context)
-                                  .bodyMedium
-                                  .fontStyle,
-                              lineHeight: 1.43,
-                            ),
-                      ),
-                      Text(
-                        valueOrDefault<String>(
-                          widget.status,
-                          'Bank Transfer',
-                        ),
-                        style: FlutterFlowTheme.of(context).labelSmall.override(
-                              font: GoogleFonts.inter(
-                                fontWeight: FlutterFlowTheme.of(context)
-                                    .labelSmall
-                                    .fontWeight,
-                                fontStyle: FlutterFlowTheme.of(context)
-                                    .labelSmall
-                                    .fontStyle,
-                              ),
-                              color: FlutterFlowTheme.of(context).secondaryText,
-                              letterSpacing: 0.0,
-                              fontWeight: FlutterFlowTheme.of(context)
-                                  .labelSmall
-                                  .fontWeight,
-                              fontStyle: FlutterFlowTheme.of(context)
-                                  .labelSmall
-                                  .fontStyle,
-                              lineHeight: 1.45,
-                            ),
-                      ),
-                    ].divide(SizedBox(height: 4.0)),
-                  ),
-                ].divide(SizedBox(width: 16.0)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 44.0,
+                height: 44.0,
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12.0),
+                  shape: BoxShape.rectangle,
+                ),
+                alignment: const AlignmentDirectional(0.0, 0.0),
+                child: Icon(
+                  isIncome ? Icons.add_chart_rounded : Icons.payments_rounded,
+                  color: accentColor,
+                  size: 24.0,
+                ),
               ),
-            ),
+              Expanded(
+                flex: 1,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      style: context.textTheme.bodyMedium!.override(
+                        font: GoogleFonts.inter(
+                          fontWeight: FontWeight.w600,
+                          fontStyle: context.textTheme.bodyMedium!.fontStyle,
+                        ),
+                        color: context.colorScheme.onSurface,
+                        letterSpacing: 0.0,
+                        fontWeight: FontWeight.w600,
+                        fontStyle: context.textTheme.bodyMedium!.fontStyle,
+                        lineHeight: 1.43,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      '$category • $date',
+                      style: context.textTheme.bodySmall!.override(
+                        font: GoogleFonts.inter(
+                          fontWeight: context.textTheme.bodySmall!.fontWeight,
+                          fontStyle: context.textTheme.bodySmall!.fontStyle,
+                        ),
+                        color: context.textTheme.bodySmall!.color,
+                        letterSpacing: 0.0,
+                        fontWeight: context.textTheme.bodySmall!.fontWeight,
+                        fontStyle: context.textTheme.bodySmall!.fontStyle,
+                        lineHeight: 1.33,
+                      ),
+                    ),
+                  ].divide(SizedBox(width: context.tokens.space4)),
+                ),
+              ),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    amount,
+                    style: context.textTheme.bodyMedium!.override(
+                      font: GoogleFonts.inter(
+                        fontWeight: FontWeight.bold,
+                        fontStyle: context.textTheme.bodyMedium!.fontStyle,
+                      ),
+                      color: accentColor,
+                      letterSpacing: 0.0,
+                      fontWeight: FontWeight.bold,
+                      fontStyle: context.textTheme.bodyMedium!.fontStyle,
+                      lineHeight: 1.43,
+                    ),
+                  ),
+                  Text(
+                    status,
+                    style: context.textTheme.labelSmall!.override(
+                      font: GoogleFonts.inter(
+                        fontWeight: context.textTheme.labelSmall!.fontWeight,
+                        fontStyle: context.textTheme.labelSmall!.fontStyle,
+                      ),
+                      color: context.textTheme.bodySmall!.color,
+                      letterSpacing: 0.0,
+                      fontWeight: context.textTheme.labelSmall!.fontWeight,
+                      fontStyle: context.textTheme.labelSmall!.fontStyle,
+                      lineHeight: 1.45,
+                    ),
+                  ),
+                ].divide(SizedBox(width: context.tokens.space4)),
+              ),
+            ].divide(SizedBox(width: context.tokens.space16)),
           ),
         ),
       ),

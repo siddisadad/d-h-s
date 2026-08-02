@@ -1,0 +1,80 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'inventory_provider.dart';
+
+// **************************************************************************
+// RiverpodGenerator
+// **************************************************************************
+
+String _$inventoryRepositoryHash() =>
+    r'af0c0bd555edb3ec20b9e0eee1aa7f027aa199e3';
+
+/// See also [inventoryRepository].
+@ProviderFor(inventoryRepository)
+final inventoryRepositoryProvider =
+    AutoDisposeProvider<InventoryRepository>.internal(
+  inventoryRepository,
+  name: r'inventoryRepositoryProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$inventoryRepositoryHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef InventoryRepositoryRef = AutoDisposeProviderRef<InventoryRepository>;
+String _$getProductsUseCaseHash() =>
+    r'fc5105a925752196384df90b320142316757fe35';
+
+/// See also [getProductsUseCase].
+@ProviderFor(getProductsUseCase)
+final getProductsUseCaseProvider = AutoDisposeProvider<GetProducts>.internal(
+  getProductsUseCase,
+  name: r'getProductsUseCaseProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$getProductsUseCaseHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef GetProductsUseCaseRef = AutoDisposeProviderRef<GetProducts>;
+String _$filteredProductsHash() => r'e9e09f93a053e3f2e85c9bf7d2095b533e8df876';
+
+/// See also [filteredProducts].
+@ProviderFor(filteredProducts)
+final filteredProductsProvider = AutoDisposeProvider<List<Product>>.internal(
+  filteredProducts,
+  name: r'filteredProductsProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$filteredProductsHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef FilteredProductsRef = AutoDisposeProviderRef<List<Product>>;
+String _$inventoryNotifierHash() => r'fb1f56c914787a327a117409e5856c4b4215d98c';
+
+/// See also [InventoryNotifier].
+@ProviderFor(InventoryNotifier)
+final inventoryNotifierProvider =
+    AutoDisposeAsyncNotifierProvider<InventoryNotifier, List<Product>>.internal(
+  InventoryNotifier.new,
+  name: r'inventoryNotifierProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$inventoryNotifierHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$InventoryNotifier = AutoDisposeAsyncNotifier<List<Product>>;
+// ignore_for_file: type=lint
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

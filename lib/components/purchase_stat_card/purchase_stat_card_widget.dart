@@ -1,125 +1,61 @@
-import '/flutter_flow/flutter_flow_theme.dart';
-import '/flutter_flow/flutter_flow_util.dart';
+import '../../core/design_system/theme/app_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'purchase_stat_card_model.dart';
-export 'purchase_stat_card_model.dart';
 
-class PurchaseStatCardWidget extends StatefulWidget {
-  const PurchaseStatCardWidget({
-    super.key,
-    Color? color,
-    this.icon,
-    String? label,
-    String? value,
-  })  : this.color = color ?? const Color(0x00000000),
-        this.label = label ?? 'Pending GRN',
-        this.value = value ?? '12 Orders';
-
-  final Color color;
-  final Widget? icon;
+class PurchaseStatCardWidget extends StatelessWidget {
   final String label;
   final String value;
+  final IconData? icon;
+  final Color? color;
 
-  @override
-  State<PurchaseStatCardWidget> createState() => _PurchaseStatCardWidgetState();
-}
-
-class _PurchaseStatCardWidgetState extends State<PurchaseStatCardWidget> {
-  late PurchaseStatCardModel _model;
-
-  @override
-  void setState(VoidCallback callback) {
-    super.setState(callback);
-    _model.onUpdate();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _model = createModel(context, () => PurchaseStatCardModel());
-
-    WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
-  }
-
-  @override
-  void dispose() {
-    _model.maybeDispose();
-
-    super.dispose();
-  }
+  const PurchaseStatCardWidget({
+    super.key,
+    required this.label,
+    required this.value,
+    this.icon,
+    this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final primaryColor = color ?? AppColors.primary;
+
     return Container(
+      padding: EdgeInsets.all(tokens.space16),
       decoration: BoxDecoration(
-        color: FlutterFlowTheme.of(context).secondaryBackground,
-        borderRadius: BorderRadius.circular(16.0),
-        shape: BoxShape.rectangle,
+        color: context.colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.theme.dividerColor),
+        boxShadow: [tokens.shadowSm],
       ),
-      child: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Container(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  widget.icon!,
-                  Text(
-                    valueOrDefault<String>(
-                      widget.label,
-                      'Pending GRN',
-                    ),
-                    style: FlutterFlowTheme.of(context).labelMedium.override(
-                          font: GoogleFonts.inter(
-                            fontWeight: FlutterFlowTheme.of(context)
-                                .labelMedium
-                                .fontWeight,
-                            fontStyle: FlutterFlowTheme.of(context)
-                                .labelMedium
-                                .fontStyle,
-                          ),
-                          color: FlutterFlowTheme.of(context).secondaryText,
-                          letterSpacing: 0.0,
-                          fontWeight: FlutterFlowTheme.of(context)
-                              .labelMedium
-                              .fontWeight,
-                          fontStyle: FlutterFlowTheme.of(context)
-                              .labelMedium
-                              .fontStyle,
-                          lineHeight: 1.33,
-                        ),
-                  ),
-                ].divide(SizedBox(width: 4.0)),
-              ),
+              if (icon != null) ...[
+                Icon(icon, size: 18, color: primaryColor),
+                SizedBox(width: tokens.space8),
+              ],
               Text(
-                valueOrDefault<String>(
-                  widget.value,
-                  '12 Orders',
+                label.toUpperCase(),
+                style: context.textTheme.labelSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.1,
                 ),
-                style: FlutterFlowTheme.of(context).titleMedium.override(
-                      font: GoogleFonts.plusJakartaSans(
-                        fontWeight: FontWeight.bold,
-                        fontStyle:
-                            FlutterFlowTheme.of(context).titleMedium.fontStyle,
-                      ),
-                      color: FlutterFlowTheme.of(context).primaryText,
-                      letterSpacing: 0.0,
-                      fontWeight: FontWeight.bold,
-                      fontStyle:
-                          FlutterFlowTheme.of(context).titleMedium.fontStyle,
-                      lineHeight: 1.5,
-                    ),
               ),
-            ].divide(SizedBox(height: 4.0)),
+            ],
           ),
-        ),
+          SizedBox(height: tokens.space8),
+          Text(
+            value,
+            style: context.textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: primaryColor,
+              fontSize: 22,
+            ),
+          ),
+        ],
       ),
     );
   }

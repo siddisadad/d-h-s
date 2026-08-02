@@ -1,0 +1,6 @@
+import '../../../../core/error/result.dart';
+import '../entities/purchase_order.dart';
+
+abstract class PurchaseRepository {
+  Future<Result<List<PurchaseOrder>>> getRecentPurchases();
+}

@@ -1,108 +1,65 @@
-import '/flutter_flow/flutter_flow_icon_button.dart';
-import '/flutter_flow/flutter_flow_theme.dart';
-import '/flutter_flow/flutter_flow_util.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'action_item_model.dart';
-export 'action_item_model.dart';
+import 'package:go_router/go_router.dart';
+import '../../core/design_system/theme/app_theme.dart';
 
-class ActionItemWidget extends StatefulWidget {
-  const ActionItemWidget({
-    super.key,
-    String? icon,
-    String? label,
-    String? target,
-    Color? tone,
-  })  : this.icon = icon ?? 'add_shopping_cart_rounded',
-        this.label = label ?? 'New Sale',
-        this.target = target ?? 'SalesInvoiceEntry',
-        this.tone = tone ?? const Color(0x00000000);
-
+class ActionItemWidget extends StatelessWidget {
   final String icon;
   final String label;
   final String target;
   final Color tone;
 
-  @override
-  State<ActionItemWidget> createState() => _ActionItemWidgetState();
-}
-
-class _ActionItemWidgetState extends State<ActionItemWidget> {
-  late ActionItemModel _model;
-
-  @override
-  void setState(VoidCallback callback) {
-    super.setState(callback);
-    _model.onUpdate();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _model = createModel(context, () => ActionItemModel());
-
-    WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
-  }
-
-  @override
-  void dispose() {
-    _model.maybeDispose();
-
-    super.dispose();
-  }
+  const ActionItemWidget({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.target,
+    required this.tone,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Container(
-          width: 56.0,
-          height: 56.0,
-          decoration: BoxDecoration(
-            color: valueOrDefault<Color>(
-              widget.tone,
-              FlutterFlowTheme.of(context).primary,
-            ),
-            shape: BoxShape.rectangle,
-          ),
-          child: FlutterFlowIconButton(
-            borderRadius: 8.0,
-            buttonSize: 44.0,
-            fillColor: Colors.transparent,
-            icon: Icon(
-              Icons.add_shopping_cart_rounded,
-              color: valueOrDefault<Color>(
-                widget.tone,
-                FlutterFlowTheme.of(context).primary,
+    final tokens = context.tokens;
+    
+    return InkWell(
+      onTap: () => context.go(target), // Assumes target is a path now
+      borderRadius: BorderRadius.circular(tokens.radiusLg),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        child: Column(
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: tone.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: tone.withValues(alpha: 0.2), width: 1.5),
+                boxShadow: [tokens.shadowXs],
               ),
-              size: 28.0,
+              child: Icon(_getIconData(icon), color: tone, size: 26),
             ),
-            onPressed: () {
-              print('IconButton pressed ...');
-            },
-          ),
-        ),
-        Text(
-          valueOrDefault<String>(
-            widget.label,
-            'New Sale',
-          ),
-          style: FlutterFlowTheme.of(context).labelSmall.override(
-                font: GoogleFonts.inter(
-                  fontWeight: FontWeight.w500,
-                  fontStyle: FlutterFlowTheme.of(context).labelSmall.fontStyle,
-                ),
-                color: FlutterFlowTheme.of(context).primaryText,
-                letterSpacing: 0.0,
-                fontWeight: FontWeight.w500,
-                fontStyle: FlutterFlowTheme.of(context).labelSmall.fontStyle,
-                lineHeight: 1.45,
+            const SizedBox(height: 10),
+            Text(
+              label,
+              maxLines: 1,
+              style: context.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
               ),
+            ),
+          ],
         ),
-      ].divide(SizedBox(height: 4.0)),
+      ),
     );
+  }
+
+  IconData _getIconData(String name) {
+    switch (name) {
+      case 'add_shopping_cart_rounded': return Icons.add_shopping_cart_rounded;
+      case 'local_shipping_rounded': return Icons.local_shipping_rounded;
+      case 'barcode_scanner_rounded': return Icons.qr_code_scanner_rounded;
+      case 'assessment_rounded': return Icons.assessment_rounded;
+      default: return Icons.help_outline_rounded;
+    }
   }
 }
