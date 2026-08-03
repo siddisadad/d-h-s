@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../database/local_database.dart';
 import '../../features/dashboard/data/datasources/dashboard_remote_data_source.dart';
 import '../../features/dashboard/data/repositories/dashboard_repository_impl.dart';
 import '../../features/dashboard/domain/repositories/dashboard_repository.dart';
@@ -28,8 +29,11 @@ import '../../features/authentication/data/datasources/auth_remote_data_source.d
 import '../../features/authentication/data/datasources/auth_mock_data_source.dart';
 import '../../features/authentication/data/repositories/auth_repository_impl.dart';
 import '../../features/authentication/domain/repositories/auth_repository.dart';
+import '../../features/analytics/data/repositories/analytics_repository_impl.dart';
+import '../../features/analytics/domain/repositories/analytics_repository.dart';
 import '../config/app_config.dart';
 import '../network/api_client.dart';
+import '../services/firebase_database_service.dart';
 
 class InjectionContainer {
   static final InjectionContainer _instance = InjectionContainer._internal();
@@ -51,6 +55,11 @@ class InjectionContainer {
   late EmployeeRepository employeeRepository;
   late FinanceRepository financeRepository;
   late AuthRepository authRepository;
+  late AnalyticsRepository analyticsRepository;
+  late FirebaseDatabaseService firebaseDb;
+  
+  // Database instance
+  final LocalDatabase localDb = LocalDatabase();
 
   void init(ApiClient client) {
     if (_isInitialized) {
@@ -71,7 +80,10 @@ class InjectionContainer {
     final inventoryDataSource = useMocks
         ? InventoryMockDataSourceImpl()
         : InventoryRemoteDataSourceImpl(client);
-    inventoryRepository = InventoryRepositoryImpl(remoteDataSource: inventoryDataSource);
+    inventoryRepository = InventoryRepositoryImpl(
+      remoteDataSource: inventoryDataSource,
+      localDb: localDb,
+    );
     getProductsUseCase = GetProducts(inventoryRepository);
 
     // 3. Dashboard
@@ -85,33 +97,47 @@ class InjectionContainer {
     final salesDataSource = useMocks
         ? SalesMockDataSourceImpl()
         : SalesRemoteDataSourceImpl(client);
-    salesRepository = SalesRepositoryImpl(remoteDataSource: salesDataSource);
+    salesRepository = SalesRepositoryImpl(
+      remoteDataSource: salesDataSource,
+      localDatabase: localDb,
+    );
     createInvoiceUseCase = CreateInvoice(salesRepository);
 
     // 5. CRM
     final crmDataSource = useMocks
         ? CrmMockDataSourceImpl()
         : CrmRemoteDataSourceImpl(client);
-    crmRepository = CrmRepositoryImpl(remoteDataSource: crmDataSource);
+    crmRepository = CrmRepositoryImpl(
+      remoteDataSource: crmDataSource,
+      localDatabase: localDb,
+    );
     getContactsUseCase = GetContacts(crmRepository);
 
     // 6. Purchases
     final purchaseDataSource = useMocks
         ? PurchaseMockDataSourceImpl()
         : PurchaseRemoteDataSourceImpl(client);
-    purchaseRepository = PurchaseRepositoryImpl(remoteDataSource: purchaseDataSource);
+    purchaseRepository = PurchaseRepositoryImpl(
+      remoteDataSource: purchaseDataSource,
+      localDatabase: localDb,
+    );
 
     // 7. Employees
-    final employeeDataSource = useMocks
-        ? EmployeeMockDataSourceImpl()
-        : EmployeeRemoteDataSourceImpl(client);
-    employeeRepository = EmployeeRepositoryImpl(remoteDataSource: employeeDataSource);
+    final employeeDataSource = EmployeeRemoteDataSourceImpl(client);
+    employeeRepository = EmployeeRepositoryImpl(
+      remoteDataSource: employeeDataSource,
+      localDatabase: localDb,
+    );
 
     // 8. Finance
-    final financeDataSource = useMocks
-        ? FinanceMockDataSourceImpl()
-        : FinanceRemoteDataSourceImpl(client);
+    final financeDataSource = FinanceRemoteDataSourceImpl(client);
     financeRepository = FinanceRepositoryImpl(remoteDataSource: financeDataSource);
+
+    // 9. Analytics
+    analyticsRepository = AnalyticsRepositoryImpl(localDatabase: localDb);
+
+    // 10. Firebase Realtime Database
+    firebaseDb = FirebaseDatabaseService();
 
     _isInitialized = true;
     debugPrint('✅ [DI] Service Locator Ready');

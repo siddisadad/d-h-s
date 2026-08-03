@@ -6,6 +6,7 @@ import '../models/employee_model.dart';
 abstract class EmployeeRemoteDataSource {
   Future<List<Employee>> getEmployees();
   Future<bool> updateAttendance(String id, String status);
+  Future<bool> addEmployee(Employee employee);
 }
 
 class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
@@ -43,6 +44,18 @@ class EmployeeRemoteDataSourceImpl implements EmployeeRemoteDataSource {
     }
   }
 
+  @override
+  Future<bool> addEmployee(Employee employee) async {
+    try {
+      final response = await _client.dio.post('/employees', data: employee.toMap());
+      return response.statusCode == 201 || response.statusCode == 200;
+    } catch (e) {
+      debugPrint('⚠️ [Employee API] Add Employee Failed: $e');
+      if (kDebugMode) return true;
+      rethrow;
+    }
+  }
+
   final List<Employee> _mockEmployees = [
     Employee(id: 'E001', name: 'Rahul Sharma', role: 'Sales Manager', email: 'rahul@dhs.com', phone: '9876543210', salary: '45,000'),
     Employee(id: 'E002', name: 'Priya Patel', role: 'Inventory Specialist', email: 'priya@dhs.com', phone: '9876543211', salary: '35,000'),
@@ -64,4 +77,7 @@ class EmployeeMockDataSourceImpl implements EmployeeRemoteDataSource {
 
   @override
   Future<bool> updateAttendance(String id, String status) async => true;
+
+  @override
+  Future<bool> addEmployee(Employee employee) async => true;
 }

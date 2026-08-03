@@ -45,9 +45,9 @@ class CrmRemoteDataSourceImpl implements CrmRemoteDataSource {
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
         return data.map((json) => LedgerEntry(
-          amount: json['amount'],
-          balance: json['balance'],
-          date: json['date'],
+          amount: (json['amount'] as num).toDouble(),
+          balance: (json['balance'] as num).toDouble(),
+          date: DateTime.parse(json['date']),
           ref: json['ref'],
           type: json['type'],
           isDebit: json['isDebit'],
@@ -63,17 +63,18 @@ class CrmRemoteDataSourceImpl implements CrmRemoteDataSource {
   }
 
   final List<Contact> _mockSuppliers = [
-    Contact(id: 'S1', name: 'Adarsh Steel Industries', initials: 'AS', contact: '+91 98765 43210', gstin: '27AAACA1234A1Z5', balance: '₹4,50,000', location: 'Industrial Area, Pune', type: ContactType.supplier),
-    Contact(id: 'S2', name: 'Mahadev Khatape Steel', initials: 'MK', contact: '+91 88888 77777', gstin: '27BBBCB5678B2Z1', balance: '₹1,25,500', location: 'Loni Kalbhor', type: ContactType.supplier),
+    Contact(id: 'S1', name: 'Adarsh Steel Industries', initials: 'AS', contact: '+91 98765 43210', gstin: '27AAACA1234A1Z5', balance: 450000.0, location: 'Industrial Area, Pune', type: ContactType.supplier),
+    Contact(id: 'S2', name: 'Mahadev Khatape Steel', initials: 'MK', contact: '+91 88888 77777', gstin: '27BBBCB5678B2Z1', balance: 125500.0, location: 'Loni Kalbhor', type: ContactType.supplier),
   ];
 
   final List<Contact> _mockCustomers = [
-    Contact(id: 'C1', name: 'Rohan Construction', initials: 'RC', contact: '+91 98765 43210', gstin: '27AAACA1234A1Z5', balance: '₹45,820', location: 'MIDC Area, Pune', type: ContactType.customer),
+    Contact(id: 'C1', name: 'Rohan Construction', initials: 'RC', contact: '+91 98765 43210', gstin: '27AAACA1234A1Z5', balance: 45820.0, location: 'MIDC Area, Pune', type: ContactType.customer),
+    Contact(id: 'C2', name: 'Deshmukh Builders', initials: 'DB', contact: '+91 77777 66666', gstin: '27CCCCCC1234C1Z', balance: -12000.0, location: 'Hadapsar, Pune', type: ContactType.customer),
   ];
 
   final List<LedgerEntry> _mockLedger = [
-    LedgerEntry(amount: '12,400', balance: '45,820', date: '22 May 2024', ref: '#SI-2024-882', type: 'Sales Invoice', isDebit: true),
-    LedgerEntry(amount: '5,000', balance: '33,420', date: '18 May 2024', ref: '#PAY-9912', type: 'Payment Received', isDebit: false),
+    LedgerEntry(amount: 12400.0, balance: 45820.0, date: DateTime(2024, 5, 22), ref: '#SI-2024-882', type: 'Sales Invoice', isDebit: true),
+    LedgerEntry(amount: 5000.0, balance: 33420.0, date: DateTime(2024, 5, 18), ref: '#PAY-9912', type: 'Payment Received', isDebit: false),
   ];
 }
 
@@ -82,8 +83,8 @@ class CrmMockDataSourceImpl implements CrmRemoteDataSource {
   Future<List<Contact>> getContacts(ContactType type) async {
     await Future.delayed(const Duration(milliseconds: 300));
     return type == ContactType.supplier 
-      ? [Contact(id: 'S1', name: 'Adarsh Steel', initials: 'AS', contact: '123', gstin: 'GST', balance: '0', location: 'Pune', type: ContactType.supplier)]
-      : [Contact(id: 'C1', name: 'Rohan Const', initials: 'RC', contact: '123', gstin: 'GST', balance: '0', location: 'Pune', type: ContactType.customer)];
+      ? [Contact(id: 'S1', name: 'Adarsh Steel', initials: 'AS', contact: '123', gstin: 'GST', balance: 0.0, location: 'Pune', type: ContactType.supplier)]
+      : [Contact(id: 'C1', name: 'Rohan Const', initials: 'RC', contact: '123', gstin: 'GST', balance: 0.0, location: 'Pune', type: ContactType.customer)];
   }
 
   @override

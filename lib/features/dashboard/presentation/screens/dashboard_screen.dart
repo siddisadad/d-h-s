@@ -1,17 +1,24 @@
+import '../../../../components/base_list_item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../../../core/design_system/theme/app_theme.dart';
-import '../../../../core/widgets/custom_card.dart';
-import '../providers/dashboard_provider.dart';
-import '../providers/activity_provider.dart';
+import 'package:deshmukh_steel_e_r_p/core/design_system/theme/app_theme.dart';
+import 'package:deshmukh_steel_e_r_p/core/widgets/custom_card.dart';
+import 'package:deshmukh_steel_e_r_p/features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'package:deshmukh_steel_e_r_p/features/dashboard/presentation/providers/activity_provider.dart';
+import 'package:deshmukh_steel_e_r_p/features/sales/presentation/providers/sales_history_provider.dart';
 import 'package:deshmukh_steel_e_r_p/features/dashboard/domain/entities/activity.dart';
+import 'package:deshmukh_steel_e_r_p/features/authentication/presentation/providers/auth_provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:go_router/go_router.dart';
-import '../../../../core/widgets/global_search_overlay.dart';
-import '../../../../core/widgets/custom_charts.dart';
-import '../../../../components/kpi_card/kpi_card_widget.dart';
+import 'package:deshmukh_steel_e_r_p/core/widgets/global_search_overlay.dart';
+import 'package:deshmukh_steel_e_r_p/core/widgets/custom_charts.dart';
+import 'package:deshmukh_steel_e_r_p/components/kpi_card/kpi_card_widget.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:deshmukh_steel_e_r_p/core/providers/app_bar_provider.dart';
+import 'package:deshmukh_steel_e_r_p/core/security/permissions.dart';
+import 'package:deshmukh_steel_e_r_p/core/widgets/permission_wrapper.dart';
+import 'package:intl/intl.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -19,76 +26,81 @@ class DashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(dashboardStatsNotifierProvider);
-    final activitiesAsync = ref.watch(activityNotifierProvider);
+    final activitiesAsync = ref.watch(activityStreamProvider);
+    final salesAsync = ref.watch(salesHistoryProvider);
+    final authUser = ref.watch(authProvider).value;
     final tokens = context.tokens;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('DHS ERP DASHBOARD'),
+    // Update Global AppBar
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(appBarNotifierProvider.notifier).update(
+        title: 'DCI ERP DASHBOARD',
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none_rounded),
-            onPressed: () {},
-          ),
           IconButton(
             icon: const Icon(Icons.search_rounded),
             onPressed: () => _showSearch(context),
           ),
-          SizedBox(width: tokens.space8),
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-            child: const Icon(Icons.person_outline_rounded, color: AppColors.primary, size: 20),
-          ),
-          SizedBox(width: tokens.space16),
         ],
-      ),
-      body: statsAsync.when(
-        data: (stats) => RefreshIndicator(
-          onRefresh: () async {
-            await ref.read(dashboardStatsNotifierProvider.notifier).refresh();
-            ref.invalidate(activityNotifierProvider);
-          },
-          child: SingleChildScrollView(
-            padding: EdgeInsets.all(tokens.space24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildWelcomeHeader(context),
-                SizedBox(height: tokens.space24),
-                _buildKpiGrid(context, stats),
-                SizedBox(height: tokens.space32),
-                _buildRevenueTrend(context),
-                SizedBox(height: tokens.space32),
-                _buildQuickActions(context),
-                SizedBox(height: tokens.space32),
-                activitiesAsync.when(
-                  data: (activities) => _buildRecentActivity(context, activities),
+      );
+    });
+
+    return statsAsync.when(
+      data: (stats) => RefreshIndicator(
+        onRefresh: () async {
+          await ref.read(dashboardStatsNotifierProvider.notifier).refresh();
+        },
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(tokens.space24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildQuickActions(context),
+              const SizedBox(height: 32),
+              _buildWelcomeHeader(context, authUser?.displayName ?? 'User'),
+              const SizedBox(height: 24),
+              _buildKpiGrid(context, stats),
+              const SizedBox(height: 32),
+              PermissionWrapper(
+                requiredPermissions: const [AppPermission.viewAnalytics],
+                child: salesAsync.when(
+                  data: (sales) => _buildRevenueTrend(context, sales),
                   loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, s) => Text('Error loading activities: $e'),
+                  error: (e, s) => const SizedBox.shrink(),
                 ),
-              ],
-            ).animate().fadeIn(duration: 500.ms).slideY(begin: 0.05, end: 0),
-          ),
+              ),
+              const SizedBox(height: 32),
+              activitiesAsync.when(
+                data: (activities) => _buildRecentActivity(context, activities),
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, s) => Text('Error loading activities: $e'),
+              ),
+            ],
+          ).animate().fadeIn(duration: 500.ms).slideY(begin: 0.05, end: 0),
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
       ),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, stack) => Center(child: Text('Error: $err')),
     );
   }
 
-  Widget _buildWelcomeHeader(BuildContext context) {
+  Widget _buildWelcomeHeader(BuildContext context, String name) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Welcome back, Admin',
-          style: context.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700),
+          'Welcome back, $name 👋',
+          style: context.textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.5,
+          ),
         ),
+        const SizedBox(height: 4),
         Text(
-          'Here is what\'s happening with Deshmukh Hardware today.',
-          style: context.textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+          'Monitor your business performance and inventory in real-time.',
+          style: context.textTheme.bodyMedium?.copyWith(
+            color: context.colorScheme.onSurface.withValues(alpha: 0.7),
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ],
     );
@@ -112,28 +124,31 @@ class DashboardScreen extends ConsumerWidget {
               label: 'Today\'s Sales',
               value: stats?.sales ?? '₹0',
               icon: const Icon(Icons.payments_rounded),
-              tone: AppColors.primary,
+              tone: context.colorScheme.primary,
               trend: '+12%',
             ),
             KpiCardWidget(
               label: 'Today\'s Purchase',
               value: stats?.purchases ?? '₹0',
               icon: const Icon(Icons.shopping_cart_rounded),
-              tone: AppColors.success,
+              tone: context.colorScheme.secondary,
               trend: '+5%',
             ),
-            KpiCardWidget(
-              label: 'Collections',
-              value: stats?.collections ?? '₹0',
-              icon: const Icon(Icons.account_balance_wallet_rounded),
-              tone: AppColors.accent,
-              trend: '+8%',
+            PermissionWrapper(
+              requiredPermissions: const [AppPermission.viewFinance],
+              child: KpiCardWidget(
+                label: 'Collections',
+                value: stats?.collections ?? '₹0',
+                icon: const Icon(Icons.account_balance_wallet_rounded),
+                tone: context.colorScheme.tertiary,
+                trend: '+8%',
+              ),
             ),
             KpiCardWidget(
               label: 'Low Stock',
               value: stats?.lowStock ?? '0 Items',
               icon: const Icon(Icons.inventory_2_rounded),
-              tone: AppColors.error,
+              tone: context.colorScheme.error,
               isAlert: true,
             ),
           ],
@@ -142,10 +157,26 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildRevenueTrend(BuildContext context) {
-    final tokens = context.tokens;
+  Widget _buildRevenueTrend(BuildContext context, List<dynamic> sales) {
+    // Generate last 7 days revenue
+    final now = DateTime.now();
+    final last7Days = List.generate(7, (i) => now.subtract(Duration(days: 6 - i)));
+    
+    final spots = List.generate(7, (i) {
+      final day = last7Days[i];
+      final daySales = sales.where((s) => 
+        s.date.year == day.year && 
+        s.date.month == day.month && 
+        s.date.day == day.day
+      ).fold(0.0, (sum, s) => sum + s.grandTotal);
+      
+      return FlSpot(i.toDouble(), daySales / 1000); // Scale to 'k' for better chart display
+    });
+
+    final xLabels = last7Days.map((d) => DateFormat('E').format(d).toUpperCase()).toList();
+
     return CustomCard(
-      padding: EdgeInsets.all(tokens.space24),
+      padding: EdgeInsets.all(context.tokens.space24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -153,31 +184,23 @@ class DashboardScreen extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'REVENUE TREND',
+                'REVENUE TREND (LAST 7 DAYS)',
                 style: context.textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.2,
-                  color: AppColors.textSecondary,
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
-              const Icon(Icons.more_horiz_rounded, color: AppColors.textSecondary),
+              Icon(Icons.trending_up_rounded, color: context.tokens.success),
             ],
           ),
-          SizedBox(height: tokens.space24),
+          const SizedBox(height: 24),
           SizedBox(
             height: 200,
             child: CustomLineChart(
-              spots: const [
-                FlSpot(0, 45),
-                FlSpot(1, 52),
-                FlSpot(2, 48),
-                FlSpot(3, 70),
-                FlSpot(4, 61),
-                FlSpot(5, 85),
-                FlSpot(6, 92),
-              ],
-              xLabels: const ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'],
-              maxY: 100,
+              spots: spots,
+              xLabels: xLabels,
+              maxY: spots.fold(0.0, (max, spot) => spot.y > max ? spot.y : max) * 1.2,
             ),
           ),
         ],
@@ -186,7 +209,6 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   Widget _buildQuickActions(BuildContext context) {
-    final tokens = context.tokens;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -195,19 +217,25 @@ class DashboardScreen extends ConsumerWidget {
           style: context.textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w700,
             letterSpacing: 1.2,
-            color: AppColors.textSecondary,
+            color: context.colorScheme.onSurface.withValues(alpha: 0.6),
           ),
         ),
-        SizedBox(height: tokens.space16),
+        const SizedBox(height: 16),
         Row(
           children: [
-            Expanded(child: _buildActionItem(context, Icons.add_shopping_cart_rounded, 'New Sale', AppColors.primary, '/sales')),
-            SizedBox(width: tokens.space16),
-            Expanded(child: _buildActionItem(context, Icons.inventory_2_outlined, 'Inventory', AppColors.info, '/inventory')),
-            SizedBox(width: tokens.space16),
-            Expanded(child: _buildActionItem(context, Icons.people_outline_rounded, 'Customers', AppColors.accent, '/customers')),
-            SizedBox(width: tokens.space16),
-            Expanded(child: _buildActionItem(context, Icons.assessment_outlined, 'Reports', AppColors.secondary, '/analytics')),
+            PermissionWrapper(
+              requiredPermissions: const [AppPermission.createInvoice],
+              child: Expanded(child: _buildActionItem(context, Icons.add_shopping_cart_rounded, 'New Sale', context.colorScheme.primary, '/sales')),
+            ),
+            const SizedBox(width: 16),
+            Expanded(child: _buildActionItem(context, Icons.inventory_2_outlined, 'Inventory', context.colorScheme.secondary, '/inventory')),
+            const SizedBox(width: 16),
+            Expanded(child: _buildActionItem(context, Icons.people_outline_rounded, 'Customers', context.colorScheme.tertiary, '/customers')),
+            const SizedBox(width: 16),
+            PermissionWrapper(
+              requiredPermissions: const [AppPermission.viewAnalytics],
+              child: Expanded(child: _buildActionItem(context, Icons.assessment_outlined, 'Reports', context.colorScheme.primaryContainer, '/analytics')),
+            ),
           ],
         ),
       ],
@@ -215,7 +243,6 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   Widget _buildRecentActivity(BuildContext context, List<Activity> activities) {
-    final tokens = context.tokens;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -224,29 +251,29 @@ class DashboardScreen extends ConsumerWidget {
           style: context.textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w700,
             letterSpacing: 1.2,
-            color: AppColors.textSecondary,
+            color: context.colorScheme.onSurface.withValues(alpha: 0.6),
           ),
         ),
-        SizedBox(height: tokens.space16),
+        const SizedBox(height: 16),
         CustomCard(
           padding: EdgeInsets.zero,
-          child: ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: activities.length > 5 ? 5 : activities.length,
-            separatorBuilder: (context, index) => Divider(height: 1, color: context.theme.dividerColor),
-            itemBuilder: (context, index) {
-              final activity = activities[index];
-              return ListTile(
-                leading: _buildActivityIcon(context, activity.type),
-                title: Text(activity.title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                subtitle: Text(activity.subtitle, style: context.textTheme.bodySmall),
-                trailing: Text(
-                  timeago.format(activity.timestamp),
-                  style: context.textTheme.labelSmall?.copyWith(fontSize: 10),
-                ),
-              );
-            },
+          child: Column(
+            children: List.generate(
+              activities.length > 5 ? 5 : activities.length,
+              (index) {
+                final activity = activities[index];
+                return BaseListItem(
+                  title: activity.title,
+                  subtitle: activity.subtitle,
+                  leading: _buildActivityIcon(context, activity.type),
+                  showDivider: index < (activities.length > 5 ? 4 : activities.length - 1),
+                  trailing: Text(
+                    timeago.format(activity.timestamp),
+                    style: context.textTheme.labelSmall?.copyWith(fontSize: 10),
+                  ),
+                );
+              },
+            ),
           ),
         ),
       ],
@@ -259,19 +286,19 @@ class DashboardScreen extends ConsumerWidget {
     switch (type) {
       case ActivityType.sale:
         icon = Icons.shopping_cart_checkout_rounded;
-        color = AppColors.primary;
+        color = context.colorScheme.primary;
         break;
       case ActivityType.purchase:
         icon = Icons.shopping_bag_outlined;
-        color = AppColors.success;
+        color = context.tokens.success;
         break;
       case ActivityType.stockAdjustment:
         icon = Icons.inventory_2_outlined;
-        color = AppColors.accent;
+        color = context.colorScheme.tertiary;
         break;
       case ActivityType.userLogin:
         icon = Icons.login_rounded;
-        color = AppColors.info;
+        color = context.tokens.info;
         break;
     }
     return Container(
@@ -282,17 +309,28 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   Widget _buildActionItem(BuildContext context, IconData icon, String label, Color color, String path) {
-    final tokens = context.tokens;
     return CustomCard(
       onTap: () => context.go(path),
-      padding: EdgeInsets.symmetric(vertical: tokens.space20),
+      padding: EdgeInsets.symmetric(vertical: context.tokens.space24),
+      showShadow: false,
+      color: context.colorScheme.surface,
       child: Column(
         children: [
-          Icon(icon, color: color, size: 28),
-          SizedBox(height: tokens.space8),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(icon, color: color, size: 28),
+          ),
+          const SizedBox(height: 12),
           Text(
             label,
-            style: context.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
+            style: context.textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.2,
+            ),
           ),
         ],
       ),

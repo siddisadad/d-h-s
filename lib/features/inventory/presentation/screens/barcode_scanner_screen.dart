@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import '../../../../core/design_system/theme/app_theme.dart';
-import '../providers/inventory_provider.dart';
-import 'product_form_screen.dart';
+import 'package:deshmukh_steel_e_r_p/core/design_system/theme/app_theme.dart';
+import 'package:deshmukh_steel_e_r_p/features/inventory/presentation/providers/inventory_provider.dart';
+import 'package:deshmukh_steel_e_r_p/features/inventory/domain/entities/product.dart';
+import 'package:deshmukh_steel_e_r_p/features/inventory/presentation/screens/product_form_screen.dart';
+import 'package:deshmukh_steel_e_r_p/core/widgets/scanner_overlay.dart';
+import '../../domain/entities/warehouse.dart';
 
 class BarcodeScannerScreen extends ConsumerStatefulWidget {
-  const BarcodeScannerScreen({super.key});
+  final bool isAuditMode;
+  final Function(Product)? onResult;
+
+  const BarcodeScannerScreen({
+    super.key, 
+    this.isAuditMode = false,
+    this.onResult,
+  });
 
   @override
   ConsumerState<BarcodeScannerScreen> createState() => _BarcodeScannerScreenState();
@@ -40,17 +50,23 @@ class _BarcodeScannerScreenState extends ConsumerState<BarcodeScannerScreen> {
     setState(() => isScanning = false);
     debugPrint('🔍 Barcode detected: $code');
 
-    // Search for product in the full loaded list (not just the filtered one)
     final productsAsync = ref.read(inventoryNotifierProvider);
     
     productsAsync.whenData((products) {
-      final match = products.where((p) => p.sku.toUpperCase() == code.toUpperCase());
+      final matches = products.where((p) => p.sku.toUpperCase() == code.toUpperCase());
 
-      if (match.isNotEmpty) {
-        final product = match.first;
-        debugPrint('✅ Match found: ${product.name}');
+      if (matches.isNotEmpty) {
+        final product = matches.first;
         
-        if (mounted) {
+        if (widget.onResult != null) {
+          widget.onResult!(product);
+          Navigator.pop(context);
+          return;
+        }
+
+        if (widget.isAuditMode) {
+          _showAuditDialog(product);
+        } else {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -64,13 +80,97 @@ class _BarcodeScannerScreenState extends ConsumerState<BarcodeScannerScreen> {
     });
   }
 
+  void _showAuditDialog(Product product) {
+    final qtyController = TextEditingController();
+    Warehouse? selectedWarehouse;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Consumer(
+        builder: (context, ref, _) {
+          final warehousesAsync = ref.watch(warehouseNotifierProvider);
+
+          return AlertDialog(
+            title: Text('AUDIT: ${product.name}'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Current Total Stock: ${product.stock} ${product.unit}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 16),
+                const Text('Select Yard', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                warehousesAsync.when(
+                  data: (list) {
+                    if (selectedWarehouse == null && list.isNotEmpty) {
+                       selectedWarehouse = list.firstWhere((w) => w.isDefault, orElse: () => list.first);
+                    }
+                    return DropdownButtonFormField<Warehouse>(
+                      value: selectedWarehouse,
+                      items: list.map((w) => DropdownMenuItem(value: w, child: Text(w.name))).toList(),
+                      onChanged: (val) => selectedWarehouse = val,
+                      decoration: const InputDecoration(contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
+                    );
+                  },
+                  loading: () => const LinearProgressIndicator(),
+                  error: (e, s) => Text('Error: $e'),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: qtyController,
+                  keyboardType: TextInputType.number,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Adjustment (+ or -)',
+                    hintText: 'e.g. 50 or -10',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  setState(() => isScanning = true);
+                },
+                child: const Text('CANCEL'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (selectedWarehouse == null) return;
+                  final adjustment = double.tryParse(qtyController.text) ?? 0;
+                  if (adjustment != 0) {
+                    await ref.read(inventoryNotifierProvider.notifier).adjustStock(
+                      product.sku, 
+                      selectedWarehouse!.id, 
+                      adjustment,
+                    );
+                  }
+                  if (mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Stock updated for ${product.name} in ${selectedWarehouse!.name}'), duration: const Duration(seconds: 1)),
+                    );
+                    setState(() => isScanning = true);
+                  }
+                },
+                child: const Text('UPDATE'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   void _handleNoMatch(String code) {
-    debugPrint('❌ No product found for SKU: $code');
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('No product found for SKU: $code'),
-          backgroundColor: AppColors.error,
+          backgroundColor: context.errorColor,
           action: SnackBarAction(
             label: 'RETRY',
             textColor: Colors.white,
@@ -78,8 +178,7 @@ class _BarcodeScannerScreenState extends ConsumerState<BarcodeScannerScreen> {
           ),
         ),
       );
-      // Reset scanning after a short delay if no snackbar action taken
-      Future.delayed(const Duration(seconds: 3), () {
+      Future.delayed(const Duration(seconds: 2), () {
         if (mounted && !isScanning) {
           setState(() => isScanning = true);
         }
@@ -91,7 +190,7 @@ class _BarcodeScannerScreenState extends ConsumerState<BarcodeScannerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('SCAN BARCODE'),
+        title: Text(widget.isAuditMode ? 'RAPID STOCK AUDIT' : 'SCAN BARCODE'),
         actions: [
           IconButton(
             icon: const Icon(Icons.flash_on_rounded),
@@ -109,73 +208,11 @@ class _BarcodeScannerScreenState extends ConsumerState<BarcodeScannerScreen> {
             controller: controller,
             onDetect: _onDetect,
           ),
-          _buildOverlay(context),
+          ScannerOverlay(
+            label: widget.isAuditMode ? 'Scan item to adjust stock' : 'Align barcode within the frame',
+          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildOverlay(BuildContext context) {
-    return Stack(
-      children: [
-        // Semi-transparent background
-        ColorFiltered(
-          colorFilter: ColorFilter.mode(
-            Colors.black.withValues(alpha: 0.5),
-            BlendMode.srcOut,
-          ),
-          child: Stack(
-            children: [
-              Container(
-                decoration: const BoxDecoration(
-                  color: Colors.black,
-                  backgroundBlendMode: BlendMode.dstOut,
-                ),
-              ),
-              Center(
-                child: Container(
-                  width: 250,
-                  height: 250,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        // Scanning frame
-        Center(
-          child: Container(
-            width: 250,
-            height: 250,
-            decoration: BoxDecoration(
-              border: Border.all(color: AppColors.primary, width: 4),
-              borderRadius: BorderRadius.circular(24),
-            ),
-          ),
-        ),
-        // Instructions
-        Positioned(
-          bottom: 100,
-          left: 0,
-          right: 0,
-          child: Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.black54,
-                borderRadius: BorderRadius.circular(30),
-              ),
-              child: const Text(
-                'Align barcode within the frame',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

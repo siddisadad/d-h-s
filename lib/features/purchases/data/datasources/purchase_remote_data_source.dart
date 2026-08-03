@@ -31,14 +31,21 @@ class PurchaseRemoteDataSourceImpl implements PurchaseRemoteDataSource {
   }
 
   final List<PurchaseOrder> _mockPurchases = [
-    PurchaseOrder(id: 'TSL-2024-01', supplierName: 'Tata Steel Ltd.', date: '24 Oct', amount: '₹1,25,000', status: 'received'),
-    PurchaseOrder(id: 'JSW-HRD-88', supplierName: 'JSW Steel Corp', date: '23 Oct', amount: '₹84,200', status: 'Pending'),
+    PurchaseOrder(
+      id: 'TSL-2024-01', 
+      supplierId: 'S001', 
+      supplierName: 'Tata Steel Ltd.', 
+      date: DateTime(2024, 10, 24), 
+      items: [], 
+      status: 'Received',
+    ),
   ];
 }
 
 class PurchaseMockDataSourceImpl implements PurchaseRemoteDataSource {
   @override
   Future<List<PurchaseOrder>> getRecentPurchases() async {
+    await Future.delayed(const Duration(milliseconds: 300));
     return [];
   }
 }

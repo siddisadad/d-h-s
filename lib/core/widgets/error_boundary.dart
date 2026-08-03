@@ -55,27 +55,33 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: AppColors.error.withValues(alpha: 0.1),
+                        color: Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.error_outline_rounded,
-                        color: AppColors.error,
+                        color: Theme.of(context).colorScheme.error,
                         size: 64,
                       ),
                     ),
                     const SizedBox(height: 24),
                     Text(
                       'Something went wrong',
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
                     Text(
                       'The application encountered an unexpected error. Our team has been notified.',
-                      style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 32),

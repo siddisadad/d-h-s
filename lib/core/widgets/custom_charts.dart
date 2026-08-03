@@ -20,7 +20,7 @@ class CustomLineChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = color ?? AppColors.primary;
+    final primaryColor = color ?? context.primaryColor;
     
     return LineChart(
       LineChartData(

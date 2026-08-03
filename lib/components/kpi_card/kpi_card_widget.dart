@@ -5,38 +5,39 @@ import 'package:flutter/material.dart';
 class KpiCardWidget extends StatelessWidget {
   final Widget? icon;
   final String label;
-  final Color tone;
+  final Color? tone;
   final String trend;
   final String value;
   final bool isAlert;
 
   const KpiCardWidget({
     super.key,
+    required this.label,
     this.icon,
-    this.label = 'Sales',
-    this.tone = AppColors.primary,
     this.trend = '+12%',
     this.value = '₹1,45,200',
     this.isAlert = false,
+    this.tone,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
     final tokens = context.tokens;
+    final activeTone = tone ?? theme.colorScheme.primary;
 
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(tokens.radiusLg),
         border: Border.all(
-          color: theme.dividerColor.withValues(alpha: 0.5),
+          color: theme.colorScheme.outline.withValues(alpha: 0.3),
           width: 1.0,
         ),
-        boxShadow: [tokens.shadowSm],
+        boxShadow: [tokens.shadowXs],
       ),
       child: Padding(
-        padding: EdgeInsets.all(tokens.space12),
+        padding: EdgeInsets.all(tokens.space16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,29 +46,29 @@ class KpiCardWidget extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: tone.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(tokens.radiusMd),
+                    color: activeTone.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  child: icon ?? Icon(Icons.show_chart_rounded, color: tone, size: 20),
+                  child: icon ?? Icon(Icons.show_chart_rounded, color: activeTone, size: 22),
                 ),
                 if (trend.isNotEmpty && !isAlert)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                      color: context.colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(tokens.radiusFull),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.trending_up_rounded, color: theme.colorScheme.primary, size: 12),
+                        Icon(Icons.arrow_upward_rounded, color: context.colorScheme.primary, size: 12),
                         const SizedBox(width: 4),
                         Text(
                           trend,
                           style: context.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.primary,
+                            color: context.colorScheme.primary,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -76,23 +77,26 @@ class KpiCardWidget extends StatelessWidget {
                   ).animate().fadeIn(duration: 400.ms).slideX(begin: 0.2),
               ],
             ),
-            const Spacer(),
+            const SizedBox(height: 16),
             Text(
               label.toUpperCase(),
               maxLines: 1,
               style: context.textTheme.labelSmall?.copyWith(
                 fontWeight: FontWeight.w800,
+                color: context.colorScheme.onSurface.withValues(alpha: 0.6),
                 letterSpacing: 1.2,
+                fontSize: 9,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             Text(
               value,
               maxLines: 1,
               style: context.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.w800,
                 color: isAlert ? theme.colorScheme.error : theme.colorScheme.onSurface,
-                letterSpacing: -0.5,
+                letterSpacing: -1.0,
+                fontSize: 22,
               ),
             ),
           ],

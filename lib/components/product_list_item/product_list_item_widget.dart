@@ -1,25 +1,34 @@
-import '../../core/design_system/theme/app_theme.dart';
-import '../../core/widgets/custom_card.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:deshmukh_steel_e_r_p/core/design_system/theme/app_theme.dart';
+import 'package:deshmukh_steel_e_r_p/core/widgets/custom_card.dart';
 import 'package:flutter/material.dart';
-import '../../features/inventory/domain/entities/product.dart';
+import 'package:deshmukh_steel_e_r_p/core/security/permissions.dart';
+import 'package:deshmukh_steel_e_r_p/core/widgets/permission_wrapper.dart';
+import 'package:deshmukh_steel_e_r_p/features/inventory/domain/entities/product.dart';
+import 'package:deshmukh_steel_e_r_p/features/analytics/presentation/providers/forecast_provider.dart';
+import 'package:intl/intl.dart';
 
-class ProductListItemWidget extends StatelessWidget {
+class ProductListItemWidget extends ConsumerWidget {
   final Product product;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final VoidCallback? onTap;
 
   const ProductListItemWidget({
     super.key,
     required this.product,
     this.onEdit,
     this.onDelete,
+    this.onTap,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final tokens = context.tokens;
+    final forecastAsync = ref.watch(demandForecastProvider(product.sku));
     
     return CustomCard(
+      onTap: onTap,
       padding: EdgeInsets.all(tokens.space16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -47,19 +56,33 @@ class ProductListItemWidget extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: (product.isLowStock ? AppColors.error : AppColors.success).withValues(alpha: 0.1),
+                      color: (product.isLowStock ? tokens.error : tokens.success).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(tokens.radiusFull),
                     ),
                     child: Text(
                       product.isLowStock ? 'Low Stock' : 'In Stock',
                       style: context.textTheme.labelSmall?.copyWith(
-                        color: product.isLowStock ? AppColors.error : AppColors.success,
+                        color: product.isLowStock ? tokens.error : tokens.success,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
                   const SizedBox(width: 8),
-                  _buildActionMenu(context),
+                  forecastAsync.maybeWhen(
+                    data: (forecast) => forecast != null && forecast.isCritical 
+                      ? Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(color: context.colorScheme.error, borderRadius: BorderRadius.circular(4)),
+                          child: const Text('PRIORITY', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                        )
+                      : const SizedBox.shrink(),
+                    orElse: () => const SizedBox.shrink(),
+                  ),
+                  const SizedBox(width: 8),
+                  PermissionWrapper(
+                    requiredPermissions: const [AppPermission.manageInventory],
+                    child: _buildActionMenu(context),
+                  ),
                 ],
               ),
             ],
@@ -70,8 +93,22 @@ class ProductListItemWidget extends StatelessWidget {
             children: [
               _buildDetail(context, 'CATEGORY', product.category),
               _buildDetail(context, 'UNIT', product.unit),
-              _buildDetail(context, 'PRICE', product.price, isPrimary: true),
-              _buildDetail(context, 'STOCK', '${product.stock} ${product.unit}', isBold: true, color: product.isLowStock ? AppColors.error : AppColors.primary),
+              PermissionWrapper(
+                requiredPermissions: const [AppPermission.viewPrices],
+                child: _buildDetail(
+                  context,
+                  'PRICE',
+                  NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2).format(product.price),
+                  isPrimary: true,
+                ),
+              ),
+              _buildDetail(
+                context,
+                'STOCK',
+                '${NumberFormat.decimalPattern().format(product.stock)} ${product.unit}',
+                isBold: true,
+                color: product.isLowStock ? tokens.error : context.colorScheme.primary,
+              ),
             ],
           ),
         ],
@@ -81,7 +118,7 @@ class ProductListItemWidget extends StatelessWidget {
 
   Widget _buildActionMenu(BuildContext context) {
     return PopupMenuButton<String>(
-      icon: const Icon(Icons.more_vert_rounded, color: AppColors.textSecondary, size: 20),
+      icon: Icon(Icons.more_vert_rounded, color: context.tokens.textSecondary, size: 20),
       onSelected: (val) {
         if (val == 'edit') onEdit?.call();
         if (val == 'delete') onDelete?.call();
@@ -97,13 +134,13 @@ class ProductListItemWidget extends StatelessWidget {
             ],
           ),
         ),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'delete',
           child: Row(
             children: [
-              Icon(Icons.delete_outline_rounded, size: 18, color: AppColors.error),
-              SizedBox(width: 8),
-              Text('Delete', style: TextStyle(color: AppColors.error)),
+              Icon(Icons.delete_outline_rounded, size: 18, color: context.colorScheme.error),
+              const SizedBox(width: 8),
+              Text('Delete', style: TextStyle(color: context.colorScheme.error)),
             ],
           ),
         ),
@@ -124,7 +161,7 @@ class ProductListItemWidget extends StatelessWidget {
           value,
           style: context.textTheme.bodyMedium?.copyWith(
             fontWeight: isBold || isPrimary ? FontWeight.w700 : FontWeight.w500,
-            color: color ?? (isPrimary ? AppColors.primary : AppColors.textPrimary),
+            color: color ?? (isPrimary ? context.primaryColor : context.onSurfaceColor),
           ),
         ),
       ],

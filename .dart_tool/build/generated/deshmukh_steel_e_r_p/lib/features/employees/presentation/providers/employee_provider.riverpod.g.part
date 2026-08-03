@@ -2,7 +2,26 @@
 // RiverpodGenerator
 // **************************************************************************
 
-String _$employeeNotifierHash() => r'21bfe0481270962cde7f22ed8a2b06376cac6b6c';
+String _$employeeRepositoryHash() =>
+    r'5e4c45587da7f3ea4b33cd947aa1a44f534f2107';
+
+/// See also [employeeRepository].
+@ProviderFor(employeeRepository)
+final employeeRepositoryProvider =
+    AutoDisposeProvider<EmployeeRepository>.internal(
+  employeeRepository,
+  name: r'employeeRepositoryProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$employeeRepositoryHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef EmployeeRepositoryRef = AutoDisposeProviderRef<EmployeeRepository>;
+String _$employeeNotifierHash() => r'c107b6561c73a33c305f05a4c015d00f2a6e232a';
 
 /// See also [EmployeeNotifier].
 @ProviderFor(EmployeeNotifier)

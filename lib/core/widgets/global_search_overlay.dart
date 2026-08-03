@@ -28,9 +28,9 @@ class _GlobalSearchOverlayState extends ConsumerState<GlobalSearchOverlay> {
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
-      decoration: const BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: context.surfaceColor,
+        borderRadius: const BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
       ),
       child: Column(
         children: [
@@ -81,7 +81,7 @@ class _GlobalSearchOverlayState extends ConsumerState<GlobalSearchOverlay> {
         margin: const EdgeInsets.symmetric(vertical: 12),
         width: 40,
         height: 4,
-        decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+        decoration: BoxDecoration(color: context.colorScheme.outlineVariant, borderRadius: BorderRadius.circular(2)),
       ),
     );
   }
@@ -110,10 +110,10 @@ class _GlobalSearchOverlayState extends ConsumerState<GlobalSearchOverlay> {
     IconData icon;
     Color color;
     switch (category) {
-      case SearchCategory.product: icon = Icons.inventory_2_outlined; color = AppColors.primary; break;
-      case SearchCategory.customer: icon = Icons.person_outline_rounded; color = AppColors.accent; break;
-      case SearchCategory.supplier: icon = Icons.business_rounded; color = AppColors.secondary; break;
-      case SearchCategory.invoice: icon = Icons.receipt_long_rounded; color = AppColors.info; break;
+      case SearchCategory.product: icon = Icons.inventory_2_outlined; color = context.primaryColor; break;
+      case SearchCategory.customer: icon = Icons.person_outline_rounded; color = context.colorScheme.tertiary; break;
+      case SearchCategory.supplier: icon = Icons.business_rounded; color = context.secondaryColor; break;
+      case SearchCategory.invoice: icon = Icons.receipt_long_rounded; color = context.infoColor; break;
     }
     return Icon(icon, color: color);
   }
@@ -121,7 +121,10 @@ class _GlobalSearchOverlayState extends ConsumerState<GlobalSearchOverlay> {
   Widget _getCategoryTag(SearchCategory category) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(color: AppColors.border.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(4)),
+      decoration: BoxDecoration(
+        color: context.colorScheme.outlineVariant.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(4),
+      ),
       child: Text(category.name.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
     );
   }

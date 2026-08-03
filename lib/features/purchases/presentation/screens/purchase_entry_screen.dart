@@ -8,9 +8,19 @@ import '../../../crm/presentation/providers/crm_provider.dart';
 import '../../../inventory/presentation/providers/inventory_provider.dart';
 import '../../../crm/domain/entities/contact.dart';
 import '../../domain/entities/purchase_item.dart';
+import '../../domain/entities/purchase_order.dart';
+import '../providers/purchase_provider.dart';
+import '../../../inventory/presentation/screens/barcode_scanner_screen.dart';
 
 class PurchaseEntryScreen extends ConsumerStatefulWidget {
-  const PurchaseEntryScreen({super.key});
+  final Contact? prefilledSupplier;
+  final List<PurchaseItem>? prefilledItems;
+
+  const PurchaseEntryScreen({
+    super.key,
+    this.prefilledSupplier,
+    this.prefilledItems,
+  });
 
   @override
   ConsumerState<PurchaseEntryScreen> createState() => _PurchaseEntryScreenState();
@@ -21,11 +31,20 @@ class _PurchaseEntryScreenState extends ConsumerState<PurchaseEntryScreen> {
   final List<PurchaseItem> _items = [];
 
   @override
+  void initState() {
+    super.initState();
+    _selectedSupplier = widget.prefilledSupplier;
+    if (widget.prefilledItems != null) {
+      _items.addAll(widget.prefilledItems!);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('NEW PURCHASE ENTRY'),
       ),
@@ -35,9 +54,9 @@ class _PurchaseEntryScreenState extends ConsumerState<PurchaseEntryScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildSupplierSection(context),
-            SizedBox(height: tokens.space24),
+            const SizedBox(height: 24),
             _buildItemsSection(context),
-            SizedBox(height: tokens.space24),
+            const SizedBox(height: 24),
             _buildSummarySection(context),
           ],
         ),
@@ -47,12 +66,11 @@ class _PurchaseEntryScreenState extends ConsumerState<PurchaseEntryScreen> {
   }
 
   Widget _buildSupplierSection(BuildContext context) {
-    final tokens = context.tokens;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('SUPPLIER', style: context.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 1.2)),
-        SizedBox(height: tokens.space12),
+        const SizedBox(height: 12),
         if (_selectedSupplier == null)
           CustomButton(
             text: 'Select Supplier',
@@ -66,10 +84,13 @@ class _PurchaseEntryScreenState extends ConsumerState<PurchaseEntryScreen> {
             child: Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: AppColors.success.withValues(alpha: 0.1),
-                  child: Text(_selectedSupplier!.initials, style: const TextStyle(color: AppColors.success)),
+                  backgroundColor: context.successColor.withValues(alpha: 0.1),
+                  child: Text(
+                    _selectedSupplier!.initials,
+                    style: TextStyle(color: context.successColor),
+                  ),
                 ),
-                SizedBox(width: tokens.space16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -80,7 +101,7 @@ class _PurchaseEntryScreenState extends ConsumerState<PurchaseEntryScreen> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close_rounded, color: AppColors.error),
+                  icon: Icon(Icons.close_rounded, color: context.colorScheme.error),
                   onPressed: () => setState(() => _selectedSupplier = null),
                 ),
               ],
@@ -100,7 +121,6 @@ class _PurchaseEntryScreenState extends ConsumerState<PurchaseEntryScreen> {
   }
 
   Widget _buildItemsSection(BuildContext context) {
-    final tokens = context.tokens;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -108,22 +128,38 @@ class _PurchaseEntryScreenState extends ConsumerState<PurchaseEntryScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('PURCHASE ITEMS', style: context.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 1.2)),
-            TextButton.icon(
-              onPressed: () => _showProductSelection(context),
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('Add Item'),
+            Row(
+              children: [
+                IconButton(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => BarcodeScannerScreen(
+                        onResult: (p) => _addItemWithDialog(p.name, p.sku),
+                      ),
+                    ),
+                  ),
+                  icon: Icon(Icons.qr_code_scanner_rounded, color: context.colorScheme.primary),
+                  tooltip: 'Scan Barcode',
+                ),
+                TextButton.icon(
+                  onPressed: () => _showProductSelection(context),
+                  icon: const Icon(Icons.add_rounded),
+                  label: const Text('Add Item'),
+                ),
+              ],
             ),
           ],
         ),
-        SizedBox(height: tokens.space12),
+        const SizedBox(height: 12),
         if (_items.isEmpty)
           CustomCard(
-            padding: EdgeInsets.all(tokens.space32),
+            padding: const EdgeInsets.all(32),
             child: const Center(child: Text('No items added')),
           )
         else
           ..._items.asMap().entries.map((e) => Padding(
-            padding: EdgeInsets.only(bottom: tokens.space12),
+            padding: const EdgeInsets.only(bottom: 12),
             child: _buildItemCard(context, e.value, e.key),
           )),
       ],
@@ -146,7 +182,7 @@ class _PurchaseEntryScreenState extends ConsumerState<PurchaseEntryScreen> {
           ),
           Text('₹${item.subtotal.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w700)),
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: AppColors.error),
+            icon: Icon(Icons.delete_outline, color: context.colorScheme.error),
             onPressed: () => setState(() => _items.removeAt(index)),
           ),
         ],
@@ -159,7 +195,42 @@ class _PurchaseEntryScreenState extends ConsumerState<PurchaseEntryScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _ProductSelectionSheet(onSelected: (p) => setState(() => _items.add(p))),
+      builder: (context) => _ProductSelectionSheet(onSelected: (p) => _addItemWithDialog(p.name, p.sku)),
+    );
+  }
+
+  void _addItemWithDialog(String name, String sku) {
+    final costController = TextEditingController();
+    final qtyController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Add: $name'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: costController, decoration: const InputDecoration(labelText: 'Cost Price'), keyboardType: TextInputType.number),
+            TextField(controller: qtyController, decoration: const InputDecoration(labelText: 'Quantity'), keyboardType: TextInputType.number),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
+          ElevatedButton(
+            onPressed: () {
+              final price = double.tryParse(costController.text) ?? 0.0;
+              final qty = double.tryParse(qtyController.text) ?? 0.0;
+              if (price > 0 && qty > 0) {
+                setState(() {
+                  _items.add(PurchaseItem(name: name, sku: sku, costPrice: price, qty: qty, gstRate: 18));
+                });
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('ADD'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -171,18 +242,18 @@ class _PurchaseEntryScreenState extends ConsumerState<PurchaseEntryScreen> {
     final currency = NumberFormat.currency(symbol: '₹', locale: 'en_IN');
 
     return CustomCard(
-      color: AppColors.success.withValues(alpha: 0.02),
+      color: context.successColor.withValues(alpha: 0.02),
       child: Column(
         children: [
-          _buildSummaryRow('Subtotal', currency.format(subtotal)),
+          _buildSummaryRow(context, 'Subtotal', currency.format(subtotal)),
           SizedBox(height: tokens.space8),
-          _buildSummaryRow('Total GST (18%)', currency.format(totalGst)),
+          _buildSummaryRow(context, 'Total GST (18%)', currency.format(totalGst)),
           Divider(height: tokens.space24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('TOTAL PAYABLE', style: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
-              Text(currency.format(total), style: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800, color: AppColors.success)),
+              Text(currency.format(total), style: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800, color: context.successColor)),
             ],
           ),
         ],
@@ -190,11 +261,11 @@ class _PurchaseEntryScreenState extends ConsumerState<PurchaseEntryScreen> {
     );
   }
 
-  Widget _buildSummaryRow(String label, String value) {
+  Widget _buildSummaryRow(BuildContext context, String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(color: AppColors.textSecondary)),
+        Text(label, style: TextStyle(color: context.onSurfaceVariantColor)),
         Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
       ],
     );
@@ -203,9 +274,9 @@ class _PurchaseEntryScreenState extends ConsumerState<PurchaseEntryScreen> {
   Widget _buildBottomBar(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(context.tokens.space24),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.border)),
+      decoration: BoxDecoration(
+        color: context.surfaceColor,
+        border: Border(top: BorderSide(color: context.colorScheme.outlineVariant)),
       ),
       child: CustomButton(
         text: 'RECORD PURCHASE ENTRY',
@@ -213,8 +284,22 @@ class _PurchaseEntryScreenState extends ConsumerState<PurchaseEntryScreen> {
         variant: CustomButtonVariant.primary,
         onPressed: () async {
           if (_selectedSupplier == null || _items.isEmpty) return;
-          // Logic to save purchase
-          Navigator.pop(context);
+          
+          final success = await ref.read(purchaseNotifierProvider.notifier).createPurchase(
+            PurchaseOrder(
+              id: 'PUR-${DateTime.now().millisecondsSinceEpoch}',
+              supplierId: _selectedSupplier!.id,
+              supplierName: _selectedSupplier!.name,
+              date: DateTime.now(),
+              items: _items,
+              status: 'Completed',
+            ),
+          );
+
+          if (success && mounted) {
+            Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Purchase Entry Recorded!')));
+          }
         },
       ),
     );
@@ -230,7 +315,10 @@ class _SupplierSelectionSheet extends ConsumerWidget {
     final suppliersAsync = ref.watch(crmNotifierProvider(ContactType.supplier));
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
-      decoration: const BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      decoration: BoxDecoration(
+        color: context.surfaceColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       child: Column(
         children: [
           const Padding(padding: EdgeInsets.all(24), child: Text('SELECT SUPPLIER', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
@@ -258,7 +346,7 @@ class _SupplierSelectionSheet extends ConsumerWidget {
 }
 
 class _ProductSelectionSheet extends ConsumerWidget {
-  final Function(PurchaseItem) onSelected;
+  final Function(dynamic) onSelected;
   const _ProductSelectionSheet({required this.onSelected});
 
   @override
@@ -266,7 +354,10 @@ class _ProductSelectionSheet extends ConsumerWidget {
     final productsAsync = ref.watch(inventoryNotifierProvider);
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
-      decoration: const BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      decoration: BoxDecoration(
+        color: context.surfaceColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       child: Column(
         children: [
           const Padding(padding: EdgeInsets.all(24), child: Text('SELECT PRODUCT', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
@@ -278,12 +369,7 @@ class _ProductSelectionSheet extends ConsumerWidget {
                   title: Text(list[index].name),
                   subtitle: Text('SKU: ${list[index].sku}'),
                   onTap: () {
-                    onSelected(PurchaseItem(
-                      name: list[index].name,
-                      costPrice: 50.0, // Mock
-                      qty: 10,
-                      gstRate: 18,
-                    ));
+                    onSelected(list[index]);
                     Navigator.pop(context);
                   },
                 ),

@@ -15,8 +15,6 @@
         "connectivity_plus",
         "cupertino_icons",
         "dio",
-        "drift",
-        "drift_flutter",
         "excel",
         "firebase_auth",
         "firebase_auth_platform_interface",
@@ -24,6 +22,7 @@
         "firebase_core",
         "firebase_core_platform_interface",
         "firebase_core_web",
+        "firebase_database",
         "firebase_performance",
         "firebase_performance_platform_interface",
         "firebase_performance_web",
@@ -87,7 +86,6 @@
       ],
       "devDependencies": [
         "build_runner",
-        "drift_dev",
         "flutter_lints",
         "flutter_test",
         "integration_test",
@@ -168,37 +166,6 @@
       "version": "6.0.0",
       "dependencies": [
         "lints"
-      ]
-    },
-    {
-      "name": "drift_dev",
-      "version": "2.28.0",
-      "dependencies": [
-        "analyzer",
-        "args",
-        "build",
-        "build_config",
-        "build_resolvers",
-        "charcode",
-        "cli_util",
-        "collection",
-        "dart_style",
-        "drift",
-        "io",
-        "json_annotation",
-        "logging",
-        "meta",
-        "package_config",
-        "path",
-        "pub_semver",
-        "recase",
-        "source_gen",
-        "source_span",
-        "sqlite3",
-        "sqlparser",
-        "stream_transform",
-        "string_scanner",
-        "yaml"
       ]
     },
     {
@@ -340,34 +307,6 @@
         "collection",
         "equatable",
         "xml"
-      ]
-    },
-    {
-      "name": "drift_flutter",
-      "version": "0.2.3",
-      "dependencies": [
-        "drift",
-        "flutter",
-        "meta",
-        "path",
-        "path_provider",
-        "sqlite3",
-        "sqlite3_flutter_libs"
-      ]
-    },
-    {
-      "name": "drift",
-      "version": "2.28.1",
-      "dependencies": [
-        "async",
-        "collection",
-        "convert",
-        "meta",
-        "path",
-        "sqlite3",
-        "stack_trace",
-        "stream_channel",
-        "web"
       ]
     },
     {
@@ -1207,101 +1146,6 @@
       ]
     },
     {
-      "name": "string_scanner",
-      "version": "1.4.1",
-      "dependencies": [
-        "source_span"
-      ]
-    },
-    {
-      "name": "dart_style",
-      "version": "3.1.1",
-      "dependencies": [
-        "analyzer",
-        "args",
-        "collection",
-        "package_config",
-        "path",
-        "pub_semver",
-        "source_span",
-        "yaml"
-      ]
-    },
-    {
-      "name": "build_resolvers",
-      "version": "2.5.4",
-      "dependencies": [
-        "analyzer",
-        "async",
-        "build",
-        "build_runner_core",
-        "collection",
-        "convert",
-        "crypto",
-        "graphs",
-        "logging",
-        "package_config",
-        "path",
-        "pool",
-        "pub_semver",
-        "stream_transform"
-      ]
-    },
-    {
-      "name": "pub_semver",
-      "version": "2.2.0",
-      "dependencies": [
-        "collection"
-      ]
-    },
-    {
-      "name": "package_config",
-      "version": "2.2.0",
-      "dependencies": [
-        "path"
-      ]
-    },
-    {
-      "name": "source_span",
-      "version": "1.10.2",
-      "dependencies": [
-        "collection",
-        "path",
-        "term_glyph"
-      ]
-    },
-    {
-      "name": "sqlparser",
-      "version": "0.41.2",
-      "dependencies": [
-        "charcode",
-        "collection",
-        "meta",
-        "source_span"
-      ]
-    },
-    {
-      "name": "sqlite3",
-      "version": "2.9.4",
-      "dependencies": [
-        "collection",
-        "ffi",
-        "meta",
-        "path",
-        "typed_data",
-        "web"
-      ]
-    },
-    {
-      "name": "io",
-      "version": "1.0.5",
-      "dependencies": [
-        "meta",
-        "path",
-        "string_scanner"
-      ]
-    },
-    {
       "name": "yaml",
       "version": "3.1.3",
       "dependencies": [
@@ -1309,46 +1153,6 @@
         "source_span",
         "string_scanner"
       ]
-    },
-    {
-      "name": "cli_util",
-      "version": "0.4.2",
-      "dependencies": [
-        "meta",
-        "path"
-      ]
-    },
-    {
-      "name": "logging",
-      "version": "1.3.0",
-      "dependencies": []
-    },
-    {
-      "name": "args",
-      "version": "2.7.0",
-      "dependencies": []
-    },
-    {
-      "name": "stream_transform",
-      "version": "2.1.1",
-      "dependencies": []
-    },
-    {
-      "name": "json_annotation",
-      "version": "4.12.0",
-      "dependencies": [
-        "meta"
-      ]
-    },
-    {
-      "name": "recase",
-      "version": "4.1.0",
-      "dependencies": []
-    },
-    {
-      "name": "charcode",
-      "version": "1.4.0",
-      "dependencies": []
     },
     {
       "name": "web_socket_channel",
@@ -1375,6 +1179,11 @@
       "dependencies": [
         "json_annotation"
       ]
+    },
+    {
+      "name": "stream_transform",
+      "version": "2.1.1",
+      "dependencies": []
     },
     {
       "name": "shelf_web_socket",
@@ -1409,6 +1218,13 @@
       ]
     },
     {
+      "name": "pub_semver",
+      "version": "2.2.0",
+      "dependencies": [
+        "collection"
+      ]
+    },
+    {
       "name": "pool",
       "version": "1.5.2",
       "dependencies": [
@@ -1417,8 +1233,20 @@
       ]
     },
     {
+      "name": "package_config",
+      "version": "2.2.0",
+      "dependencies": [
+        "path"
+      ]
+    },
+    {
       "name": "mime",
       "version": "2.0.0",
+      "dependencies": []
+    },
+    {
+      "name": "logging",
+      "version": "1.3.0",
       "dependencies": []
     },
     {
@@ -1426,6 +1254,15 @@
       "version": "0.6.7",
       "dependencies": [
         "meta"
+      ]
+    },
+    {
+      "name": "io",
+      "version": "1.0.5",
+      "dependencies": [
+        "meta",
+        "path",
+        "string_scanner"
       ]
     },
     {
@@ -1459,6 +1296,20 @@
       "dependencies": [
         "async",
         "path"
+      ]
+    },
+    {
+      "name": "dart_style",
+      "version": "3.1.1",
+      "dependencies": [
+        "analyzer",
+        "args",
+        "collection",
+        "package_config",
+        "path",
+        "pub_semver",
+        "source_span",
+        "yaml"
       ]
     },
     {
@@ -1501,6 +1352,26 @@
       ]
     },
     {
+      "name": "build_resolvers",
+      "version": "2.5.4",
+      "dependencies": [
+        "analyzer",
+        "async",
+        "build",
+        "build_runner_core",
+        "collection",
+        "convert",
+        "crypto",
+        "graphs",
+        "logging",
+        "package_config",
+        "path",
+        "pool",
+        "pub_semver",
+        "stream_transform"
+      ]
+    },
+    {
       "name": "build_daemon",
       "version": "4.1.3",
       "dependencies": [
@@ -1517,6 +1388,11 @@
         "watcher",
         "web_socket_channel"
       ]
+    },
+    {
+      "name": "args",
+      "version": "2.7.0",
+      "dependencies": []
     },
     {
       "name": "equatable",
@@ -1544,13 +1420,6 @@
       ]
     },
     {
-      "name": "convert",
-      "version": "3.1.2",
-      "dependencies": [
-        "typed_data"
-      ]
-    },
-    {
       "name": "synchronized",
       "version": "3.4.1+1",
       "dependencies": []
@@ -1562,6 +1431,18 @@
         "meta",
         "path",
         "synchronized"
+      ]
+    },
+    {
+      "name": "sqlite3",
+      "version": "2.9.4",
+      "dependencies": [
+        "collection",
+        "ffi",
+        "meta",
+        "path",
+        "typed_data",
+        "web"
       ]
     },
     {
@@ -1840,6 +1721,22 @@
       ]
     },
     {
+      "name": "string_scanner",
+      "version": "1.4.1",
+      "dependencies": [
+        "source_span"
+      ]
+    },
+    {
+      "name": "source_span",
+      "version": "1.10.2",
+      "dependencies": [
+        "collection",
+        "path",
+        "term_glyph"
+      ]
+    },
+    {
       "name": "freezed_annotation",
       "version": "3.1.0",
       "dependencies": [
@@ -1868,12 +1765,26 @@
       ]
     },
     {
+      "name": "json_annotation",
+      "version": "4.12.0",
+      "dependencies": [
+        "meta"
+      ]
+    },
+    {
       "name": "checked_yaml",
       "version": "2.0.4",
       "dependencies": [
         "json_annotation",
         "source_span",
         "yaml"
+      ]
+    },
+    {
+      "name": "convert",
+      "version": "3.1.2",
+      "dependencies": [
+        "typed_data"
       ]
     },
     {
@@ -2012,6 +1923,41 @@
         "file",
         "path",
         "platform"
+      ]
+    },
+    {
+      "name": "firebase_database",
+      "version": "12.4.6",
+      "dependencies": [
+        "firebase_core",
+        "firebase_core_platform_interface",
+        "firebase_database_platform_interface",
+        "firebase_database_web",
+        "flutter"
+      ]
+    },
+    {
+      "name": "firebase_database_web",
+      "version": "0.2.7+12",
+      "dependencies": [
+        "collection",
+        "firebase_core",
+        "firebase_core_web",
+        "firebase_database_platform_interface",
+        "flutter",
+        "flutter_web_plugins"
+      ]
+    },
+    {
+      "name": "firebase_database_platform_interface",
+      "version": "0.4.0+5",
+      "dependencies": [
+        "_flutterfire_internals",
+        "collection",
+        "firebase_core",
+        "flutter",
+        "meta",
+        "plugin_platform_interface"
       ]
     }
   ],

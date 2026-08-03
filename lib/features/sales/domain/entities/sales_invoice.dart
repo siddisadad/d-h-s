@@ -2,6 +2,7 @@ import 'invoice_item.dart';
 
 class SalesInvoice {
   final String id;
+  final String customerId;
   final String customerName;
   final DateTime date;
   final List<InvoiceItem> items;
@@ -9,6 +10,7 @@ class SalesInvoice {
 
   SalesInvoice({
     required this.id,
+    required this.customerId,
     required this.customerName,
     required this.date,
     required this.items,

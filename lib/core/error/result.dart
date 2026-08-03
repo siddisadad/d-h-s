@@ -19,4 +19,12 @@ class Result<T> {
       return onSuccess(data as T);
     }
   }
+
+  T getOrElse(T Function(Failure) d) {
+    if (isError) {
+      return d(failure!);
+    } else {
+      return data as T;
+    }
+  }
 }

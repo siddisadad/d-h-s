@@ -43,7 +43,7 @@ final createInvoiceUseCaseProvider =
 // ignore: unused_element
 typedef CreateInvoiceUseCaseRef = AutoDisposeProviderRef<CreateInvoice>;
 String _$salesInvoiceNotifierHash() =>
-    r'7466bdab141146e9f14e3788a8585cebe113e735';
+    r'6603012af20c05834fb5f4fcd1f49c3def8b6041';
 
 /// See also [SalesInvoiceNotifier].
 @ProviderFor(SalesInvoiceNotifier)

@@ -1,11 +1,12 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../../domain/entities/product.dart';
-import '../../domain/repositories/inventory_repository.dart';
-import '../../domain/usecases/get_products.dart';
-import '../../../../core/di/injection_container.dart';
-import '../../../../core/utils/logger.dart';
-import '../../../dashboard/presentation/providers/activity_provider.dart';
-import '../../../dashboard/domain/entities/activity.dart' as activity;
+import 'package:deshmukh_steel_e_r_p/features/inventory/domain/entities/product.dart';
+import 'package:deshmukh_steel_e_r_p/features/inventory/domain/entities/warehouse.dart';
+import 'package:deshmukh_steel_e_r_p/features/inventory/domain/repositories/inventory_repository.dart';
+import 'package:deshmukh_steel_e_r_p/features/inventory/domain/usecases/get_products.dart';
+import 'package:deshmukh_steel_e_r_p/core/di/injection_container.dart';
+import 'package:deshmukh_steel_e_r_p/core/utils/logger.dart';
+import 'package:deshmukh_steel_e_r_p/features/dashboard/presentation/providers/activity_provider.dart';
+import 'package:deshmukh_steel_e_r_p/features/dashboard/domain/entities/activity.dart' as activity;
 
 part 'inventory_provider.g.dart';
 
@@ -16,63 +17,55 @@ InventoryRepository inventoryRepository(InventoryRepositoryRef ref) => sl.invent
 GetProducts getProductsUseCase(GetProductsUseCaseRef ref) => sl.getProductsUseCase;
 
 @riverpod
+class InventoryCategory extends _$InventoryCategory {
+  @override
+  String build() => 'All Items';
+  void set(String category) => state = category;
+}
+
+@riverpod
+class InventorySearch extends _$InventorySearch {
+  @override
+  String build() => '';
+  void set(String query) => state = query;
+}
+
+@riverpod
 class InventoryNotifier extends _$InventoryNotifier {
   @override
-  Future<List<Product>> build() async {
-    return _fetchFromApi();
-  }
-
-  String _currentCategory = 'All Items';
-  String _searchQuery = '';
-
-  String get currentCategory => _currentCategory;
-  String get searchQuery => _searchQuery;
+  Future<List<Product>> build() async => _fetchFromApi();
 
   Future<List<Product>> _fetchFromApi() async {
     try {
-      Log.d('Fetching Inventory from API...', name: 'Inventory');
       final useCase = ref.read(getProductsUseCaseProvider);
       final result = await useCase(GetProductsParams(category: null));
-
-      return result.fold(
-        (failure) {
-          Log.e('Inventory API Fetch Failed', error: failure.message, name: 'Inventory');
-          throw Exception(failure.message);
-        },
-        (products) {
-          Log.d('Inventory API Fetch Complete. Records: ${products.length}', name: 'Inventory');
-          
-          if (_currentCategory == 'All Items') {
-            return products;
-          }
-          return products.where((p) => p.category.toLowerCase() == _currentCategory.toLowerCase()).toList();
-        },
-      );
-    } catch (e, stack) {
-      Log.e('Inventory Provider Error', error: e, stackTrace: stack, name: 'Inventory');
-      rethrow;
-    }
+      return result.fold((f) => throw Exception(f.message), (p) => p);
+    } catch (e) { rethrow; }
   }
 
-  void setCategory(String category) {
-    _currentCategory = category;
-    ref.invalidateSelf();
-  }
-
-  void setSearchQuery(String query) {
-    _searchQuery = query;
-    ref.notifyListeners(); 
+  Future<void> adjustStock(String sku, String warehouseId, double quantity) async {
+    final repository = ref.read(inventoryRepositoryProvider);
+    final result = await repository.adjustStock(sku, warehouseId, quantity);
+    result.fold(
+      (failure) => Log.e('Failed to adjust stock', error: failure.message, name: 'Inventory'),
+      (success) {
+        ref.read(activityNotifierProvider.notifier).addActivity(
+          'Stock Adjusted',
+          'SKU: $sku ${quantity >= 0 ? "+" : ""}$quantity in $warehouseId',
+          activity.ActivityType.stockAdjustment,
+        );
+        ref.invalidateSelf();
+      },
+    );
   }
 
   Future<void> addProduct(Product product) async {
     state = const AsyncLoading();
-    final repository = ref.read(inventoryRepositoryProvider);
-    final result = await repository.createProduct(product);
-    
+    final result = await ref.read(inventoryRepositoryProvider).createProduct(product);
     state = await AsyncValue.guard(() async {
       return result.fold(
-        (failure) => throw Exception(failure.message),
-        (success) {
+        (f) => throw Exception(f.message),
+        (s) {
           ref.read(activityNotifierProvider.notifier).addActivity(
             'New Product Added',
             '${product.name} (SKU: ${product.sku})',
@@ -86,13 +79,11 @@ class InventoryNotifier extends _$InventoryNotifier {
 
   Future<void> updateProduct(Product product) async {
     state = const AsyncLoading();
-    final repository = ref.read(inventoryRepositoryProvider);
-    final result = await repository.updateProduct(product);
-    
+    final result = await ref.read(inventoryRepositoryProvider).updateProduct(product);
     state = await AsyncValue.guard(() async {
       return result.fold(
-        (failure) => throw Exception(failure.message),
-        (success) {
+        (f) => throw Exception(f.message),
+        (s) {
           ref.read(activityNotifierProvider.notifier).addActivity(
             'Product Updated',
             '${product.name} details modified',
@@ -106,48 +97,59 @@ class InventoryNotifier extends _$InventoryNotifier {
 
   Future<void> deleteProduct(String sku) async {
     state = const AsyncLoading();
-    final repository = ref.read(inventoryRepositoryProvider);
-    final result = await repository.deleteProduct(sku);
-    
+    final result = await ref.read(inventoryRepositoryProvider).deleteProduct(sku);
     state = await AsyncValue.guard(() async {
-      return result.fold(
-        (failure) => throw Exception(failure.message),
-        (success) {
-          ref.read(activityNotifierProvider.notifier).addActivity(
-            'Product Deleted',
-            'SKU: $sku removed from system',
-            activity.ActivityType.stockAdjustment,
-          );
-          return _fetchFromApi();
-        },
-      );
+      return result.fold((f) => throw Exception(f.message), (s) => _fetchFromApi());
     });
   }
+}
 
-  Future<void> adjustStock(String sku, double quantity) async {
-    ref.read(activityNotifierProvider.notifier).addActivity(
-      'Stock Adjusted',
-      'SKU: $sku ${quantity >= 0 ? "+" : ""}$quantity',
-      activity.ActivityType.stockAdjustment,
-    );
-
-    ref.invalidateSelf();
+@riverpod
+class WarehouseNotifier extends _$WarehouseNotifier {
+  @override
+  Future<List<Warehouse>> build() async {
+    final repository = ref.read(inventoryRepositoryProvider);
+    final result = await repository.getWarehouses();
+    return result.fold((f) => [], (w) => w);
   }
+
+  Future<void> addWarehouse(Warehouse warehouse) async {
+    final repository = ref.read(inventoryRepositoryProvider);
+    final result = await repository.createWarehouse(warehouse);
+    if (result.isSuccess) {
+      ref.invalidateSelf();
+    }
+  }
+}
+
+@riverpod
+Future<Product?> product(ProductRef ref, String sku) async {
+  final products = await ref.watch(inventoryNotifierProvider.future);
+  try { return products.firstWhere((p) => p.sku == sku); } catch (_) { return null; }
+}
+
+@riverpod
+Future<Map<String, double>> stockBreakdown(StockBreakdownRef ref, String sku) async {
+  final result = await ref.watch(inventoryRepositoryProvider).getStockBreakdown(sku);
+  return result.fold((f) => {}, (b) => b);
 }
 
 @riverpod
 List<Product> filteredProducts(FilteredProductsRef ref) {
   final productsAsync = ref.watch(inventoryNotifierProvider);
-  final notifier = ref.watch(inventoryNotifierProvider.notifier);
-  final query = notifier.searchQuery.toLowerCase();
+  final query = ref.watch(inventorySearchProvider).toLowerCase();
+  final category = ref.watch(inventoryCategoryProvider);
 
   return productsAsync.maybeWhen(
     data: (products) {
-      if (query.isEmpty) return products;
-      return products.where((p) => 
-        p.name.toLowerCase().contains(query) || 
-        p.sku.toLowerCase().contains(query)
-      ).toList();
+      var filtered = products;
+      if (category != 'All Items') {
+        filtered = filtered.where((p) => p.category.toLowerCase() == category.toLowerCase()).toList();
+      }
+      if (query.isNotEmpty) {
+        filtered = filtered.where((p) => p.name.toLowerCase().contains(query) || p.sku.toLowerCase().contains(query)).toList();
+      }
+      return filtered;
     },
     orElse: () => [],
   );

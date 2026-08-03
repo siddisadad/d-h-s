@@ -23,18 +23,23 @@ class CustomCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(borderRadius ?? 16),
-      child: Container(
-        padding: padding ?? const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color ?? context.colorScheme.surface,
-          borderRadius: BorderRadius.circular(borderRadius ?? 16),
-          border: Border.all(color: context.theme.dividerColor, width: 1),
-          boxShadow: showShadow ? [tokens.shadowSm] : null,
+    return Container(
+      decoration: BoxDecoration(
+        color: color ?? context.colorScheme.surface,
+        borderRadius: BorderRadius.circular(borderRadius ?? tokens.radiusLg),
+        border: Border.all(color: context.colorScheme.outline.withValues(alpha: 0.5), width: 1),
+        boxShadow: showShadow ? [tokens.shadowSm] : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(borderRadius ?? tokens.radiusLg),
+          child: Padding(
+            padding: padding ?? EdgeInsets.all(tokens.space16),
+            child: child,
+          ),
         ),
-        child: child,
       ),
     );
   }

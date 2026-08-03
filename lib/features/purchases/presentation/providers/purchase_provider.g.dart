@@ -6,7 +6,26 @@ part of 'purchase_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$purchaseNotifierHash() => r'807787d39cb0b991d297e4d469c8023ab4a928b0';
+String _$purchaseRepositoryHash() =>
+    r'4d4dfd3f2ae1d4ce2e53ab653f56b538cd2714ed';
+
+/// See also [purchaseRepository].
+@ProviderFor(purchaseRepository)
+final purchaseRepositoryProvider =
+    AutoDisposeProvider<PurchaseRepository>.internal(
+  purchaseRepository,
+  name: r'purchaseRepositoryProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$purchaseRepositoryHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef PurchaseRepositoryRef = AutoDisposeProviderRef<PurchaseRepository>;
+String _$purchaseNotifierHash() => r'754be7f505969907a4061306f0c8dc3de89e03db';
 
 /// See also [PurchaseNotifier].
 @ProviderFor(PurchaseNotifier)

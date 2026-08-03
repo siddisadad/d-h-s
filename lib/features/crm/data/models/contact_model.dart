@@ -19,7 +19,7 @@ class ContactModel extends Contact {
       initials: json['initials'] as String,
       contact: json['contact'] as String,
       gstin: json['gstin'] as String,
-      balance: json['balance'] as String,
+      balance: (json['balance'] as num).toDouble(),
       location: json['location'] as String,
       type: json['type'] == 'supplier' ? ContactType.supplier : ContactType.customer,
     );

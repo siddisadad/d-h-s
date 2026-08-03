@@ -6,7 +6,25 @@ part of 'finance_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$financeNotifierHash() => r'72f52cad42d0a24ea3bb47c0c743969082b195c0';
+String _$financeRepositoryHash() => r'bdafb2122a342c0c9a32cb7126a76a1cb4900850';
+
+/// See also [financeRepository].
+@ProviderFor(financeRepository)
+final financeRepositoryProvider =
+    AutoDisposeProvider<FinanceRepository>.internal(
+  financeRepository,
+  name: r'financeRepositoryProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$financeRepositoryHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef FinanceRepositoryRef = AutoDisposeProviderRef<FinanceRepository>;
+String _$financeNotifierHash() => r'84309c3963d91da6f895000d63370d9fe628b38a';
 
 /// See also [FinanceNotifier].
 @ProviderFor(FinanceNotifier)

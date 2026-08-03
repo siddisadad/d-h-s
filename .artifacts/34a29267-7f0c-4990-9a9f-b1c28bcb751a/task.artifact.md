@@ -1,0 +1,3 @@
+- [x] Fix sqflite_ffi initialization in `LocalDatabase`
+- [x] Ensure consistent initialization in `main.dart`
+- [ ] Verify fix by checking logs/UI

@@ -1,11 +1,13 @@
 class InvoiceItem {
   final String name;
+  final String sku;
   final double price;
   final double qty;
   final double gstRate;
 
   InvoiceItem({
     required this.name,
+    required this.sku,
     required this.price,
     required this.qty,
     required this.gstRate,

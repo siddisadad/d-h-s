@@ -53,42 +53,54 @@ class CustomButton extends StatelessWidget {
     }
 
     final buttonStyle = ElevatedButton.styleFrom(
-      backgroundColor: backgroundColor,
+      backgroundColor: variant == CustomButtonVariant.primary ? Colors.transparent : backgroundColor,
       foregroundColor: textColor,
       elevation: 0,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: EdgeInsets.zero,
       minimumSize: const Size(0, 52),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(context.tokens.radiusMd),
         side: borderSide ?? BorderSide.none,
       ),
     );
 
-    Widget content = Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        if (loading)
-          const SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-          )
-        else if (icon != null)
-          Icon(icon, size: 20),
-        if (loading || icon != null) const SizedBox(width: 10),
-        Text(
-          text,
-          style: context.textTheme.labelLarge?.copyWith(
-            color: textColor,
-            fontWeight: FontWeight.w600,
-          ),
+    Widget content = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      decoration: variant == CustomButtonVariant.primary ? BoxDecoration(
+        gradient: LinearGradient(
+          colors: [colorScheme.primary, colorScheme.primary.withValues(alpha: 0.85)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-      ],
+        borderRadius: BorderRadius.circular(context.tokens.radiusMd),
+      ) : null,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (loading)
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2, color: textColor),
+            )
+          else if (icon != null)
+            Icon(icon, size: 20),
+          if (loading || icon != null) const SizedBox(width: 10),
+          Text(
+            text,
+            style: context.textTheme.labelLarge?.copyWith(
+              color: textColor,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ],
+      ),
     );
 
     if (fullWidth) {
-      content = SizedBox(width: double.infinity, child: Center(child: content));
+      content = SizedBox(width: double.infinity, child: content);
     }
 
     return ElevatedButton(

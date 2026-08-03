@@ -1,73 +1,150 @@
+import '/components/settings_group/settings_group_widget.dart';
+import '/components/base_list_item.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/design_system/theme/app_theme.dart';
-import '../../../../core/widgets/custom_card.dart';
-import '../../../authentication/presentation/providers/auth_provider.dart';
+import 'package:deshmukh_steel_e_r_p/core/design_system/theme/app_theme.dart';
+import 'package:deshmukh_steel_e_r_p/features/authentication/presentation/providers/auth_provider.dart';
+import 'package:deshmukh_steel_e_r_p/core/providers/app_bar_provider.dart';
+import 'package:deshmukh_steel_e_r_p/core/providers/theme_provider.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final tokens = context.tokens;
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('SETTINGS'),
-      ),
-      body: ListView(
-        padding: EdgeInsets.all(tokens.space24),
-        children: [
-          _buildSectionHeader(context, 'General'),
-          CustomCard(
-            padding: EdgeInsets.zero,
-            child: Column(
-              children: [
-                SwitchListTile(
-                  title: const Text('Dark Mode'),
-                  value: Theme.of(context).brightness == Brightness.dark,
-                  onChanged: (val) {},
-                  activeThumbColor: AppColors.primary,
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final themeMode = ref.watch(themeNotifierProvider);
+
+    // Update Global AppBar
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(appBarNotifierProvider.notifier).update(
+        title: 'SETTINGS',
+      );
+    });
+
+    return ListView(
+      padding: EdgeInsets.all(tokens.space24),
+      children: [
+        SettingsGroupWidget(
+          title: 'General',
+          children: [
+            BaseListItem(
+              title: 'Theme Mode',
+              subtitle: _getThemeModeLabel(themeMode),
+              showDivider: true,
+              trailing: PopupMenuButton<ThemeMode>(
+                initialValue: themeMode,
+                onSelected: (mode) {
+                  ref.read(themeNotifierProvider.notifier).setThemeMode(mode);
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: ThemeMode.system,
+                    child: Text('System Default'),
+                  ),
+                  const PopupMenuItem(
+                    value: ThemeMode.light,
+                    child: Text('Light'),
+                  ),
+                  const PopupMenuItem(
+                    value: ThemeMode.dark,
+                    child: Text('Dark'),
+                  ),
+                ],
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: context.colorScheme.surfaceContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _getThemeModeLabel(themeMode),
+                        style: context.textTheme.labelMedium?.copyWith(
+                          color: context.colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        size: 16,
+                        color: context.colorScheme.primary,
+                      ),
+                    ],
+                  ),
                 ),
-                const Divider(height: 1),
-                ListTile(
-                  title: const Text('Language'),
-                  trailing: const Text('English (US)', style: TextStyle(fontWeight: FontWeight.w600)),
-                  onTap: () {},
-                ),
-              ],
+              ),
+              leadingIcon: Icons.palette_rounded,
             ),
-          ),
-          SizedBox(height: tokens.space32),
-          _buildSectionHeader(context, 'Account'),
-          CustomCard(
-            padding: EdgeInsets.zero,
-            child: ListTile(
-              leading: const Icon(Icons.logout_rounded, color: AppColors.error),
-              title: const Text('Sign Out', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w600)),
+            BaseListItem(
+              title: 'Language',
+              showDivider: false,
+              trailing: Text('English (US)', style: context.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600)),
+              leadingIcon: Icons.language_rounded,
+              onTap: () {},
+            ),
+          ],
+        ),
+        SettingsGroupWidget(
+          title: 'Inventory & Logistics',
+          children: [
+            BaseListItem(
+              title: 'Yards & Warehouses',
+              subtitle: 'Manage physical stock locations',
+              leadingIcon: Icons.warehouse_rounded,
+              showDivider: true,
+              onTap: () => context.push('/inventory/warehouses'),
+            ),
+            BaseListItem(
+              title: 'Stock Transfer',
+              subtitle: 'Move material between yards',
+              leadingIcon: Icons.move_up_rounded,
+              showDivider: false,
+              onTap: () => context.push('/inventory/transfer'),
+            ),
+          ],
+        ),
+        SettingsGroupWidget(
+          title: 'Account',
+          children: [
+            BaseListItem(
+              title: 'Sign Out',
+              showDivider: false,
+              leadingIcon: Icons.logout_rounded,
+              leadingIconColor: context.colorScheme.error,
+              leadingBackgroundColor: context.colorScheme.error.withValues(alpha: 0.1),
               onTap: () => ref.read(authProvider.notifier).logout(),
             ),
+          ],
+        ),
+        SizedBox(height: tokens.space32),
+        Center(
+          child: Text(
+            'v1.0.0 • Deshmukh Hardware & Steel',
+            style: context.textTheme.bodySmall,
           ),
-          SizedBox(height: tokens.space32),
-          Center(
-            child: Text(
-              'v1.0.0 • Deshmukh Hardware & Steel',
-              style: context.textTheme.bodySmall,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12, left: 4),
-      child: Text(
-        title.toUpperCase(),
-        style: context.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 1.2),
-      ),
-    );
+  String _getThemeModeLabel(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.system:
+        return 'System Default';
+      case ThemeMode.light:
+        return 'Light';
+      case ThemeMode.dark:
+        return 'Dark';
+    }
   }
 }

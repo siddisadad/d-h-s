@@ -140,22 +140,10 @@
       "languageVersion": "3.4"
     },
     {
-      "name": "charcode",
-      "rootUri": "file:///C:/Users/siddi/AppData/Local/Pub/Cache/hosted/pub.dev/charcode-1.4.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.0"
-    },
-    {
       "name": "checked_yaml",
       "rootUri": "file:///C:/Users/siddi/AppData/Local/Pub/Cache/hosted/pub.dev/checked_yaml-2.0.4",
       "packageUri": "lib/",
       "languageVersion": "3.8"
-    },
-    {
-      "name": "cli_util",
-      "rootUri": "file:///C:/Users/siddi/AppData/Local/Pub/Cache/hosted/pub.dev/cli_util-0.4.2",
-      "packageUri": "lib/",
-      "languageVersion": "3.4"
     },
     {
       "name": "clock",
@@ -242,24 +230,6 @@
       "languageVersion": "3.3"
     },
     {
-      "name": "drift",
-      "rootUri": "file:///C:/Users/siddi/AppData/Local/Pub/Cache/hosted/pub.dev/drift-2.28.1",
-      "packageUri": "lib/",
-      "languageVersion": "3.4"
-    },
-    {
-      "name": "drift_dev",
-      "rootUri": "file:///C:/Users/siddi/AppData/Local/Pub/Cache/hosted/pub.dev/drift_dev-2.28.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.4"
-    },
-    {
-      "name": "drift_flutter",
-      "rootUri": "file:///C:/Users/siddi/AppData/Local/Pub/Cache/hosted/pub.dev/drift_flutter-0.2.3",
-      "packageUri": "lib/",
-      "languageVersion": "3.3"
-    },
-    {
       "name": "equatable",
       "rootUri": "file:///C:/Users/siddi/AppData/Local/Pub/Cache/hosted/pub.dev/equatable-2.1.0",
       "packageUri": "lib/",
@@ -322,6 +292,24 @@
     {
       "name": "firebase_core_web",
       "rootUri": "file:///C:/Users/siddi/AppData/Local/Pub/Cache/hosted/pub.dev/firebase_core_web-3.9.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
+    },
+    {
+      "name": "firebase_database",
+      "rootUri": "file:///C:/Users/siddi/AppData/Local/Pub/Cache/hosted/pub.dev/firebase_database-12.4.6",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
+    },
+    {
+      "name": "firebase_database_platform_interface",
+      "rootUri": "file:///C:/Users/siddi/AppData/Local/Pub/Cache/hosted/pub.dev/firebase_database_platform_interface-0.4.0+5",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
+    },
+    {
+      "name": "firebase_database_web",
+      "rootUri": "file:///C:/Users/siddi/AppData/Local/Pub/Cache/hosted/pub.dev/firebase_database_web-0.2.7+12",
       "packageUri": "lib/",
       "languageVersion": "3.6"
     },
@@ -830,12 +818,6 @@
       "languageVersion": "3.4"
     },
     {
-      "name": "recase",
-      "rootUri": "file:///C:/Users/siddi/AppData/Local/Pub/Cache/hosted/pub.dev/recase-4.1.0",
-      "packageUri": "lib/",
-      "languageVersion": "2.12"
-    },
-    {
       "name": "rfc_6901",
       "rootUri": "file:///C:/Users/siddi/AppData/Local/Pub/Cache/hosted/pub.dev/rfc_6901-0.2.1",
       "packageUri": "lib/",
@@ -1008,12 +990,6 @@
       "rootUri": "file:///C:/Users/siddi/AppData/Local/Pub/Cache/hosted/pub.dev/sqlite3_flutter_libs-0.5.42",
       "packageUri": "lib/",
       "languageVersion": "2.12"
-    },
-    {
-      "name": "sqlparser",
-      "rootUri": "file:///C:/Users/siddi/AppData/Local/Pub/Cache/hosted/pub.dev/sqlparser-0.41.2",
-      "packageUri": "lib/",
-      "languageVersion": "3.5"
     },
     {
       "name": "stack_trace",

@@ -1,3 +1,5 @@
+import '../../../../core/security/permissions.dart';
+
 class AppUser {
   final String id;
   final String email;
@@ -10,6 +12,10 @@ class AppUser {
     required this.displayName,
     required this.role,
   });
+
+  bool hasPermission(AppPermission permission) {
+    return RolePermissions.hasPermission(role, permission);
+  }
 
   factory AppUser.fromJson(Map<String, dynamic> json) {
     return AppUser(

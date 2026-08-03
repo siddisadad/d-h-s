@@ -1,74 +1,54 @@
-# Enterprise-Grade ERP Overhaul Implementation Plan
+# Implementation Plan - Phase 5: Advanced Procurement & Supplier Management
 
-This plan outlines the transformation of the Deshmukh ERP into a production-ready, enterprise-grade application with Clean Architecture, robust security, offline resilience, and global localization.
+This phase focuses on the "Inbound" lifecycle of the hardware yard: recording purchases from suppliers, automatically increasing stock levels, and tracking liabilities in supplier ledgers.
 
-## Phase 1: Foundation & RBAC (Architecture & Security)
+## User Review Required
 
-### [MODIFY] [Clean Architecture Refactoring]
-- Complete the migration of all feature providers (CRM, Employees, Finance, Purchases) to use Riverpod-based Dependency Injection for Repositories and Use Cases.
-- This ensures the presentation layer is decoupled from the Service Locator (`sl`).
+> [!IMPORTANT]
+> **Stock Increment**: Recording a purchase will now automatically increase inventory stock levels across the system.
 
-### [NEW] [RBAC (Role-Based Access Control) Matrix]
-- Define a `Permission` enum (e.g., `viewInventory`, `editPrice`, `manageEmployees`).
-- Map `AppUser` roles (`Admin`, `Manager`, `Employee`) to specific permission sets.
-- Update `PermissionWrapper` to accept permissions instead of raw role strings.
+- **Liability Tracking**: Every purchase will create a "Credit" entry in the supplier's ledger, increasing the "Due Amount" shown in the Procurement dashboard.
+- **Offline Reliability**: Like Sales, Purchases will support full offline entry with a background sync queue.
 
-### [MODIFY] [Global Error Handling]
-- Extend `GlobalErrorBoundary` to include a "Report Error" feature (simulated for now, can be linked to a backend logging endpoint).
-- Integrate `connectivity_plus` to show a "No Internet" banner globally.
+## Proposed Changes
 
----
+### 1. Entity & Model Upgrades
+#### [MODIFY] [purchase_order.dart](file:///A:/Workspace/d-h-s/lib/features/purchases/domain/entities/purchase_order.dart)
+- Upgrade `PurchaseOrder` to include `customerId` (Supplier), `items` (List<PurchaseItem>), `discount`, and `totalAmount`.
+#### [NEW] [purchase_model.dart](file:///A:/Workspace/d-h-s/lib/features/purchases/data/models/purchase_model.dart)
+- Implement `toJson` and `fromJson` for the upgraded `PurchaseOrder`.
 
-## Phase 2: Offline Resilience & Synchronization
+### 2. Database Foundation (v4)
+#### [MODIFY] [local_database.dart](file:///A:/Workspace/d-h-s/lib/core/database/local_database.dart)
+- Add `purchases` table.
+- Columns: `id` (PK), `supplierId`, `supplierName`, `date`, `totalAmount`, `status`, `items` (JSON text).
+- Implement `savePurchase` and `getPurchases` helper methods.
 
-### [NEW] [Offline Engine (SQFlite + Sync Queue)]
-- Implement a local database using `sqflite` to mirror critical cloud data (Inventory, Contacts).
-- **Change Tracker**: Create a mechanism to log local mutations (Create/Update/Delete) when the device is offline.
-- **Background Sync**: Implement a sync service that pushes the local "mutation queue" to the server when connectivity is restored, including basic timestamp-based conflict resolution.
+### 3. Transactional Procurement Logic
+#### [MODIFY] [purchase_repository_impl.dart](file:///A:/Workspace/d-h-s/lib/features/purchases/data/repositories/purchase_repository_impl.dart)
+- Implement `createPurchase` using a `db.transaction`:
+    1. Save the `PurchaseOrder` locally.
+    2. **Stock Update**: For each item, increment `inventory.stock` by the purchased quantity.
+    3. **Ledger Update**: Create a "Credit" entry in the `ledgers` table for the supplier.
+    4. **Balance Update**: Update the supplier's balance in the `contacts` table.
+    5. **Sync Queue**: If remote fails, queue a `POST /purchases` task.
 
----
-
-## Phase 3: Enterprise Features & Localization
-
-### [NEW] [Audit Trail Service]
-- Create an `AuditService` that automatically logs every state-changing operation with the user ID, timestamp, and action details.
-- Integrate this service into all Notifiers.
-
-### [NEW] [Localization (l10n)]
-- Set up `flutter_localizations`.
-- Implement `AppLocalizations` for:
-    - **English** (Primary)
-    - **Marathi** (Regional)
-    - **Hindi** (National)
-- Create a `Settings` option to toggle language dynamically.
-
-### [MODIFY] [Analytics & Reports]
-- Connect the `AnalyticsScreen` to real aggregated data from the repositories.
-- Implement "Drill-down" reports (e.g., tap a bar in the "Sales" chart to see the specific invoices for that day).
-
----
-
-## Phase 4: CI/CD & Production Readiness
-
-### [NEW] [Automated Testing Suite]
-- Expand unit tests for all Use Cases.
-- Add widget tests for complex UI components like `SalesInvoiceScreen`.
-
-### [NEW] [CI/CD Pipeline]
-- Create a `.github/workflows/main.yml` file for:
-    - Automated `flutter analyze`.
-    - Automated `flutter test`.
-    - Automated Build (Android APK, Web).
+### 4. UI: Intelligent Purchase Entry
+#### [MODIFY] [purchase_entry_screen.dart](file:///A:/Workspace/d-h-s/lib/features/purchases/presentation/screens/purchase_entry_screen.dart)
+- Implement real input dialogs for Cost Price and Quantity when adding items.
+- Link the "Record Purchase Entry" button to the new repository logic.
+- Add a "Scan Barcode" button to the Purchase Items section.
 
 ---
 
 ## Verification Plan
 
 ### Automated Tests
-- Run `flutter analyze` after every phase.
-- Execute the E2E flow test in `integration_test/full_flow_test.dart`.
+- Run `flutter analyze` on the Purchases module.
 
 ### Manual Verification
-1.  **RBAC**: Log in as an "Employee" and verify they cannot see the "Finance" tab or edit product prices.
-2.  **Offline**: Disable internet, create a mock sale, then enable internet and verify it syncs to the "Recent Activity" log.
-3.  **L10n**: Switch to "Marathi" in settings and verify the entire Dashboard labels update.
+1.  **Inventory Check**: Note the stock of "Bosch Professional Drill" (e.g., 8).
+2.  **Purchase Entry**: Create a purchase for 20 units from a supplier.
+3.  **Stock Verify**: Check Inventory; stock should now be 28.
+4.  **Ledger Verify**: Open Supplier Ledger; verify the new credit entry.
+5.  **Dashboard Verify**: Verify "Due Amount" in Purchase Management dashboard has increased.

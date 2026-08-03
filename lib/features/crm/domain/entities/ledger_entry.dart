@@ -1,9 +1,9 @@
 class LedgerEntry {
-  final String date;
+  final DateTime date;
   final String type;
   final String ref;
-  final String amount;
-  final String balance;
+  final double amount;
+  final double balance;
   final bool isDebit;
 
   LedgerEntry({

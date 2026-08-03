@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/design_system/theme/app_theme.dart';
-import '../../../../core/widgets/custom_card.dart';
-import '../../../../core/widgets/custom_text_field.dart';
-import '../providers/crm_provider.dart';
-import '../../domain/entities/contact.dart';
+import 'package:deshmukh_steel_e_r_p/core/design_system/theme/app_theme.dart';
+import 'package:deshmukh_steel_e_r_p/core/widgets/custom_card.dart';
+import 'package:deshmukh_steel_e_r_p/core/widgets/custom_text_field.dart';
+import 'package:deshmukh_steel_e_r_p/core/widgets/custom_button.dart';
+import 'package:deshmukh_steel_e_r_p/features/crm/presentation/providers/crm_provider.dart';
+import 'package:deshmukh_steel_e_r_p/features/crm/domain/entities/contact.dart';
+import 'package:deshmukh_steel_e_r_p/core/security/permissions.dart';
+import 'package:deshmukh_steel_e_r_p/core/widgets/permission_wrapper.dart';
+import 'package:deshmukh_steel_e_r_p/core/providers/app_bar_provider.dart';
+import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
+import 'contact_form_screen.dart';
 
 class SupplierDirectoryScreen extends ConsumerWidget {
   const SupplierDirectoryScreen({super.key});
@@ -14,41 +21,53 @@ class SupplierDirectoryScreen extends ConsumerWidget {
     final suppliersAsync = ref.watch(crmNotifierProvider(ContactType.supplier));
     final tokens = context.tokens;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('SUPPLIER DIRECTORY'),
-      ),
-      body: Column(
-        children: [
-          _buildSearchHeader(context),
-          _buildQuickStats(context),
-          Expanded(
-            child: suppliersAsync.when(
-              data: (list) => ListView.separated(
-                padding: EdgeInsets.symmetric(horizontal: tokens.space24),
-                itemCount: list.length,
-                separatorBuilder: (context, index) => SizedBox(height: tokens.space16),
-                itemBuilder: (context, index) => _buildSupplierCard(context, list[index]),
-              ),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, s) => Center(child: Text('Error: $e')),
+    // Update Global AppBar
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(appBarNotifierProvider.notifier).update(
+        title: 'SUPPLIER DIRECTORY',
+        actions: [
+          PermissionWrapper(
+            requiredPermissions: const [AppPermission.manageContacts],
+            child: CustomButton(
+              text: 'Add Supplier',
+              variant: CustomButtonVariant.primary,
+              icon: Icons.add_business_rounded,
+              onPressed: () => _showAddSupplierDialog(context, ref),
             ),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add_rounded, color: Colors.white),
-      ),
+      );
+    });
+// ...
+
+    return Column(
+      children: [
+        _buildSearchHeader(context),
+        suppliersAsync.when(
+          data: (list) => _buildQuickStats(context, list),
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
+        ),
+        Expanded(
+          child: suppliersAsync.when(
+            data: (list) => ListView.separated(
+              padding: EdgeInsets.symmetric(horizontal: tokens.space24),
+              itemCount: list.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 16),
+              itemBuilder: (context, index) => _buildSupplierCard(context, list[index]),
+            ),
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, s) => Center(child: Text('Error: $e')),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildSearchHeader(BuildContext context) {
     final tokens = context.tokens;
     return Container(
-      color: AppColors.surface,
+      color: context.colorScheme.surface,
       padding: EdgeInsets.all(tokens.space24),
       child: Row(
         children: [
@@ -59,7 +78,7 @@ class SupplierDirectoryScreen extends ConsumerWidget {
               prefixIcon: Icons.search_rounded,
             ),
           ),
-          SizedBox(width: tokens.space16),
+          const SizedBox(width: 16),
           _filterButton(context),
         ],
       ),
@@ -72,26 +91,34 @@ class SupplierDirectoryScreen extends ConsumerWidget {
       height: 52,
       width: 52,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.theme.dividerColor),
       ),
-      child: const Icon(Icons.tune_rounded, color: AppColors.primary),
+      child: Icon(Icons.tune_rounded, color: context.colorScheme.primary),
     );
   }
 
-  Widget _buildQuickStats(BuildContext context) {
+  Widget _buildQuickStats(BuildContext context, List<Contact> suppliers) {
     final tokens = context.tokens;
+    final totalPayable = suppliers.fold(0.0, (sum, s) => sum + s.balance);
+
     return Padding(
       padding: EdgeInsets.all(tokens.space24),
       child: Row(
         children: [
-          Expanded(child: _statBox(context, 'Total Payable', '₹12.4L', AppColors.error)),
-          SizedBox(width: tokens.space16),
-          Expanded(child: _statBox(context, 'Active Vendors', '48', AppColors.success)),
+          Expanded(child: _statBox(context, 'Total Payable', _formatLargeValue(totalPayable), context.colorScheme.error)),
+          const SizedBox(width: 16),
+          Expanded(child: _statBox(context, 'Active Vendors', suppliers.length.toString(), context.tokens.success)),
         ],
       ),
     );
+  }
+
+  String _formatLargeValue(double value) {
+    final val = value.abs();
+    if (val >= 100000) return '₹${(val / 100000).toStringAsFixed(1)}L';
+    return NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0).format(val);
   }
 
   Widget _statBox(BuildContext context, String label, String value, Color color) {
@@ -108,15 +135,18 @@ class SupplierDirectoryScreen extends ConsumerWidget {
   }
 
   Widget _buildSupplierCard(BuildContext context, Contact supplier) {
-    final tokens = context.tokens;
     return CustomCard(
+      onTap: () => context.go('/suppliers/${supplier.id}'),
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: AppColors.secondary.withValues(alpha: 0.1),
-            child: Text(supplier.initials, style: const TextStyle(color: AppColors.secondary, fontWeight: FontWeight.bold)),
+            backgroundColor: context.colorScheme.secondary.withValues(alpha: 0.1),
+            child: Text(
+              supplier.initials,
+              style: TextStyle(color: context.colorScheme.secondary, fontWeight: FontWeight.bold),
+            ),
           ),
-          SizedBox(width: tokens.space16),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -129,12 +159,19 @@ class SupplierDirectoryScreen extends ConsumerWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(supplier.balance, style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.error)),
+              Text(
+                NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0).format(supplier.balance),
+                style: TextStyle(fontWeight: FontWeight.w700, color: context.colorScheme.error),
+              ),
               Text('Outstanding', style: context.textTheme.labelSmall?.copyWith(fontSize: 9)),
             ],
           ),
         ],
       ),
     );
+  }
+
+  void _showAddSupplierDialog(BuildContext context, WidgetRef ref) {
+    context.push('/suppliers/new');
   }
 }

@@ -5,17 +5,18 @@ class LedgerStatWidget extends StatelessWidget {
   const LedgerStatWidget({
     super.key,
     this.label = 'Outstanding',
-    this.tone = const Color(0x00000000),
+    this.tone,
     this.value = '₹45,820',
   });
 
   final String label;
-  final Color tone;
+  final Color? tone;
   final String value;
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    final activeTone = tone ?? context.colorScheme.primary;
 
     return Container(
       decoration: BoxDecoration(
@@ -47,7 +48,7 @@ class LedgerStatWidget extends StatelessWidget {
               value,
               style: context.textTheme.headlineSmall!.copyWith(
                 fontWeight: FontWeight.bold,
-                color: tone != const Color(0x00000000) ? tone : context.colorScheme.onSurface,
+                color: activeTone,
               ),
             ),
           ],

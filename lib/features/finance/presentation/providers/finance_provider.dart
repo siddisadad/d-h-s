@@ -1,35 +1,45 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:flutter/foundation.dart';
+import '../../domain/repositories/finance_repository.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/utils/logger.dart';
 import '../../data/models/transaction_model.dart';
+import '../../../sales/presentation/providers/sales_history_provider.dart';
+import '../../../purchases/presentation/providers/purchase_history_provider.dart';
 
 part 'finance_provider.g.dart';
+
+@riverpod
+FinanceRepository financeRepository(FinanceRepositoryRef ref) => sl.financeRepository;
 
 @riverpod
 class FinanceNotifier extends _$FinanceNotifier {
   @override
   Future<List<TransactionModel>> build() async {
+    // Watch other modules to trigger refreshes on cash flow changes
+    ref.watch(salesHistoryProvider);
+    ref.watch(purchaseHistoryProvider);
+    
     return _fetchFromApi();
   }
 
   Future<List<TransactionModel>> _fetchFromApi() async {
     try {
-      debugPrint('🌐 [Finance] Fetching from API...');
-      final repository = sl.financeRepository;
+      Log.d('Fetching finance transactions from API...', name: 'Finance');
+      final repository = ref.read(financeRepositoryProvider);
       final result = await repository.getTransactions();
 
       return result.fold(
         (failure) {
-          debugPrint('❌ [Finance] API Fetch Failed: ${failure.message}');
+          Log.e('Finance API Fetch Failed', error: failure.message, name: 'Finance');
           throw Exception(failure.message);
         },
         (transactions) {
-          debugPrint('✅ [Finance] API Fetch Complete');
+          Log.d('Finance API Fetch Complete', name: 'Finance');
           return transactions;
         },
       );
-    } catch (e) {
-      debugPrint('⚠️ [Finance] Error: $e');
+    } catch (e, stack) {
+      Log.e('Finance Provider Error', error: e, stackTrace: stack, name: 'Finance');
       rethrow;
     }
   }
@@ -48,12 +58,27 @@ class FinanceNotifier extends _$FinanceNotifier {
       paymentMode: paymentMode,
     );
 
-    final repository = sl.financeRepository;
+    final repository = ref.read(financeRepositoryProvider);
     final result = await repository.createTransaction(model);
 
     result.fold(
-      (failure) => debugPrint('❌ [Finance] Failed to create transaction: ${failure.message}'),
-      (success) {
+      (failure) => Log.e('Failed to create transaction', error: failure.message, name: 'Finance'),
+      (success) async {
+        // Sync to Firebase
+        try {
+           await sl.firebaseDb.pushData('finance', model.toJson());
+           
+           // Record Activity
+           await sl.firebaseDb.pushData('activities', {
+             'id': 'FIN-${DateTime.now().millisecondsSinceEpoch}',
+             'title': 'Finance Entry: $category',
+             'subtitle': '$title - ₹$amount',
+             'timestamp': DateTime.now().millisecondsSinceEpoch,
+             'type': category == 'Income' ? 'sale' : 'purchase',
+           });
+        } catch (e) {
+           Log.w('Firebase finance sync failed: $e', name: 'Finance');
+        }
         ref.invalidateSelf();
       },
     );

@@ -4,6 +4,7 @@ import '../../domain/entities/invoice_item.dart';
 class InvoiceModel extends SalesInvoice {
   InvoiceModel({
     required super.id,
+    required super.customerId,
     required super.customerName,
     required super.date,
     required super.items,
@@ -13,6 +14,7 @@ class InvoiceModel extends SalesInvoice {
   factory InvoiceModel.fromJson(Map<String, dynamic> json) {
     return InvoiceModel(
       id: json['id'] as String,
+      customerId: json['customerId'] as String,
       customerName: json['customerName'] as String,
       date: DateTime.parse(json['date'] as String),
       items: (json['items'] as List)
@@ -25,6 +27,7 @@ class InvoiceModel extends SalesInvoice {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'customerId': customerId,
       'customerName': customerName,
       'date': date.toIso8601String(),
       'items': items.map((i) => InvoiceItemModel.fromEntity(i).toJson()).toList(),
@@ -36,6 +39,7 @@ class InvoiceModel extends SalesInvoice {
 class InvoiceItemModel extends InvoiceItem {
   InvoiceItemModel({
     required super.name,
+    required super.sku,
     required super.price,
     required super.qty,
     required super.gstRate,
@@ -44,6 +48,7 @@ class InvoiceItemModel extends InvoiceItem {
   factory InvoiceItemModel.fromJson(Map<String, dynamic> json) {
     return InvoiceItemModel(
       name: json['name'] as String,
+      sku: json['sku'] as String? ?? '',
       price: (json['price'] as num).toDouble(),
       qty: (json['qty'] as num).toDouble(),
       gstRate: (json['gstRate'] as num).toDouble(),
@@ -53,6 +58,7 @@ class InvoiceItemModel extends InvoiceItem {
   factory InvoiceItemModel.fromEntity(InvoiceItem entity) {
     return InvoiceItemModel(
       name: entity.name,
+      sku: entity.sku,
       price: entity.price,
       qty: entity.qty,
       gstRate: entity.gstRate,
@@ -62,6 +68,7 @@ class InvoiceItemModel extends InvoiceItem {
   Map<String, dynamic> toJson() {
     return {
       'name': name,
+      'sku': sku,
       'price': price,
       'qty': qty,
       'gstRate': gstRate,

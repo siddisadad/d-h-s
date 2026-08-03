@@ -57,14 +57,13 @@ class CustomDataTable<T> extends StatelessWidget {
             ),
           ),
           
-          // Body
           if (items.isEmpty && !isLoading)
             Padding(
               padding: EdgeInsets.all(tokens.space32),
               child: Center(
                 child: Text(
                   'No data available',
-                  style: context.textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+                  style: context.textTheme.bodyMedium?.copyWith(color: context.onSurfaceVariantColor),
                 ),
               ),
             )

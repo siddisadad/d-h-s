@@ -10,6 +10,7 @@ class CustomTextField extends StatelessWidget {
   final bool obscureText;
   final bool enabled;
   final TextInputType keyboardType;
+  final int maxLines;
   final String? Function(String?)? validator;
   final Function(String)? onChanged;
   final Function(String)? onSubmitted;
@@ -24,6 +25,7 @@ class CustomTextField extends StatelessWidget {
     this.obscureText = false,
     this.enabled = true,
     this.keyboardType = TextInputType.text,
+    this.maxLines = 1,
     this.validator,
     this.onChanged,
     this.onSubmitted,
@@ -47,6 +49,7 @@ class CustomTextField extends StatelessWidget {
           obscureText: obscureText,
           enabled: enabled,
           keyboardType: keyboardType,
+          maxLines: maxLines,
           validator: validator,
           onChanged: onChanged,
           onFieldSubmitted: onSubmitted,
@@ -58,7 +61,7 @@ class CustomTextField extends StatelessWidget {
             prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: context.colorScheme.primary.withValues(alpha: enabled ? 1.0 : 0.5)) : null,
             suffixIcon: suffixIcon != null ? Icon(suffixIcon, color: context.colorScheme.secondary.withValues(alpha: enabled ? 1.0 : 0.5)) : null,
             filled: !enabled,
-            fillColor: enabled ? null : AppColors.border.withValues(alpha: 0.3),
+            fillColor: enabled ? null : context.colorScheme.outline.withValues(alpha: 0.3),
           ),
         ),
       ],

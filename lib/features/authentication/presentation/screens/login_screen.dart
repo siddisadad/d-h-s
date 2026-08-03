@@ -26,6 +26,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _loadSavedEmail();
   }
 
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadSavedEmail() async {
     final prefs = await SharedPreferences.getInstance();
     final savedEmail = prefs.getString('remembered_email');
@@ -63,7 +70,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final authState = ref.watch(authProvider);
     
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colorScheme.surface,
       body: Center(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(tokens.space24),
@@ -84,15 +91,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         'Secure Login',
                         style: context.textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
+                          color: context.colorScheme.primary,
                         ),
                       ),
-                      SizedBox(height: tokens.space8),
+                      const SizedBox(height: 8),
                       Text(
                         'Enter your credentials to access the ERP dashboard',
-                        style: context.textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+                        style: context.textTheme.bodyMedium?.copyWith(
+                          color: context.colorScheme.onSurface.withValues(alpha: 0.7),
+                        ),
                       ),
-                      SizedBox(height: tokens.space24),
+                      const SizedBox(height: 24),
                       
                       CustomTextField(
                         label: 'Email Address',
@@ -102,7 +111,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         keyboardType: TextInputType.emailAddress,
                         enabled: !authState.isLoading,
                       ),
-                      SizedBox(height: tokens.space16),
+                      const SizedBox(height: 16),
                       
                       CustomTextField(
                         label: 'Password',
@@ -113,7 +122,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         enabled: !authState.isLoading,
                         onSubmitted: (_) => _handleLogin(),
                       ),
-                      SizedBox(height: tokens.space12),
+                      const SizedBox(height: 12),
 
                       Row(
                         children: [
@@ -125,14 +134,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               onChanged: authState.isLoading 
                                 ? null 
                                 : (val) => setState(() => _rememberMe = val ?? false),
-                              activeColor: AppColors.primary,
+                              activeColor: context.colorScheme.primary,
                             ),
                           ),
                           const SizedBox(width: 8),
                           Text(
                             'Remember Me',
                             style: context.textTheme.bodyMedium?.copyWith(
-                              color: AppColors.textSecondary,
+                              color: context.colorScheme.onSurface.withValues(alpha: 0.7),
                             ),
                           ),
                           const Spacer(),
@@ -144,7 +153,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                         ],
                       ),
-                      SizedBox(height: tokens.space12),
+                      const SizedBox(height: 12),
                       
                       if (authState.hasError) ...[
                         Container(
@@ -167,7 +176,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ],
                           ),
                         ),
-                        SizedBox(height: tokens.space16),
+                        const SizedBox(height: 16),
                       ],
                       
                       CustomButton(
@@ -234,14 +243,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 }
 
                 setDialogState(() => isResetting = true);
-                try {
+                  try {
                   await ref.read(authProvider.notifier).sendPasswordResetEmail(email);
                   if (context.mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Password reset link sent to your email'),
-                        backgroundColor: AppColors.success,
+                      SnackBar(
+                        content: const Text('Password reset link sent to your email'),
+                        backgroundColor: context.successColor,
                       ),
                     );
                   }
@@ -252,10 +261,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       message = 'Connection to backend failed. Please check if your server is running.';
                     }
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(message), backgroundColor: AppColors.error),
+                      SnackBar(content: Text(message), backgroundColor: context.colorScheme.error),
                     );
                   }
                 } finally {
+                  emailController.dispose();
                   if (context.mounted) {
                     setDialogState(() => isResetting = false);
                   }
@@ -276,11 +286,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: AppColors.primary,
+            color: context.colorScheme.primary,
             borderRadius: BorderRadius.circular(tokens.radiusXl),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.2),
+                color: context.colorScheme.primary.withValues(alpha: 0.2),
                 blurRadius: 15,
                 offset: const Offset(0, 8),
               ),
@@ -304,7 +314,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           style: context.textTheme.headlineMedium?.copyWith(
             letterSpacing: 2,
             fontWeight: FontWeight.w800,
-            color: AppColors.primary,
+            color: context.colorScheme.primary,
           ),
         ),
       ],

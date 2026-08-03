@@ -6,11 +6,11 @@ class Contact {
   final String initials;
   final String contact;
   final String gstin;
-  final String balance;
+  final double balance;
   final String location;
   final ContactType type;
 
-  Contact({
+  const Contact({
     required this.id,
     required this.name,
     required this.initials,

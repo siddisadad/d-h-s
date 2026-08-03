@@ -2,7 +2,7 @@
 // RiverpodGenerator
 // **************************************************************************
 
-String _$startupHash() => r'896e936076c5ae2ef083de3dcf1103d586b0909f';
+String _$startupHash() => r'0ac503fcb9b68506b1c9e92608c03055f6e39e11';
 
 /// See also [startup].
 @ProviderFor(startup)

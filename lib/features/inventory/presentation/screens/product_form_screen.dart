@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/design_system/theme/app_theme.dart';
-import '../../../../core/widgets/custom_button.dart';
-import '../../../../core/widgets/custom_text_field.dart';
-import '../../domain/entities/product.dart';
-import '../providers/inventory_provider.dart';
+import 'package:deshmukh_steel_e_r_p/core/design_system/theme/app_theme.dart';
+import 'package:deshmukh_steel_e_r_p/core/widgets/custom_button.dart';
+import 'package:deshmukh_steel_e_r_p/core/widgets/custom_text_field.dart';
+import 'package:deshmukh_steel_e_r_p/features/inventory/domain/entities/product.dart';
+import 'package:deshmukh_steel_e_r_p/features/inventory/presentation/providers/inventory_provider.dart';
 
 class ProductFormScreen extends ConsumerStatefulWidget {
   final Product? product;
@@ -31,8 +31,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     super.initState();
     _nameController = TextEditingController(text: widget.product?.name);
     _skuController = TextEditingController(text: widget.product?.sku);
-    _priceController = TextEditingController(text: widget.product?.price.replaceAll('₹', ''));
-    _stockController = TextEditingController(text: widget.product?.stock.replaceAll(',', ''));
+    _priceController = TextEditingController(text: widget.product?.price.toString());
+    _stockController = TextEditingController(text: widget.product?.stock.toString());
     
     if (widget.product != null) {
       if (_categories.contains(widget.product!.category)) {
@@ -60,8 +60,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       name: _nameController.text.trim(),
       sku: _skuController.text.trim(),
       category: _selectedCategory,
-      price: '₹${_priceController.text.trim()}',
-      stock: _stockController.text.trim(),
+      price: double.tryParse(_priceController.text.trim()) ?? 0,
+      stock: double.tryParse(_stockController.text.trim()) ?? 0,
       unit: _selectedUnit,
       isLowStock: (double.tryParse(_stockController.text.trim()) ?? 0) < 50,
     );
@@ -76,7 +76,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
+          SnackBar(content: Text('Error: $e'), backgroundColor: context.errorColor),
         );
       }
     }
@@ -88,7 +88,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     final isEdit = widget.product != null;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colorScheme.surface,
       appBar: AppBar(
         title: Text(isEdit ? 'EDIT PRODUCT' : 'ADD NEW PRODUCT'),
       ),
@@ -105,7 +105,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 controller: _nameController,
                 validator: (val) => val == null || val.isEmpty ? 'Required' : null,
               ),
-              SizedBox(height: tokens.space20),
+              const SizedBox(height: 20),
               CustomTextField(
                 label: 'SKU / Item Code',
                 hint: 'e.g. STEEL-TMT-12',
@@ -113,14 +113,14 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 enabled: !isEdit, 
                 validator: (val) => val == null || val.isEmpty ? 'Required' : null,
               ),
-              SizedBox(height: tokens.space20),
+              const SizedBox(height: 20),
               _buildDropdown(
                 label: 'Category',
                 value: _selectedCategory,
                 items: _categories,
                 onChanged: (val) => setState(() => _selectedCategory = val!),
               ),
-              SizedBox(height: tokens.space20),
+              const SizedBox(height: 20),
               Row(
                 children: [
                   Expanded(
@@ -132,7 +132,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                       validator: (val) => val == null || val.isEmpty ? 'Required' : null,
                     ),
                   ),
-                  SizedBox(width: tokens.space16),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: _buildDropdown(
                       label: 'Unit',
@@ -143,7 +143,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                   ),
                 ],
               ),
-              SizedBox(height: tokens.space20),
+              const SizedBox(height: 20),
               CustomTextField(
                 label: 'Current Stock',
                 hint: '0',
@@ -151,7 +151,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 keyboardType: TextInputType.number,
                 validator: (val) => val == null || val.isEmpty ? 'Required' : null,
               ),
-              SizedBox(height: tokens.space32),
+              const SizedBox(height: 32),
               CustomButton(
                 text: isEdit ? 'Update Product' : 'Create Product',
                 fullWidth: true,
@@ -177,22 +177,22 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           label,
           style: context.textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w600,
-            color: context.colorScheme.onSurface.withValues(alpha: 0.8),
+            color: context.colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: context.colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: context.colorScheme.outline.withValues(alpha: 0.5)),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: value,
               isExpanded: true,
-              icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
+              icon: Icon(Icons.keyboard_arrow_down_rounded, color: context.colorScheme.primary),
               items: items.map((String item) {
                 return DropdownMenuItem(
                   value: item,

@@ -1,0 +1,72 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .artifacts directory used by the AI assistant
+.artifacts/
+
+# Flutter/Dart related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/GeneratedConfig.xcconfig
+**/ios/Flutter/framework_info.json
+**/ios/Flutter/setup_flutter_build.sh
+**/ios/GeneratedPluginRegistrant.h
+**/ios/GeneratedPluginRegistrant.m
+**/lib/generated_plugin_registrant.dart
+**/pubspec.lock
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+lib.zip
+debug_log.txt
+
+# Symbolication related
+app.*.symbols
+
+# Executable python binary
+__pycache__/
+
+# Android related
+**/android/app/src/main/res/values/strings.xml
+**/android/local.properties
+**/android/key.properties
+**/android/app/google-services.json
+**/android/.gradle/
+**/android/build/
+**/android/captures/
+**/android/app/build/
+
+# iOS related
+**/ios/Pods/
+**/ios/.gradle/
+**/ios/build/
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/ServiceDefinitions.json
+**/ios/Runner/GoogleService-Info.plist
+
+# Web related
+**/web/index.html.tmp
+
+# Coverage
+coverage/

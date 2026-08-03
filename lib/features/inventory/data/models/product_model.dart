@@ -9,6 +9,8 @@ class ProductModel extends Product {
     required super.stock,
     required super.unit,
     required super.isLowStock,
+    super.preferredSupplierId,
+    super.reorderPoint = 0.0,
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
@@ -16,10 +18,12 @@ class ProductModel extends Product {
       name: json['name'] as String,
       sku: json['sku'] as String,
       category: json['category'] as String,
-      price: json['price'] as String,
-      stock: json['stock'] as String,
+      price: (json['price'] as num).toDouble(),
+      stock: (json['stock'] as num).toDouble(),
       unit: json['unit'] as String,
       isLowStock: json['isLowStock'] as bool? ?? false,
+      preferredSupplierId: json['preferredSupplierId'] as String?,
+      reorderPoint: (json['reorderPoint'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
@@ -32,6 +36,22 @@ class ProductModel extends Product {
       'stock': stock,
       'unit': unit,
       'isLowStock': isLowStock,
+      'preferredSupplierId': preferredSupplierId,
+      'reorderPoint': reorderPoint,
     };
+  }
+
+  Product toEntity() {
+    return Product(
+      name: name,
+      sku: sku,
+      category: category,
+      price: price,
+      stock: stock,
+      unit: unit,
+      isLowStock: isLowStock,
+      preferredSupplierId: preferredSupplierId,
+      reorderPoint: reorderPoint,
+    );
   }
 }

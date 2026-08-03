@@ -6,21 +6,23 @@ import 'package:google_fonts/google_fonts.dart';
 class ReportCategoryCardWidget extends StatelessWidget {
   const ReportCategoryCardWidget({
     super.key,
-    this.bgLight = const Color(0x00000000),
-    this.color = const Color(0xFF1976D2),
+    this.bgLight,
+    this.color,
     this.icon,
     this.subtitle = 'GSTR-1, GSTR-3B, and Tax Summary',
     this.title = 'GST Reports',
   });
 
-  final Color bgLight;
-  final Color color;
+  final Color? bgLight;
+  final Color? color;
   final Widget? icon;
   final String subtitle;
   final String title;
 
   @override
   Widget build(BuildContext context) {
+    final activeBgLight = bgLight ?? context.colorScheme.surface;
+
     return Container(
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
@@ -42,9 +44,7 @@ class ReportCategoryCardWidget extends StatelessWidget {
               width: 48.0,
               height: 48.0,
               decoration: BoxDecoration(
-                color: bgLight == const Color(0x00000000)
-                    ? context.colorScheme.surface
-                    : bgLight,
+                color: activeBgLight,
                 borderRadius: BorderRadius.circular(12.0),
                 shape: BoxShape.rectangle,
               ),

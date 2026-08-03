@@ -2,7 +2,25 @@
 // RiverpodGenerator
 // **************************************************************************
 
-String _$activityNotifierHash() => r'b12c0fb160c55488aba6019dec602c6fb6fd4a28';
+String _$activityStreamHash() => r'd6919b304308f32df4fbdf4b62ab61b0a4504e7d';
+
+/// See also [activityStream].
+@ProviderFor(activityStream)
+final activityStreamProvider =
+    AutoDisposeStreamProvider<List<Activity>>.internal(
+  activityStream,
+  name: r'activityStreamProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$activityStreamHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef ActivityStreamRef = AutoDisposeStreamProviderRef<List<Activity>>;
+String _$activityNotifierHash() => r'e295a54a78cc33f895fd0e752c56a5ebf138faed';
 
 /// See also [ActivityNotifier].
 @ProviderFor(ActivityNotifier)

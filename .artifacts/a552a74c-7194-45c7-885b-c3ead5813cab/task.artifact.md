@@ -1,0 +1,6 @@
+- [x] Create root `.gitignore` file
+- [x] Delete `lib.zip`
+- [x] Delete `debug_log.txt`
+- [x] Delete `d-h-s.iml`
+- [x] Delete `.flutter-plugins-dependencies`
+- [x] Verify cleanup

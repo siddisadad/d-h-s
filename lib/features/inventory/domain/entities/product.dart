@@ -2,10 +2,12 @@ class Product {
   final String name;
   final String sku;
   final String category;
-  final String price;
-  final String stock;
+  final double price;
+  final double stock;
   final String unit;
   final bool isLowStock;
+  final String? preferredSupplierId;
+  final double reorderPoint;
 
   Product({
     required this.name,
@@ -15,5 +17,7 @@ class Product {
     required this.stock,
     required this.unit,
     required this.isLowStock,
+    this.preferredSupplierId,
+    this.reorderPoint = 0.0,
   });
 }

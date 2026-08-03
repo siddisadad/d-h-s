@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../domain/entities/sales_quotation.dart';
 import '../../domain/entities/sales_invoice.dart';
 import '../../domain/entities/invoice_item.dart';
 import '../../domain/repositories/sales_repository.dart';
@@ -77,8 +78,20 @@ class SalesInvoiceNotifier extends _$SalesInvoiceNotifier {
     return ref.read(pdfServiceProvider.notifier).generateThermalReceipt(invoice);
   }
 
+  Future<Uint8List?> generateQuotationPreview(SalesQuotation quotation) async {
+    return ref.read(pdfServiceProvider.notifier).generateQuotation(quotation);
+  }
+
   void clearDraft() {
     state = SalesInvoiceDraft(items: [], discount: 0);
+  }
+
+  void loadFromQuotation(SalesQuotation quote, Contact? customer) {
+    state = SalesInvoiceDraft(
+      selectedCustomer: customer,
+      items: quote.items,
+      discount: quote.discount,
+    );
   }
 }
 

@@ -1,10 +1,14 @@
+import '../../../../components/base_list_item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../../../core/design_system/theme/app_theme.dart';
-import '../../../../core/widgets/custom_card.dart';
-import '../providers/crm_provider.dart';
-import '../../domain/entities/contact.dart';
+import 'package:deshmukh_steel_e_r_p/core/design_system/theme/app_theme.dart';
+import 'package:deshmukh_steel_e_r_p/core/widgets/custom_card.dart';
+import 'package:deshmukh_steel_e_r_p/features/crm/presentation/providers/crm_provider.dart';
+import 'package:deshmukh_steel_e_r_p/features/crm/presentation/providers/ledger_provider.dart';
+import 'package:deshmukh_steel_e_r_p/features/crm/domain/entities/contact.dart';
+import 'package:deshmukh_steel_e_r_p/core/providers/app_bar_provider.dart';
+import 'package:intl/intl.dart';
 
 class CustomerLedgerScreen extends ConsumerWidget {
   final String? customerId;
@@ -14,52 +18,59 @@ class CustomerLedgerScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final customersAsync = ref.watch(crmNotifierProvider(ContactType.customer));
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('CUSTOMER LEDGER'),
-      ),
-      body: customersAsync.when(
-        data: (list) {
-          final tokens = context.tokens;
-          final customer = list.isNotEmpty ? list.first : null;
-          if (customer == null) return const Center(child: Text('No customers found'));
+    return customersAsync.when(
+      data: (list) {
+        final tokens = context.tokens;
+        // Find the specific customer by ID, or default to the first one for demonstration
+        final customer = customerId != null 
+          ? list.firstWhere((c) => c.id == customerId, orElse: () => list.first)
+          : (list.isNotEmpty ? list.first : null);
 
-          return SingleChildScrollView(
-            padding: EdgeInsets.all(tokens.space24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildCustomerHeader(context, customer),
-                SizedBox(height: tokens.space24),
-                _buildStats(context),
-                SizedBox(height: tokens.space24),
-                _buildActions(context, customer),
-                SizedBox(height: tokens.space32),
-                Text('TRANSACTION HISTORY', style: context.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 1.2)),
-                SizedBox(height: tokens.space16),
-                _buildTransactionList(context),
-              ],
-            ),
+        if (customer == null) return const Center(child: Text('Customer not found'));
+
+        // Update Global AppBar
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref.read(appBarNotifierProvider.notifier).update(
+            title: customer.name.toUpperCase(),
           );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, s) => Center(child: Text('Error: $e')),
-      ),
+        });
+
+        return SingleChildScrollView(
+          padding: EdgeInsets.all(tokens.space24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildCustomerHeader(context, customer),
+              const SizedBox(height: 24),
+              _buildStats(context, customer),
+              const SizedBox(height: 24),
+              _buildActions(context, customer),
+              const SizedBox(height: 32),
+              Text('TRANSACTION HISTORY', style: context.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 1.2)),
+              const SizedBox(height: 16),
+              _buildTransactionList(context, ref, customer.id),
+            ],
+          ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, s) => Center(child: Text('Error: $e')),
     );
   }
 
   Widget _buildCustomerHeader(BuildContext context, Contact customer) {
-    final tokens = context.tokens;
     return CustomCard(
       child: Row(
         children: [
           CircleAvatar(
             radius: 28,
-            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-            child: Text(customer.initials, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary, fontSize: 20)),
+            backgroundColor: context.colorScheme.primary.withValues(alpha: 0.1),
+            child: Text(
+              customer.initials,
+              style: TextStyle(fontWeight: FontWeight.bold, color: context.colorScheme.primary, fontSize: 20),
+            ),
           ),
-          SizedBox(width: tokens.space16),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,16 +86,20 @@ class CustomerLedgerScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStats(BuildContext context) {
-    final tokens = context.tokens;
+  Widget _buildStats(BuildContext context, Contact customer) {
     return Row(
       children: [
         Expanded(
-          child: _statCard(context, 'Outstanding', '₹45,820', AppColors.error),
+          child: _statCard(
+            context, 
+            'Outstanding', 
+            NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0).format(customer.balance), 
+            context.colorScheme.error,
+          ),
         ),
-        SizedBox(width: tokens.space16),
+        const SizedBox(width: 16),
         Expanded(
-          child: _statCard(context, 'Credit Limit', '₹1,50,000', AppColors.primary),
+          child: _statCard(context, 'Credit Limit', '₹1,50,000', context.colorScheme.primary),
         ),
       ],
     );
@@ -107,13 +122,13 @@ class CustomerLedgerScreen extends ConsumerWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        _actionIcon(context, Icons.picture_as_pdf_outlined, 'Statement', AppColors.primary, () {}),
-        _actionIcon(context, Icons.chat_outlined, 'WhatsApp', AppColors.success, () async {
+        _actionIcon(context, Icons.picture_as_pdf_outlined, 'Statement', context.colorScheme.primary, () {}),
+        _actionIcon(context, Icons.chat_outlined, 'WhatsApp', context.tokens.success, () async {
           final url = 'whatsapp://send?phone=${customer.contact.replaceAll(' ', '')}';
           if (await canLaunchUrl(Uri.parse(url))) await launchUrl(Uri.parse(url));
         }),
-        _actionIcon(context, Icons.payments_outlined, 'Record Pay', AppColors.accent, () {}),
-        _actionIcon(context, Icons.notifications_none_rounded, 'Remind', AppColors.warning, () {}),
+        _actionIcon(context, Icons.payments_outlined, 'Record Pay', context.colorScheme.tertiary, () {}),
+        _actionIcon(context, Icons.notifications_none_rounded, 'Remind', context.tokens.warning, () {}),
       ],
     );
   }
@@ -135,29 +150,52 @@ class CustomerLedgerScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildTransactionList(BuildContext context) {
+  Widget _buildTransactionList(BuildContext context, WidgetRef ref, String customerId) {
+    final ledgerAsync = ref.watch(ledgerNotifierProvider(customerId));
+
     return CustomCard(
       padding: EdgeInsets.zero,
-      child: Column(
-        children: [
-          _transactionItem(context, '22 May 2024', 'Sales Invoice #SI-882', '₹12,400', true),
-          const Divider(height: 1),
-          _transactionItem(context, '18 May 2024', 'Payment Received #PAY-912', '₹5,000', false),
-        ],
+      child: ledgerAsync.when(
+        data: (entries) {
+          if (entries.isEmpty) {
+            return const Padding(
+              padding: EdgeInsets.all(24.0),
+              child: Center(child: Text('No transactions found')),
+            );
+          }
+          return Column(
+            children: List.generate(entries.length, (index) {
+              final entry = entries[index];
+              return BaseListItem(
+                title: '${entry.type} #${entry.ref}',
+                subtitle: DateFormat('dd MMM yyyy').format(entry.date),
+                trailing: _amountText(context, NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0).format(entry.amount), entry.isDebit),
+                leadingIcon: entry.isDebit ? Icons.description_rounded : Icons.payments_rounded,
+                leadingIconColor: entry.isDebit ? context.colorScheme.error : context.tokens.success,
+                leadingBackgroundColor: (entry.isDebit ? context.colorScheme.error : context.tokens.success).withValues(alpha: 0.1),
+                showDivider: index < entries.length - 1,
+              );
+            }),
+          );
+        },
+        loading: () => const Padding(
+          padding: EdgeInsets.all(24.0),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+        error: (e, s) => Padding(
+          padding: EdgeInsets.all(24.0),
+          child: Center(child: Text('Error: $e')),
+        ),
       ),
     );
   }
 
-  Widget _transactionItem(BuildContext context, String date, String ref, String amount, bool isDebit) {
-    return ListTile(
-      title: Text(ref, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-      subtitle: Text(date, style: context.textTheme.bodySmall),
-      trailing: Text(
-        (isDebit ? '+' : '-') + ' ' + amount,
-        style: TextStyle(
-          fontWeight: FontWeight.w700,
-          color: isDebit ? AppColors.error : AppColors.success,
-        ),
+  Widget _amountText(BuildContext context, String amount, bool isDebit) {
+    return Text(
+      (isDebit ? '+' : '-') + ' ' + amount,
+      style: context.textTheme.bodyMedium?.copyWith(
+        fontWeight: FontWeight.w700,
+        color: isDebit ? context.colorScheme.error : context.tokens.success,
       ),
     );
   }

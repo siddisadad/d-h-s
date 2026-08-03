@@ -44,7 +44,7 @@ class ActionItemWidget extends StatelessWidget {
               maxLines: 1,
               style: context.textTheme.labelSmall?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+                color: context.onSurfaceColor,
               ),
             ),
           ],

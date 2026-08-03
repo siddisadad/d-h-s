@@ -6,17 +6,19 @@ import 'package:google_fonts/google_fonts.dart';
 class SummaryStatWidget extends StatelessWidget {
   const SummaryStatWidget({
     super.key,
-    this.color = const Color(0x00000000),
+    this.color,
     this.label = 'Total Income',
     this.value = '₹ 4.2L',
   });
 
-  final Color color;
+  final Color? color;
   final String label;
   final String value;
 
   @override
   Widget build(BuildContext context) {
+    final activeColor = color ?? context.successColor;
+    
     return Container(
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
@@ -55,9 +57,7 @@ class SummaryStatWidget extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                   fontStyle: context.textTheme.titleMedium!.fontStyle,
                 ),
-                color: color == const Color(0x00000000)
-                    ? AppColors.success
-                    : color,
+                color: activeColor,
                 letterSpacing: 0.0,
                 fontWeight: FontWeight.bold,
                 fontStyle: context.textTheme.titleMedium!.fontStyle,

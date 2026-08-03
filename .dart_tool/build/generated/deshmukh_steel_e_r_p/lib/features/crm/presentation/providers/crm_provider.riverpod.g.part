@@ -2,7 +2,42 @@
 // RiverpodGenerator
 // **************************************************************************
 
-String _$crmNotifierHash() => r'07db20cf2927e5730f9e0c616db8f11120d01cae';
+String _$crmRepositoryHash() => r'f1f03f9653324b7c1f63dda01c213ca28b838581';
+
+/// See also [crmRepository].
+@ProviderFor(crmRepository)
+final crmRepositoryProvider = AutoDisposeProvider<CrmRepository>.internal(
+  crmRepository,
+  name: r'crmRepositoryProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$crmRepositoryHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef CrmRepositoryRef = AutoDisposeProviderRef<CrmRepository>;
+String _$getContactsUseCaseHash() =>
+    r'49509aec8dd1caebc6ae3c8284be4f6624e82a6c';
+
+/// See also [getContactsUseCase].
+@ProviderFor(getContactsUseCase)
+final getContactsUseCaseProvider = AutoDisposeProvider<GetContacts>.internal(
+  getContactsUseCase,
+  name: r'getContactsUseCaseProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$getContactsUseCaseHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef GetContactsUseCaseRef = AutoDisposeProviderRef<GetContacts>;
+String _$crmNotifierHash() => r'96395e02580c35bb0014bbb099591a8b922da8aa';
 
 /// Copied from Dart SDK
 class _SystemHash {

@@ -114,19 +114,19 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
   }
 
   final List<Product> _mockProducts = [
-    Product(category: 'Steel', name: 'Tata Tiscon TMT Bars 12mm', price: '₹68.50', sku: 'STEEL-TT-12', stock: '4,200', unit: 'Kg', isLowStock: false),
-    Product(category: 'Power Tools', name: 'Bosch Professional Drill 750W', price: '₹4,250', sku: 'TOOL-BOS-750', stock: '8', unit: 'Piece', isLowStock: true),
-    Product(category: 'Plumbing', name: 'Copper Pipe 1 inch (Standard)', price: '₹210', sku: 'PLUMB-COP-1', stock: '150', unit: 'Meter', isLowStock: false),
-    Product(category: 'Electrical', name: 'Havells 1.5mm Double Core Wire', price: '₹1,120', sku: 'ELEC-HAV-15', stock: '45', unit: 'Reel', isLowStock: false),
+    Product(category: 'Steel', name: 'Tata Tiscon TMT Bars 12mm', price: 68.50, sku: 'STEEL-TT-12', stock: 4200, unit: 'Kg', isLowStock: false),
+    Product(category: 'Power Tools', name: 'Bosch Professional Drill 750W', price: 4250, sku: 'TOOL-BOS-750', stock: 8, unit: 'Piece', isLowStock: true),
+    Product(category: 'Plumbing', name: 'Copper Pipe 1 inch (Standard)', price: 210, sku: 'PLUMB-COP-1', stock: 150, unit: 'Meter', isLowStock: false),
+    Product(category: 'Electrical', name: 'Havells 1.5mm Double Core Wire', price: 1120, sku: 'ELEC-HAV-15', stock: 45, unit: 'Reel', isLowStock: false),
   ];
 }
 
 class InventoryMockDataSourceImpl implements InventoryRemoteDataSource {
   final List<Product> _mockProducts = [
-    Product(category: 'Steel', name: 'Tata Tiscon TMT Bars 12mm', price: '₹68.50', sku: 'STEEL-TT-12', stock: '4,200', unit: 'Kg', isLowStock: false),
-    Product(category: 'Power Tools', name: 'Bosch Professional Drill 750W', price: '₹4,250', sku: 'TOOL-BOS-750', stock: '8', unit: 'Piece', isLowStock: true),
-    Product(category: 'Plumbing', name: 'Copper Pipe 1 inch (Standard)', price: '₹210', sku: 'PLUMB-COP-1', stock: '150', unit: 'Meter', isLowStock: false),
-    Product(category: 'Electrical', name: 'Havells 1.5mm Double Core Wire', price: '₹1,120', sku: 'ELEC-HAV-15', stock: '45', unit: 'Reel', isLowStock: false),
+    Product(category: 'Steel', name: 'Tata Tiscon TMT Bars 12mm', price: 68.50, sku: 'STEEL-TT-12', stock: 4200, unit: 'Kg', isLowStock: false),
+    Product(category: 'Power Tools', name: 'Bosch Professional Drill 750W', price: 4250, sku: 'TOOL-BOS-750', stock: 8, unit: 'Piece', isLowStock: true),
+    Product(category: 'Plumbing', name: 'Copper Pipe 1 inch (Standard)', price: 210, sku: 'PLUMB-COP-1', stock: 150, unit: 'Meter', isLowStock: false),
+    Product(category: 'Electrical', name: 'Havells 1.5mm Double Core Wire', price: 1120, sku: 'ELEC-HAV-15', stock: 45, unit: 'Reel', isLowStock: false),
   ];
 
   @override

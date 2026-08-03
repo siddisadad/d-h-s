@@ -45,7 +45,7 @@ final getDashboardStatsUseCaseProvider =
 // ignore: unused_element
 typedef GetDashboardStatsUseCaseRef = AutoDisposeProviderRef<GetDashboardStats>;
 String _$dashboardStatsNotifierHash() =>
-    r'785bb413c81e636d60518f8ad410ba0353e731c5';
+    r'9e509c20558fdaa8fbf162f8690759f359a5670f';
 
 /// See also [DashboardStatsNotifier].
 @ProviderFor(DashboardStatsNotifier)
