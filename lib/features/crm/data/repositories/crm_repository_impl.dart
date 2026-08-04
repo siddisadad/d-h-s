@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
@@ -8,6 +9,7 @@ import '../../domain/entities/contact.dart';
 import '../../domain/entities/ledger_entry.dart';
 import '../../domain/repositories/crm_repository.dart';
 import '../datasources/crm_remote_data_source.dart';
+import '../../../../core/config/app_config.dart';
 
 class CrmRepositoryImpl implements CrmRepository {
   final CrmRemoteDataSource remoteDataSource;
@@ -21,6 +23,24 @@ class CrmRepositoryImpl implements CrmRepository {
   @override
   Future<Result<List<Contact>>> getContacts(ContactType type) async {
     try {
+      if (AppConfig.useFirebase) {
+        final snapshot = await sl.firebaseDb.getData('contacts');
+        if (!snapshot.exists || snapshot.value == null) return Result.success([]);
+        
+        final Map<dynamic, dynamic> data = snapshot.value as Map<dynamic, dynamic>;
+        final List<Contact> contacts = [];
+        data.forEach((key, value) {
+          final model = ContactModel.fromJson(Map<String, dynamic>.from(value as Map));
+          if (model.type == type) contacts.add(model);
+        });
+        return Result.success(contacts);
+      }
+
+      if (kIsWeb) {
+        final contacts = await remoteDataSource.getContacts(type);
+        return Result.success(contacts);
+      }
+
       final db = await localDatabase.database;
       
       // 1. Background refresh from remote
@@ -55,6 +75,11 @@ class CrmRepositoryImpl implements CrmRepository {
   @override
   Future<Result<List<LedgerEntry>>> getLedgerByContactId(String contactId) async {
     try {
+      if (kIsWeb) {
+        final remoteLedger = await remoteDataSource.getLedgerByContactId(contactId);
+        return Result.success(remoteLedger);
+      }
+
       final db = await localDatabase.database;
 
       // 1. Return from Local DB (Real-time source)
@@ -88,20 +113,22 @@ class CrmRepositoryImpl implements CrmRepository {
   @override
   Future<Result<bool>> createContact(Contact contact) async {
     try {
-      final db = await localDatabase.database;
-      
-      // 1. Save locally
-      await db.insert('contacts', {
-        'id': contact.id,
-        'name': contact.name,
-        'initials': contact.initials,
-        'contact': contact.contact,
-        'gstin': contact.gstin,
-        'balance': contact.balance,
-        'location': contact.location,
-        'type': contact.type == ContactType.customer ? 'customer' : 'supplier',
-        'lastUpdated': DateTime.now().millisecondsSinceEpoch,
-      }, conflictAlgorithm: ConflictAlgorithm.replace);
+      if (!kIsWeb) {
+        final db = await localDatabase.database;
+        
+        // 1. Save locally
+        await db.insert('contacts', {
+          'id': contact.id,
+          'name': contact.name,
+          'initials': contact.initials,
+          'contact': contact.contact,
+          'gstin': contact.gstin,
+          'balance': contact.balance,
+          'location': contact.location,
+          'type': contact.type == ContactType.customer ? 'customer' : 'supplier',
+          'lastUpdated': DateTime.now().millisecondsSinceEpoch,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+      }
 
       // 2. Push to Cloud
       try {
@@ -137,23 +164,25 @@ class CrmRepositoryImpl implements CrmRepository {
   @override
   Future<Result<bool>> updateContact(Contact contact) async {
     try {
-      final db = await localDatabase.database;
-      
-      // 1. Update locally
-      await db.update(
-        'contacts',
-        {
-          'name': contact.name,
-          'initials': contact.initials,
-          'contact': contact.contact,
-          'gstin': contact.gstin,
-          'balance': contact.balance,
-          'location': contact.location,
-          'lastUpdated': DateTime.now().millisecondsSinceEpoch,
-        },
-        where: 'id = ?',
-        whereArgs: [contact.id],
-      );
+      if (!kIsWeb) {
+        final db = await localDatabase.database;
+        
+        // 1. Update locally
+        await db.update(
+          'contacts',
+          {
+            'name': contact.name,
+            'initials': contact.initials,
+            'contact': contact.contact,
+            'gstin': contact.gstin,
+            'balance': contact.balance,
+            'location': contact.location,
+            'lastUpdated': DateTime.now().millisecondsSinceEpoch,
+          },
+          where: 'id = ?',
+          whereArgs: [contact.id],
+        );
+      }
 
       // 2. Push to Cloud
       try {
@@ -188,6 +217,7 @@ class CrmRepositoryImpl implements CrmRepository {
   }
 
   Future<void> _refreshContactsInBackground(ContactType type) async {
+    if (kIsWeb) return;
     try {
       final remoteContacts = await remoteDataSource.getContacts(type);
       await _mirrorToLocal(remoteContacts);
@@ -197,6 +227,7 @@ class CrmRepositoryImpl implements CrmRepository {
   }
 
   Future<void> _mirrorToLocal(List<Contact> contacts) async {
+    if (kIsWeb) return;
     final db = await localDatabase.database;
     final batch = db.batch();
     for (var c in contacts) {

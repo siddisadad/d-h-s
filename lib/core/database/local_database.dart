@@ -22,11 +22,14 @@ class LocalDatabase {
   }
 
   Future<Database> _initDatabase() async {
+    if (kIsWeb) {
+      Log.w('Local Database (sqflite) is not supported on Web. Falling back to memory/remote.', name: 'Database');
+      throw UnsupportedError('sqflite is not supported on Web');
+    }
+
     // Desktop initialization guard
-    if (!kIsWeb && (Platform.isWindows || Platform.isLinux)) {
+    if (Platform.isWindows || Platform.isLinux) {
       try {
-        // We use a try-catch because accessing databaseFactory before it is set
-        // can throw "Bad state: databaseFactory not initialized" on some platforms.
         sqfliteFfiInit();
         databaseFactory = databaseFactoryFfi;
         Log.i('🖥️ sqflite_ffi initialized for LocalDatabase', name: 'Database');

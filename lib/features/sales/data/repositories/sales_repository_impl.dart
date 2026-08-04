@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
@@ -13,6 +14,7 @@ import '../models/invoice_model.dart';
 import '../models/quotation_model.dart';
 import '../models/return_model.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/config/app_config.dart';
 
 class SalesRepositoryImpl implements SalesRepository {
   final SalesRemoteDataSource remoteDataSource;
@@ -25,6 +27,28 @@ class SalesRepositoryImpl implements SalesRepository {
 
   @override
   Future<Result<bool>> createInvoice(SalesInvoice invoice) async {
+    if (kIsWeb) {
+      // Cloud-only fallback for Web
+      try {
+        final model = InvoiceModel(
+          id: invoice.id,
+          customerId: invoice.customerId,
+          customerName: invoice.customerName,
+          date: invoice.date,
+          items: invoice.items,
+          discount: invoice.discount,
+        );
+        await sl.firebaseDb.setData('sales/${invoice.id}', model.toJson());
+        await sl.firebaseDb.pushData('activities', {
+          'id': invoice.id,
+          'title': 'New Sale Created (Web)',
+          'subtitle': '${invoice.customerName} - ₹${invoice.grandTotal.toStringAsFixed(0)}',
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+          'type': 'sale',
+        });
+        return Result.success(true);
+      } catch (e) { return Result.error(ServerFailure(e.toString())); }
+    }
     final db = await localDatabase.database;
     
     try {
@@ -140,6 +164,23 @@ class SalesRepositoryImpl implements SalesRepository {
   @override
   Future<Result<List<SalesInvoice>>> getRecentInvoices() async {
     try {
+      if (AppConfig.useFirebase) {
+        final snapshot = await sl.firebaseDb.getData('sales');
+        if (!snapshot.exists || snapshot.value == null) return Result.success([]);
+        
+        final Map<dynamic, dynamic> data = snapshot.value as Map<dynamic, dynamic>;
+        final List<SalesInvoice> invoices = [];
+        data.forEach((key, value) {
+          final model = InvoiceModel.fromJson(Map<String, dynamic>.from(value as Map));
+          invoices.add(model);
+        });
+        return Result.success(invoices);
+      }
+
+      if (kIsWeb) {
+        final remote = await remoteDataSource.getRecentInvoices();
+        return Result.success(remote);
+      }
       final db = await localDatabase.database;
       final List<Map<String, dynamic>> maps = await db.query('sales', orderBy: 'date DESC');
       final invoices = maps.map((m) {
@@ -162,6 +203,21 @@ class SalesRepositoryImpl implements SalesRepository {
   @override
   Future<Result<bool>> createQuotation(SalesQuotation quotation) async {
     try {
+      if (kIsWeb) {
+        // Cloud-only fallback
+        final model = QuotationModel(
+          id: quotation.id,
+          customerId: quotation.customerId,
+          customerName: quotation.customerName,
+          date: quotation.date,
+          expiryDate: quotation.expiryDate,
+          items: quotation.items,
+          discount: quotation.discount,
+          status: quotation.status,
+        );
+        await sl.firebaseDb.setData('quotations/${quotation.id}', model.toJson());
+        return Result.success(true);
+      }
       final db = await localDatabase.database;
       final model = QuotationModel(
         id: quotation.id,
@@ -196,6 +252,7 @@ class SalesRepositoryImpl implements SalesRepository {
   @override
   Future<Result<List<SalesQuotation>>> getQuotations() async {
     try {
+      if (kIsWeb) return Result.success([]); // Mock quotations or fetch from Firebase
       final db = await localDatabase.database;
       final List<Map<String, dynamic>> maps = await db.query('quotations', orderBy: 'date DESC');
       return Result.success(maps.map((m) {
@@ -219,6 +276,7 @@ class SalesRepositoryImpl implements SalesRepository {
   @override
   Future<Result<bool>> convertQuotationToInvoice(String quotationId) async {
     try {
+      if (kIsWeb) return Result.error(ServerFailure('Quotation conversion not supported on Web yet'));
       final db = await localDatabase.database;
       final List<Map<String, dynamic>> maps = await db.query('quotations', where: 'id = ?', whereArgs: [quotationId]);
       if (maps.isEmpty) return Result.error(ServerFailure('Quotation not found'));
@@ -251,6 +309,7 @@ class SalesRepositoryImpl implements SalesRepository {
 
   @override
   Future<Result<bool>> processReturn(SalesReturn salesReturn) async {
+    if (kIsWeb) return Result.error(ServerFailure('Returns not supported on Web yet'));
     final db = await localDatabase.database;
     try {
       return await db.transaction((txn) async {
@@ -310,6 +369,7 @@ class SalesRepositoryImpl implements SalesRepository {
   @override
   Future<Result<List<SalesReturn>>> getReturns() async {
     try {
+      if (kIsWeb) return Result.success([]);
       final db = await localDatabase.database;
       final List<Map<String, dynamic>> maps = await db.query('returns', orderBy: 'date DESC');
       return Result.success(maps.map((m) {

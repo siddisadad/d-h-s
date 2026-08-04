@@ -5,5 +5,8 @@ class AppConfig {
   static String get baseUrl => devBaseUrl; // Default to dev
 
   // Set this to TRUE to bypass all backend network calls and use local mock data
-  static const bool useMocks = true;
+  static const bool useMocks = false;
+
+  // Set this to TRUE to use Firebase Realtime Database as the remote source
+  static const bool useFirebase = true;
 }

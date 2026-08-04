@@ -11,7 +11,7 @@ part 'pdf_service.g.dart';
 
 @riverpod
 class PdfService extends _$PdfService {
-  static const _brandColor = PdfColor.fromInt(0xFF0F4C81);
+  static const _brandColor = PdfColor.fromInt(0xFF6B4FA9);
   static const _accentColor = PdfColor.fromInt(0xFFF59E0B);
   
   // Business Details

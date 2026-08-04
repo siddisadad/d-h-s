@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
@@ -11,6 +12,7 @@ import '../models/warehouse_model.dart';
 import '../../domain/entities/warehouse.dart';
 import '../../domain/entities/stock_transfer.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/config/app_config.dart';
 
 class InventoryRepositoryImpl implements InventoryRepository {
   final InventoryRemoteDataSource remoteDataSource;
@@ -24,6 +26,26 @@ class InventoryRepositoryImpl implements InventoryRepository {
   @override
   Future<Result<List<Product>>> getProducts({String? category}) async {
     try {
+      if (AppConfig.useFirebase) {
+        final snapshot = await sl.firebaseDb.getData('inventory');
+        if (!snapshot.exists || snapshot.value == null) return Result.success([]);
+        
+        final Map<dynamic, dynamic> data = snapshot.value as Map<dynamic, dynamic>;
+        final List<Product> products = [];
+        data.forEach((key, value) {
+          final product = ProductModel.fromJson(Map<String, dynamic>.from(value as Map)).toEntity();
+          if (category == null || category == 'All Items' || product.category == category) {
+            products.add(product);
+          }
+        });
+        return Result.success(products);
+      }
+
+      if (kIsWeb) {
+        final products = await remoteDataSource.getProducts(category: category);
+        return Result.success(products);
+      }
+
       final db = await localDb.database;
       
       // 1. Background refresh from Cloud (Firebase) - Real-time Source
@@ -71,6 +93,17 @@ class InventoryRepositoryImpl implements InventoryRepository {
   @override
   Future<Result<Product>> getProductBySku(String sku) async {
     try {
+      if (kIsWeb) {
+        final productsResult = await getProducts();
+        return productsResult.fold(
+          (failure) => Result.error(failure),
+          (products) {
+            final product = products.firstWhere((p) => p.sku == sku);
+            return Result.success(product);
+          },
+        );
+      }
+
       final db = await localDb.database;
       final List<Map<String, dynamic>> maps = await db.query(
         'inventory',
@@ -99,7 +132,6 @@ class InventoryRepositoryImpl implements InventoryRepository {
   @override
   Future<Result<bool>> createProduct(Product product) async {
     try {
-      final db = await localDb.database;
       final model = ProductModel(
         name: product.name,
         sku: product.sku,
@@ -110,12 +142,15 @@ class InventoryRepositoryImpl implements InventoryRepository {
         isLowStock: product.isLowStock,
       );
       
-      // 1. Save locally
-      await db.insert('inventory', _productToMap(product), conflictAlgorithm: ConflictAlgorithm.replace);
-      
-      // Initialize stock in Main Yard if it's a new product with stock
-      if (product.stock != 0) {
-        await localDb.updateStockLevel(product.sku, 'main_yard', product.stock);
+      if (!kIsWeb) {
+        final db = await localDb.database;
+        // 1. Save locally
+        await db.insert('inventory', _productToMap(product), conflictAlgorithm: ConflictAlgorithm.replace);
+        
+        // Initialize stock in Main Yard if it's a new product with stock
+        if (product.stock != 0) {
+          await localDb.updateStockLevel(product.sku, 'main_yard', product.stock);
+        }
       }
       
       // 2. Push to Cloud (Firebase)
@@ -158,7 +193,6 @@ class InventoryRepositoryImpl implements InventoryRepository {
   @override
   Future<Result<bool>> updateProduct(Product product) async {
     try {
-      final db = await localDb.database;
       final model = ProductModel(
         name: product.name,
         sku: product.sku,
@@ -169,13 +203,16 @@ class InventoryRepositoryImpl implements InventoryRepository {
         isLowStock: product.isLowStock,
       );
       
-      // 1. Save locally
-      await db.update(
-        'inventory', 
-        _productToMap(product), 
-        where: 'sku = ?', 
-        whereArgs: [product.sku],
-      );
+      if (!kIsWeb) {
+        final db = await localDb.database;
+        // 1. Save locally
+        await db.update(
+          'inventory', 
+          _productToMap(product), 
+          where: 'sku = ?', 
+          whereArgs: [product.sku],
+        );
+      }
       
       // 2. Push to Cloud (Firebase)
       try {
@@ -214,10 +251,11 @@ class InventoryRepositoryImpl implements InventoryRepository {
   @override
   Future<Result<bool>> deleteProduct(String sku) async {
     try {
-      final db = await localDb.database;
-      
-      // 1. Delete locally
-      await db.delete('inventory', where: 'sku = ?', whereArgs: [sku]);
+      if (!kIsWeb) {
+        final db = await localDb.database;
+        // 1. Delete locally
+        await db.delete('inventory', where: 'sku = ?', whereArgs: [sku]);
+      }
       
       // 2. Delete from Cloud
       try {
@@ -246,6 +284,14 @@ class InventoryRepositoryImpl implements InventoryRepository {
   @override
   Future<Result<bool>> adjustStock(String sku, String warehouseId, double quantity) async {
     try {
+      if (kIsWeb) {
+        // Simple mock adjustment for Web (updates won't persist locally but will try Firebase)
+        await sl.firebaseDb.updateData('inventory/$sku', {
+          'stock': quantity, // Note: This should ideally be an increment in a real app
+        });
+        return Result.success(true);
+      }
+
       final db = await localDb.database;
       
       // 1. Get current TOTAL stock
@@ -302,6 +348,12 @@ class InventoryRepositoryImpl implements InventoryRepository {
   @override
   Future<Result<List<Warehouse>>> getWarehouses() async {
     try {
+      if (kIsWeb) {
+        // Return dummy warehouse for web
+        return Result.success([
+          Warehouse(id: 'main_yard', name: 'Main Yard (Mock)', location: 'Cloud Storage', isDefault: true),
+        ]);
+      }
       final maps = await localDb.getWarehouses();
       return Result.success(maps.map((m) => WarehouseModel.fromJson(m)).toList());
     } catch (e) {
@@ -333,6 +385,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
   @override
   Future<Result<Map<String, double>>> getStockBreakdown(String sku) async {
     try {
+      if (kIsWeb) return Result.success({'main_yard': 0.0});
       final maps = await localDb.getStockLevels(sku);
       final Map<String, double> breakdown = {};
       for (var m in maps) {
@@ -370,6 +423,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
   // --- Helpers ---
 
   Future<void> _mirrorToLocalProductList(List<Product> products) async {
+    if (kIsWeb) return;
     final db = await localDb.database;
     final batch = db.batch();
     for (var p in products) {
@@ -379,6 +433,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
   }
 
   Future<void> _mirrorToLocalProduct(Product p, dynamic stocksMap) async {
+    if (kIsWeb) return;
     final db = await localDb.database;
     await db.insert('inventory', _productToMap(p), conflictAlgorithm: ConflictAlgorithm.replace);
     

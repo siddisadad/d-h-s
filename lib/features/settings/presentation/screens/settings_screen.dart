@@ -7,6 +7,7 @@ import 'package:deshmukh_steel_e_r_p/core/design_system/theme/app_theme.dart';
 import 'package:deshmukh_steel_e_r_p/features/authentication/presentation/providers/auth_provider.dart';
 import 'package:deshmukh_steel_e_r_p/core/providers/app_bar_provider.dart';
 import 'package:deshmukh_steel_e_r_p/core/providers/theme_provider.dart';
+import 'package:deshmukh_steel_e_r_p/.artifacts/a552a74c-7194-45c7-885b-c3ead5813cab/scratch/seed_firebase.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -123,6 +124,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               leadingIconColor: context.colorScheme.error,
               leadingBackgroundColor: context.colorScheme.error.withValues(alpha: 0.1),
               onTap: () => ref.read(authProvider.notifier).logout(),
+            ),
+          ],
+        ),
+        SettingsGroupWidget(
+          title: 'Developer Tools',
+          children: [
+            BaseListItem(
+              title: 'Seed Firebase Database',
+              subtitle: 'Populate cloud DB with dummy data',
+              leadingIcon: Icons.cloud_upload_rounded,
+              showDivider: false,
+              onTap: () async {
+                 try {
+                   await FirebaseSeeder.seed();
+                   if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Database Seeded Successfully')));
+                 } catch (e) {
+                   if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Seeding Failed: $e'), backgroundColor: Colors.red));
+                 }
+              },
             ),
           ],
         ),

@@ -1,12 +1,12 @@
 # UI Design System: DCI ERP
 
 ## 1.1 Visual Identity
-The DCI ERP UI follows a **Material 3** "Industrial Blue" design system. It is designed to prioritize legibility in high-brightness outdoor environments (e.g., steel yards).
+The DCI ERP UI follows a **Material 3** "Industrial Purple" design system. It is designed to prioritize legibility in high-brightness outdoor environments (e.g., steel yards).
 
 ## 1.2 Color Palette
 
-### Primary (Industrial Blue)
-- **Hex**: `#0F4C81`
+### Primary (Industrial Purple)
+- **Hex**: `#6B4FA9`
 - **Usage**: App bars, primary buttons, headers.
 
 ### Accent (Industrial Amber)

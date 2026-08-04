@@ -1,6 +1,7 @@
-- [x] Create root `.gitignore` file
-- [x] Delete `lib.zip`
-- [x] Delete `debug_log.txt`
-- [x] Delete `d-h-s.iml`
-- [x] Delete `.flutter-plugins-dependencies`
-- [x] Verify cleanup
+- [x] Fix CRM Repository CRUD for Web
+- [x] Fix Inventory Repository CRUD for Web
+- [x] Fix Purchase Repository CRUD for Web
+- [x] Fix Sales Repository CRUD for Web
+- [x] Fix Analytics Repository for Web
+- [x] Disable Sync Service on Web
+- [/] Verify CRUD operations on Web (Mock mode)

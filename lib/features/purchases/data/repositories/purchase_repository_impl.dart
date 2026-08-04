@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
@@ -22,6 +23,10 @@ class PurchaseRepositoryImpl implements PurchaseRepository {
   @override
   Future<Result<List<PurchaseOrder>>> getRecentPurchases() async {
     try {
+      if (kIsWeb) {
+        final remote = await remoteDataSource.getRecentPurchases();
+        return Result.success(remote);
+      }
       final db = await localDatabase.database;
       _refreshPurchasesInBackground();
 
@@ -48,6 +53,29 @@ class PurchaseRepositoryImpl implements PurchaseRepository {
   @override
   Future<Result<bool>> createPurchase(PurchaseOrder purchase) async {
     try {
+      if (kIsWeb) {
+        // Only Cloud Operations on Web
+        try {
+          final model = PurchaseModel(
+            id: purchase.id,
+            supplierId: purchase.supplierId,
+            supplierName: purchase.supplierName,
+            date: purchase.date,
+            items: purchase.items,
+            discount: purchase.discount,
+            status: purchase.status,
+          );
+          await sl.firebaseDb.setData('purchases/${purchase.id}', model.toJson());
+          await sl.firebaseDb.pushData('activities', {
+            'id': purchase.id,
+            'title': 'New Purchase Recorded (Web)',
+            'subtitle': '${purchase.supplierName} - ₹${purchase.grandTotal.toStringAsFixed(0)}',
+            'timestamp': DateTime.now().millisecondsSinceEpoch,
+            'type': 'purchase',
+          });
+        } catch (_) {}
+        return Result.success(true);
+      }
       final db = await localDatabase.database;
       return await db.transaction((txn) async {
         final model = PurchaseModel(
@@ -125,6 +153,7 @@ class PurchaseRepositoryImpl implements PurchaseRepository {
   }
 
   Future<void> _refreshPurchasesInBackground() async {
+    if (kIsWeb) return;
     try {
       final remote = await remoteDataSource.getRecentPurchases();
       final db = await localDatabase.database;

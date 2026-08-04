@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:deshmukh_steel_e_r_p/core/error/failures.dart';
 import 'package:deshmukh_steel_e_r_p/core/error/result.dart';
 import 'package:deshmukh_steel_e_r_p/features/analytics/domain/entities/report_item.dart';
@@ -12,6 +13,11 @@ class AnalyticsRepositoryImpl implements AnalyticsRepository {
   @override
   Future<Result<List<ReportItem>>> getRecentReports() async {
     try {
+      if (kIsWeb) {
+        return Result.success([
+          ReportItem(title: 'Monthly Sales (Mock)', date: _getCurrentMonth(), type: 'PDF', summary: 'Preview data for Web demo.'),
+        ]);
+      }
       final db = await localDatabase.database;
       
       // Calculate real stats for the summary report

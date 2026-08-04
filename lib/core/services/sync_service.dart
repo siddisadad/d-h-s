@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../config/app_config.dart';
 import '../database/local_database.dart';
@@ -21,6 +22,10 @@ class SyncService extends _$SyncService {
 
   @override
   bool build() {
+    if (kIsWeb) {
+      Log.i('🛠️ Sync Service: Disabled on Web platform', name: 'Sync');
+      return false;
+    }
     _localDb = LocalDatabase();
     _apiClient = ref.read(apiClientProvider);
 
@@ -131,6 +136,7 @@ class SyncService extends _$SyncService {
   }
 
   Future<void> processQueue() async {
+    if (kIsWeb) return;
     if (_isSyncing) return;
     _isSyncing = true;
     state = true;

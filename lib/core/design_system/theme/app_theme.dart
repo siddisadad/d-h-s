@@ -5,7 +5,7 @@ import 'design_tokens.dart';
 
 // Private Color Palette
 class _Palette {
-  static const Color primary = Color(0xFF0F4C81);
+  static const Color primary = Color(0xFF6B4FA9);
   static const Color secondary = Color(0xFF64748B);
   static const Color accent = Color(0xFFF59E0B);
   static const Color success = Color(0xFF16A34A);
@@ -23,21 +23,21 @@ class _Palette {
   static const Color darkBackground = Color(0xFF020617);
   static const Color darkSurface = Color(0xFF0F172A);
   static const Color darkCard = Color(0xFF1E293B);
-  static const Color darkPrimary = Color(0xFF60A5FA);
+  static const Color darkPrimary = Color(0xFFD0BCFF);
   static const Color darkText = Color(0xFFF8FAFC);
   static const Color darkTextSecondary = Color(0xFF94A3B8);
   static const Color darkError = Color(0xFFF87171);
 
   // Surface Containers
   static const Color surfaceContainer = Color(0xFFF1F5F9);
-  static const Color primaryContainer = Color(0xFFD1E3F3);
-  static const Color onPrimaryContainer = Color(0xFF062D50);
+  static const Color primaryContainer = Color(0xFFEADDFF);
+  static const Color onPrimaryContainer = Color(0xFF21005D);
   static const Color secondaryContainer = Color(0xFFE2E8F0);
   static const Color onSecondaryContainer = Color(0xFF1E293B);
 
   // Dark Containers
-  static const Color darkPrimaryContainer = Color(0xFF1E3A8A);
-  static const Color darkOnPrimaryContainer = Color(0xFFDBEAFE);
+  static const Color darkPrimaryContainer = Color(0xFF4F378B);
+  static const Color darkOnPrimaryContainer = Color(0xFFEADDFF);
   static const Color darkSecondaryContainer = Color(0xFF334155);
   static const Color darkOnSecondaryContainer = Color(0xFFF1F5F9);
 }
