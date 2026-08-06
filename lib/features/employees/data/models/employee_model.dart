@@ -8,6 +8,7 @@ class EmployeeModel extends Employee {
     required super.email,
     required super.phone,
     required super.salary,
+    required super.lastUpdated,
     super.attendanceStatus,
   });
 
@@ -20,18 +21,14 @@ class EmployeeModel extends Employee {
       phone: json['phone'] as String,
       salary: json['salary'] as String,
       attendanceStatus: json['attendanceStatus'] as String? ?? 'Present',
+      lastUpdated: json['lastUpdated'] as int? ?? 0,
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'name': name,
-      'role': role,
-      'email': email,
-      'phone': phone,
-      'salary': salary,
-      'attendanceStatus': attendanceStatus,
+      ...super.toMap(),
     };
   }
 }

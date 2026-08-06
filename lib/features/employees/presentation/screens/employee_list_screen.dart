@@ -7,6 +7,7 @@ import 'package:deshmukh_steel_e_r_p/core/widgets/custom_card.dart';
 import 'package:deshmukh_steel_e_r_p/core/widgets/permission_wrapper.dart';
 import 'package:deshmukh_steel_e_r_p/core/security/permissions.dart';
 import 'package:deshmukh_steel_e_r_p/core/providers/app_bar_provider.dart';
+import 'package:intl/intl.dart';
 import '../providers/employee_provider.dart';
 import '../../domain/entities/employee.dart';
 
@@ -34,12 +35,38 @@ class EmployeeListScreen extends ConsumerWidget {
     });
 
     return employeesAsync.when(
-      data: (employees) => ListView.separated(
-        padding: EdgeInsets.all(tokens.space24),
-        itemCount: employees.length,
-        separatorBuilder: (context, index) => SizedBox(height: tokens.space16),
-        itemBuilder: (context, index) => _buildEmployeeCard(context, ref, employees[index]),
-      ),
+      data: (employees) {
+        final lastSync = employees.isEmpty
+            ? null
+            : employees.map((e) => e.lastUpdated).reduce((a, b) => a > b ? a : b);
+
+        return Column(
+          children: [
+            if (lastSync != null && lastSync > 0)
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: tokens.space24, vertical: tokens.space8),
+                child: Row(
+                  children: [
+                    Icon(Icons.sync_rounded, size: 14, color: context.colorScheme.onSurfaceVariant),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Last Sync: ${DateFormat('dd MMM, hh:mm a').format(DateTime.fromMillisecondsSinceEpoch(lastSync))}',
+                      style: context.textTheme.labelSmall?.copyWith(color: context.colorScheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+            Expanded(
+              child: ListView.separated(
+                padding: EdgeInsets.all(tokens.space24),
+                itemCount: employees.length,
+                separatorBuilder: (context, index) => SizedBox(height: tokens.space16),
+                itemBuilder: (context, index) => _buildEmployeeCard(context, ref, employees[index]),
+              ),
+            ),
+          ],
+        );
+      },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, s) => Center(child: Text('Error: $e')),
     );

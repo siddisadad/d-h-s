@@ -12,6 +12,7 @@ class SalesQuotation {
   final List<InvoiceItem> items;
   final double discount;
   final QuotationStatus status;
+  final int lastUpdated;
 
   SalesQuotation({
     required this.id,
@@ -22,6 +23,7 @@ class SalesQuotation {
     required this.items,
     required this.discount,
     this.status = QuotationStatus.pending,
+    this.lastUpdated = 0,
   });
 
   double get subtotal => items.fold(0, (sum, item) => sum + item.subtotal);
@@ -35,10 +37,11 @@ class SalesQuotation {
       'customerName': customerName,
       'date': date.millisecondsSinceEpoch,
       'expiryDate': expiryDate.millisecondsSinceEpoch,
-      'items': items.map((i) => (i as InvoiceItemModel).toJson()).toList(),
+      'items': items.map((i) => InvoiceItemModel.fromEntity(i).toJson()).toList(),
       'discount': discount,
       'status': status.name,
       'grandTotal': grandTotal,
+      'lastUpdated': lastUpdated,
     };
   }
 
@@ -53,6 +56,7 @@ class SalesQuotation {
       items: itemsJson.map((i) => InvoiceItemModel.fromJson(i)).toList(),
       discount: (json['discount'] as num).toDouble(),
       status: QuotationStatus.values.byName(json['status']),
+      lastUpdated: json['lastUpdated'] as int? ?? 0,
     );
   }
 }

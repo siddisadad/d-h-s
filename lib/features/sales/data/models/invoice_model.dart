@@ -8,6 +8,7 @@ class InvoiceModel extends SalesInvoice {
     required super.customerName,
     required super.date,
     required super.items,
+    required super.lastUpdated,
     super.discount,
   });
 
@@ -16,11 +17,14 @@ class InvoiceModel extends SalesInvoice {
       id: json['id'] as String,
       customerId: json['customerId'] as String,
       customerName: json['customerName'] as String,
-      date: DateTime.parse(json['date'] as String),
+      date: json['date'] is String
+          ? DateTime.parse(json['date'] as String)
+          : DateTime.fromMillisecondsSinceEpoch(json['date'] as int),
       items: (json['items'] as List)
           .map((i) => InvoiceItemModel.fromJson(i as Map<String, dynamic>))
           .toList(),
       discount: (json['discount'] as num?)?.toDouble() ?? 0.0,
+      lastUpdated: json['lastUpdated'] as int? ?? 0,
     );
   }
 
@@ -29,9 +33,10 @@ class InvoiceModel extends SalesInvoice {
       'id': id,
       'customerId': customerId,
       'customerName': customerName,
-      'date': date.toIso8601String(),
+      'date': date.millisecondsSinceEpoch,
       'items': items.map((i) => InvoiceItemModel.fromEntity(i).toJson()).toList(),
       'discount': discount,
+      'lastUpdated': lastUpdated,
     };
   }
 }

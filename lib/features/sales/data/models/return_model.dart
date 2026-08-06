@@ -11,6 +11,7 @@ class ReturnModel extends SalesReturn {
     required super.items,
     required super.reason,
     required super.grandTotal,
+    required super.lastUpdated,
   });
 
   factory ReturnModel.fromJson(Map<String, dynamic> json) {
@@ -23,6 +24,14 @@ class ReturnModel extends SalesReturn {
       items: (json['items'] as List).map((i) => InvoiceItemModel.fromJson(i)).toList(),
       reason: json['reason'],
       grandTotal: (json['grandTotal'] as num).toDouble(),
+      lastUpdated: json['lastUpdated'] as int? ?? 0,
     );
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      ...super.toJson(),
+    };
   }
 }

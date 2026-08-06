@@ -124,7 +124,7 @@ class SyncService extends _$SyncService {
       if (kIsWeb) return;
       data.forEach((key, value) async {
         final Map<String, dynamic> rMap = Map<String, dynamic>.from(value as Map);
-        await _localDb.saveReturn(rMap..['returnedItems'] = jsonEncode(rMap['returnedItems']));
+        await _localDb.saveReturn(rMap..['items'] = jsonEncode(rMap['items']));
       });
       Log.d('✓ Returns synced from Cloud', name: 'Sync');
     }));
@@ -137,10 +137,7 @@ class SyncService extends _$SyncService {
       final employees = <Map<String, dynamic>>[];
       data.forEach((key, value) {
         final model = EmployeeModel.fromJson(Map<String, dynamic>.from(value as Map));
-        employees.add({
-          ...model.toJson(),
-          'lastUpdated': DateTime.now().millisecondsSinceEpoch,
-        });
+        employees.add(model.toJson());
       });
 
       if (!kIsWeb) {
@@ -166,6 +163,7 @@ class SyncService extends _$SyncService {
           'discount': model.discount,
           'grandTotal': model.grandTotal,
           'items': jsonEncode(invMap['items']),
+          'lastUpdated': model.lastUpdated,
         });
       });
       Log.d('✓ Sales synced from Cloud', name: 'Sync');
@@ -189,6 +187,7 @@ class SyncService extends _$SyncService {
           'totalAmount': model.grandTotal,
           'status': model.status,
           'items': jsonEncode(purMap['items']),
+          'lastUpdated': model.lastUpdated,
         });
       });
       Log.d('✓ Purchases synced from Cloud', name: 'Sync');
@@ -204,11 +203,13 @@ class SyncService extends _$SyncService {
         final Map<String, dynamic> finMap = Map<String, dynamic>.from(value as Map);
         final model = TransactionModel.fromJson(finMap);
         await _localDb.saveFinanceEntry({
+          'id': model.id,
           'title': model.title,
           'category': model.category,
           'amount': model.amount,
           'date': model.date.millisecondsSinceEpoch,
           'paymentMode': model.paymentMode,
+          'lastUpdated': model.lastUpdated,
         });
       });
       Log.d('✓ Finance synced from Cloud', name: 'Sync');
@@ -295,7 +296,7 @@ List<Map<String, dynamic>> _parseInventoryData(Map data) {
       'unit': model.unit,
       'isLowStock': model.isLowStock ? 1 : 0,
       'hsnCode': model.hsnCode,
-      'lastUpdated': DateTime.now().millisecondsSinceEpoch,
+      'lastUpdated': model.lastUpdated,
     });
   });
   return products;
@@ -315,7 +316,7 @@ List<Map<String, dynamic>> _parseContactData(Map data) {
       'creditLimit': model.creditLimit,
       'location': model.location,
       'type': model.type.name,
-      'lastUpdated': DateTime.now().millisecondsSinceEpoch,
+      'lastUpdated': model.lastUpdated,
     });
   });
   return contacts;

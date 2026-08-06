@@ -106,6 +106,7 @@ class InvoiceItemsList extends ConsumerWidget {
                           ref.read(salesInvoiceNotifierProvider.notifier).addItem(InvoiceItem(
                             name: p.name,
                             sku: p.sku,
+                            hsnCode: p.hsnCode,
                             price: p.price,
                             qty: 1,
                             gstRate: 18,
@@ -155,18 +156,18 @@ class InvoiceItemsList extends ConsumerWidget {
       padding: EdgeInsets.all(tokens.space12),
       child: Row(
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(item.name, style: context.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
-                Text(
-                  '₹${item.price.toStringAsFixed(2)} x ${item.qty}',
-                  style: context.textTheme.bodySmall,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(item.name, style: context.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+                    Text(
+                      '₹${item.price.toStringAsFixed(2)} x ${item.qty}${item.hsnCode != null ? ' • HSN: ${item.hsnCode}' : ''}',
+                      style: context.textTheme.bodySmall,
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -379,6 +380,7 @@ class _ProductSelectionSheet extends ConsumerWidget {
                       ref.read(salesInvoiceNotifierProvider.notifier).addItem(InvoiceItem(
                         name: p.name,
                         sku: p.sku,
+                        hsnCode: p.hsnCode,
                         price: p.price,
                         qty: 1,
                         gstRate: 18,

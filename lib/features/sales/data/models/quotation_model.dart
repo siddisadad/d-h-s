@@ -10,6 +10,7 @@ class QuotationModel extends SalesQuotation {
     required super.expiryDate,
     required super.items,
     required super.discount,
+    required super.lastUpdated,
     super.status,
   });
 
@@ -23,20 +24,14 @@ class QuotationModel extends SalesQuotation {
       items: (json['items'] as List).map((i) => InvoiceItemModel.fromJson(i)).toList(),
       discount: (json['discount'] as num).toDouble(),
       status: QuotationStatus.values.firstWhere((e) => e.name == json['status'], orElse: () => QuotationStatus.pending),
+      lastUpdated: json['lastUpdated'] as int? ?? 0,
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'customerId': customerId,
-      'customerName': customerName,
-      'date': date.millisecondsSinceEpoch,
-      'expiryDate': expiryDate.millisecondsSinceEpoch,
-      'items': items.map((i) => (i as InvoiceItemModel).toJson()).toList(),
-      'discount': discount,
-      'status': status.name,
-      'grandTotal': grandTotal,
+      ...super.toJson(),
     };
   }
 }

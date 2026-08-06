@@ -6,6 +6,7 @@ class Employee {
   final String phone;
   final String salary;
   final String attendanceStatus; // Present, Absent, On Leave
+  final int lastUpdated;
 
   Employee({
     required this.id,
@@ -15,6 +16,7 @@ class Employee {
     required this.phone,
     required this.salary,
     this.attendanceStatus = 'Present',
+    this.lastUpdated = 0,
   });
 
   Map<String, dynamic> toMap() {
@@ -26,6 +28,7 @@ class Employee {
       'phone': phone,
       'salary': salary,
       'attendanceStatus': attendanceStatus,
+      'lastUpdated': lastUpdated,
     };
   }
 
@@ -38,6 +41,7 @@ class Employee {
       phone: map['phone'],
       salary: map['salary'],
       attendanceStatus: map['attendanceStatus'] ?? 'Present',
+      lastUpdated: map['lastUpdated'] ?? 0,
     );
   }
 }

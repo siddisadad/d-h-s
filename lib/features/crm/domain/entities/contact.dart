@@ -11,6 +11,7 @@ class Contact {
   final String location;
   final ContactType type;
   final DateTime? lastReminderSent;
+  final int lastUpdated;
 
   const Contact({
     required this.id,
@@ -23,5 +24,6 @@ class Contact {
     required this.location,
     required this.type,
     this.lastReminderSent,
+    this.lastUpdated = 0,
   });
 }

@@ -8,6 +8,7 @@ class ContactModel extends Contact {
     required super.contact,
     required super.gstin,
     required super.balance,
+    required super.lastUpdated,
     super.creditLimit = 0.0,
     required super.location,
     required super.type,
@@ -28,6 +29,7 @@ class ContactModel extends Contact {
       lastReminderSent: json['lastReminderSent'] != null
           ? DateTime.fromMillisecondsSinceEpoch(json['lastReminderSent'] as int)
           : null,
+      lastUpdated: json['lastUpdated'] as int? ?? 0,
     );
   }
 
@@ -43,6 +45,7 @@ class ContactModel extends Contact {
       'location': location,
       'type': type == ContactType.supplier ? 'supplier' : 'customer',
       'lastReminderSent': lastReminderSent?.millisecondsSinceEpoch,
+      'lastUpdated': lastUpdated,
     };
   }
 }

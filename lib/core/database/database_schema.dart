@@ -186,13 +186,55 @@ class DatabaseSchema {
         Log.w('Column creditLimit already exists in contacts');
       }
     }
-    if (oldVersion < 11) {
-      Log.i('Migrating to v11: Adding Payment Reminder Field', name: 'Database');
-      try {
-        await db.execute('ALTER TABLE contacts ADD COLUMN lastReminderSent INTEGER');
-      } catch (e) {
-        Log.w('Column lastReminderSent already exists in contacts');
+    if (oldVersion < 12) {
+      Log.i('Migrating to v12: Global Standardization (lastUpdated & String IDs)', name: 'Database');
+
+      // Update Finance Entries
+      await db.execute('ALTER TABLE finance_entries RENAME TO finance_entries_old');
+      await db.execute('''
+        CREATE TABLE finance_entries (
+          id TEXT PRIMARY KEY,
+          title TEXT NOT NULL,
+          category TEXT NOT NULL,
+          amount REAL NOT NULL,
+          date INTEGER NOT NULL,
+          paymentMode TEXT NOT NULL,
+          lastUpdated INTEGER NOT NULL
+        )
+      ''');
+      final finance = await db.query('finance_entries_old');
+      for (var row in finance) {
+        await db.insert('finance_entries', {
+          'id': 'FIN-${row['id']}-${DateTime.now().millisecondsSinceEpoch}',
+          'title': row['title'],
+          'category': row['category'],
+          'amount': row['amount'],
+          'date': row['date'],
+          'paymentMode': row['paymentMode'],
+          'lastUpdated': DateTime.now().millisecondsSinceEpoch,
+        });
       }
+      await db.execute('DROP TABLE finance_entries_old');
+
+      // Update Quotations
+      try {
+        await db.execute('ALTER TABLE quotations ADD COLUMN lastUpdated INTEGER DEFAULT 0');
+      } catch (_) {}
+
+      // Update Returns
+      try {
+        await db.execute('ALTER TABLE returns ADD COLUMN lastUpdated INTEGER DEFAULT 0');
+      } catch (_) {}
+
+      // Update Sales
+      try {
+        await db.execute('ALTER TABLE sales ADD COLUMN lastUpdated INTEGER DEFAULT 0');
+      } catch (_) {}
+
+      // Update Purchases
+      try {
+        await db.execute('ALTER TABLE purchases ADD COLUMN lastUpdated INTEGER DEFAULT 0');
+      } catch (_) {}
     }
   }
 
@@ -247,7 +289,8 @@ class DatabaseSchema {
         date INTEGER NOT NULL,
         discount REAL NOT NULL,
         grandTotal REAL NOT NULL,
-        items TEXT NOT NULL
+        items TEXT NOT NULL,
+        lastUpdated INTEGER NOT NULL
       )
     ''');
 
@@ -267,12 +310,13 @@ class DatabaseSchema {
 
     await db.execute('''
       CREATE TABLE IF NOT EXISTS finance_entries (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id TEXT PRIMARY KEY,
         title TEXT NOT NULL,
         category TEXT NOT NULL,
         amount REAL NOT NULL,
         date INTEGER NOT NULL,
-        paymentMode TEXT NOT NULL
+        paymentMode TEXT NOT NULL,
+        lastUpdated INTEGER NOT NULL
       )
     ''');
 
@@ -298,7 +342,8 @@ class DatabaseSchema {
         discount REAL NOT NULL,
         totalAmount REAL NOT NULL,
         status TEXT NOT NULL,
-        items TEXT NOT NULL
+        items TEXT NOT NULL,
+        lastUpdated INTEGER NOT NULL
       )
     ''');
 
@@ -312,7 +357,8 @@ class DatabaseSchema {
         discount REAL NOT NULL,
         grandTotal REAL NOT NULL,
         status TEXT NOT NULL,
-        items TEXT NOT NULL
+        items TEXT NOT NULL,
+        lastUpdated INTEGER NOT NULL
       )
     ''');
 
@@ -325,7 +371,8 @@ class DatabaseSchema {
         date INTEGER NOT NULL,
         grandTotal REAL NOT NULL,
         reason TEXT NOT NULL,
-        items TEXT NOT NULL
+        items TEXT NOT NULL,
+        lastUpdated INTEGER NOT NULL
       )
     ''');
 

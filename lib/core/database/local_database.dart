@@ -69,7 +69,7 @@ class LocalDatabase {
 
     return await openDatabase(
       path,
-      version: 11,
+      version: 12,
       onCreate: DatabaseSchema.create,
       onUpgrade: DatabaseSchema.upgrade,
     );

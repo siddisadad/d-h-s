@@ -10,6 +10,7 @@ class SalesReturn {
   final List<InvoiceItem> items;
   final String reason;
   final double grandTotal;
+  final int lastUpdated;
 
   SalesReturn({
     required this.id,
@@ -20,6 +21,7 @@ class SalesReturn {
     required this.items,
     required this.reason,
     required this.grandTotal,
+    this.lastUpdated = 0,
   });
 
   Map<String, dynamic> toJson() {
@@ -29,9 +31,10 @@ class SalesReturn {
       'customerId': customerId,
       'customerName': customerName,
       'date': date.millisecondsSinceEpoch,
-      'items': items.map((i) => (i as InvoiceItemModel).toJson()).toList(),
+      'items': items.map((i) => InvoiceItemModel.fromEntity(i).toJson()).toList(),
       'reason': reason,
       'grandTotal': grandTotal,
+      'lastUpdated': lastUpdated,
     };
   }
 
@@ -46,6 +49,7 @@ class SalesReturn {
       items: itemsJson.map((i) => InvoiceItemModel.fromJson(i)).toList(),
       reason: json['reason'],
       grandTotal: (json['grandTotal'] as num).toDouble(),
+      lastUpdated: json['lastUpdated'] as int? ?? 0,
     );
   }
 }

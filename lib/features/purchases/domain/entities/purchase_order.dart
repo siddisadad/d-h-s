@@ -8,6 +8,7 @@ class PurchaseOrder {
   final List<PurchaseItem> items;
   final double discount;
   final String status;
+  final int lastUpdated;
 
   PurchaseOrder({
     required this.id,
@@ -17,6 +18,7 @@ class PurchaseOrder {
     required this.items,
     this.discount = 0.0,
     required this.status,
+    this.lastUpdated = 0,
   });
 
   double get subtotal => items.fold(0.0, (sum, item) => sum + item.subtotal);

@@ -8,6 +8,7 @@ class PurchaseModel extends PurchaseOrder {
     required super.supplierName,
     required super.date,
     required super.items,
+    required super.lastUpdated,
     super.discount,
     required super.status,
   });
@@ -17,12 +18,15 @@ class PurchaseModel extends PurchaseOrder {
       id: json['id'] as String,
       supplierId: json['supplierId'] as String,
       supplierName: json['supplierName'] as String,
-      date: DateTime.parse(json['date'] as String),
+      date: json['date'] is String
+          ? DateTime.parse(json['date'] as String)
+          : DateTime.fromMillisecondsSinceEpoch(json['date'] as int),
       items: (json['items'] as List)
           .map((i) => PurchaseItemModel.fromJson(i as Map<String, dynamic>))
           .toList(),
       discount: (json['discount'] as num?)?.toDouble() ?? 0.0,
       status: json['status'] as String,
+      lastUpdated: json['lastUpdated'] as int? ?? 0,
     );
   }
 
@@ -31,10 +35,11 @@ class PurchaseModel extends PurchaseOrder {
       'id': id,
       'supplierId': supplierId,
       'supplierName': supplierName,
-      'date': date.toIso8601String(),
+      'date': date.millisecondsSinceEpoch,
       'items': items.map((i) => PurchaseItemModel.fromEntity(i).toJson()).toList(),
       'discount': discount,
       'status': status,
+      'lastUpdated': lastUpdated,
     };
   }
 }

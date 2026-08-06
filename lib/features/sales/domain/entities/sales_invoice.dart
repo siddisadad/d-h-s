@@ -7,6 +7,7 @@ class SalesInvoice {
   final DateTime date;
   final List<InvoiceItem> items;
   final double discount;
+  final int lastUpdated;
 
   SalesInvoice({
     required this.id,
@@ -15,6 +16,7 @@ class SalesInvoice {
     required this.date,
     required this.items,
     this.discount = 0.0,
+    this.lastUpdated = 0,
   });
 
   double get subtotal => items.fold(0.0, (sum, item) => sum + item.subtotal);
