@@ -25,6 +25,9 @@ class BarcodeScannerScreen extends ConsumerStatefulWidget {
 class _BarcodeScannerScreenState extends ConsumerState<BarcodeScannerScreen> {
   late MobileScannerController controller;
   bool isScanning = true;
+  bool isBulkMode = false;
+  final Map<String, int> bulkScans = {};
+  Warehouse? selectedBulkWarehouse;
 
   @override
   void initState() {
@@ -49,6 +52,11 @@ class _BarcodeScannerScreenState extends ConsumerState<BarcodeScannerScreen> {
 
     setState(() => isScanning = false);
     debugPrint('🔍 Barcode detected: $code');
+
+    if (isBulkMode) {
+      _handleBulkScan(code);
+      return;
+    }
 
     final productsAsync = ref.read(inventoryNotifierProvider);
     
@@ -107,7 +115,7 @@ class _BarcodeScannerScreenState extends ConsumerState<BarcodeScannerScreen> {
                        selectedWarehouse = list.firstWhere((w) => w.isDefault, orElse: () => list.first);
                     }
                     return DropdownButtonFormField<Warehouse>(
-                      value: selectedWarehouse,
+                      initialValue: selectedWarehouse,
                       items: list.map((w) => DropdownMenuItem(value: w, child: Text(w.name))).toList(),
                       onChanged: (val) => selectedWarehouse = val,
                       decoration: const InputDecoration(contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
@@ -192,6 +200,24 @@ class _BarcodeScannerScreenState extends ConsumerState<BarcodeScannerScreen> {
       appBar: AppBar(
         title: Text(widget.isAuditMode ? 'RAPID STOCK AUDIT' : 'SCAN BARCODE'),
         actions: [
+          if (widget.isAuditMode)
+            Row(
+              children: [
+                const Text('BULK', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                Switch(
+                  value: isBulkMode,
+                  onChanged: (val) {
+                    setState(() {
+                      isBulkMode = val;
+                      isScanning = true;
+                    });
+                    if (val && selectedBulkWarehouse == null) {
+                      _showBulkWarehouseSelection();
+                    }
+                  },
+                ),
+              ],
+            ),
           IconButton(
             icon: const Icon(Icons.flash_on_rounded),
             onPressed: () => controller.toggleTorch(),
@@ -209,10 +235,149 @@ class _BarcodeScannerScreenState extends ConsumerState<BarcodeScannerScreen> {
             onDetect: _onDetect,
           ),
           ScannerOverlay(
-            label: widget.isAuditMode ? 'Scan item to adjust stock' : 'Align barcode within the frame',
+            label: isBulkMode
+              ? 'Bulk Mode Active: Scan items for ${selectedBulkWarehouse?.name ?? "..."}'
+              : (widget.isAuditMode ? 'Scan item to adjust stock' : 'Align barcode within the frame'),
           ),
+          if (isBulkMode && bulkScans.isNotEmpty)
+            Positioned(
+              bottom: 20,
+              left: 20,
+              right: 20,
+              child: _buildBulkStatusCard(),
+            ),
         ],
       ),
     );
+  }
+
+  void _handleBulkScan(String code) {
+    final productsAsync = ref.read(inventoryNotifierProvider);
+    productsAsync.whenData((products) {
+      final matches = products.where((p) => p.sku.toUpperCase() == code.toUpperCase());
+      if (matches.isNotEmpty) {
+        setState(() {
+          bulkScans[code] = (bulkScans[code] ?? 0) + 1;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Added ${matches.first.name} (Total: ${bulkScans[code]})'),
+            duration: const Duration(milliseconds: 500),
+          ),
+        );
+      } else {
+        _handleNoMatch(code);
+      }
+      // Resume scanning after a short delay
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if (mounted) setState(() => isScanning = true);
+      });
+    });
+  }
+
+  void _showBulkWarehouseSelection() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Bulk Audit Yard'),
+        content: Consumer(
+          builder: (context, ref, _) {
+            final warehousesAsync = ref.watch(warehouseNotifierProvider);
+            return warehousesAsync.when(
+              data: (list) => DropdownButtonFormField<Warehouse>(
+                hint: const Text('Select target yard'),
+                items: list.map((w) => DropdownMenuItem(value: w, child: Text(w.name))).toList(),
+                onChanged: (val) => setState(() => selectedBulkWarehouse = val),
+              ),
+              loading: () => const CircularProgressIndicator(),
+              error: (e, s) => Text('Error: $e'),
+            );
+          },
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK')),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBulkStatusCard() {
+    return Card(
+      color: Colors.black87,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('SESSIONS SCANS: ${bulkScans.length} items', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                Text('Total Units: ${bulkScans.values.fold(0, (a, b) => a + b)}', style: const TextStyle(color: Colors.white70, fontSize: 10)),
+              ],
+            ),
+            const Spacer(),
+            TextButton(
+              onPressed: () => _showReviewSheet(),
+              child: const Text('REVIEW', style: TextStyle(color: Colors.blue)),
+            ),
+            ElevatedButton(
+              onPressed: () => _commitBulkAudit(),
+              child: const Text('COMMIT'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showReviewSheet() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            const Text('BULK AUDIT REVIEW', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Divider(),
+            Expanded(
+              child: ListView(
+                children: bulkScans.entries.map((e) => ListTile(
+                  title: Text(e.key),
+                  trailing: Text('x${e.value}'),
+                  onLongPress: () => setState(() => bulkScans.remove(e.key)),
+                )).toList(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _commitBulkAudit() async {
+    if (selectedBulkWarehouse == null) {
+      _showBulkWarehouseSelection();
+      return;
+    }
+
+    final total = bulkScans.length;
+    for (var entry in bulkScans.entries) {
+      await ref.read(inventoryNotifierProvider.notifier).adjustStock(
+        entry.key,
+        selectedBulkWarehouse!.id,
+        entry.value.toDouble(),
+      );
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Successfully updated $total items in ${selectedBulkWarehouse!.name}')));
+      setState(() {
+        bulkScans.clear();
+        isBulkMode = false;
+        isScanning = true;
+      });
+    }
   }
 }

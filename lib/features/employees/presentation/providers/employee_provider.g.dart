@@ -7,7 +7,7 @@ part of 'employee_provider.dart';
 // **************************************************************************
 
 String _$employeeRepositoryHash() =>
-    r'5e4c45587da7f3ea4b33cd947aa1a44f534f2107';
+    r'e03aecffa6490999e107348614ce0022bc5dba3e';
 
 /// See also [employeeRepository].
 @ProviderFor(employeeRepository)

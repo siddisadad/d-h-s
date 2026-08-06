@@ -1,17 +1,36 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/entities/contact.dart';
 import '../../domain/repositories/crm_repository.dart';
+import '../../data/repositories/crm_repository_impl.dart';
+import '../../data/datasources/crm_remote_data_source.dart';
 import '../../domain/usecases/get_contacts.dart';
-import '../../../../core/di/injection_container.dart';
+import '../../../../core/providers/database_providers.dart';
+import '../../../../core/providers/firebase_providers.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/utils/logger.dart';
 
 part 'crm_provider.g.dart';
 
 @riverpod
-CrmRepository crmRepository(CrmRepositoryRef ref) => sl.crmRepository;
+CrmRepository crmRepository(CrmRepositoryRef ref) {
+  final client = ref.watch(apiClientProvider);
+  final firebaseDb = ref.watch(firebaseDatabaseServiceProvider);
+  final localDb = ref.watch(localDatabaseProvider);
+
+  final crmDataSource = CrmRemoteDataSourceImpl(client);
+
+  return CrmRepositoryImpl(
+    remoteDataSource: crmDataSource,
+    localDatabase: localDb,
+    firebaseDb: firebaseDb,
+  );
+}
 
 @riverpod
-GetContacts getContactsUseCase(GetContactsUseCaseRef ref) => sl.getContactsUseCase;
+GetContacts getContactsUseCase(GetContactsUseCaseRef ref) {
+  final repository = ref.watch(crmRepositoryProvider);
+  return GetContacts(repository);
+}
 
 @riverpod
 class CrmNotifier extends _$CrmNotifier {
@@ -71,5 +90,30 @@ class CrmNotifier extends _$CrmNotifier {
         (success) => _fetchFromApi(contact.type),
       );
     });
+  }
+
+  Future<bool> sendPaymentReminder(Contact contact) async {
+    final updatedContact = Contact(
+      id: contact.id,
+      name: contact.name,
+      initials: contact.initials,
+      contact: contact.contact,
+      gstin: contact.gstin,
+      balance: contact.balance,
+      location: contact.location,
+      type: contact.type,
+      lastReminderSent: DateTime.now(),
+    );
+
+    final repository = ref.read(crmRepositoryProvider);
+    final result = await repository.updateContact(updatedContact);
+
+    return result.fold(
+      (failure) => false,
+      (success) {
+        refresh(contact.type);
+        return true;
+      },
+    );
   }
 }

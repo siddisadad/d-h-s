@@ -2,7 +2,7 @@
 // RiverpodGenerator
 // **************************************************************************
 
-String _$salesRepositoryHash() => r'b4bed8d93fc42d4a1c4ad16bed1a5416efbc114e';
+String _$salesRepositoryHash() => r'8a59585c1a7f30a38a633f091d4ba5834fadfc13';
 
 /// See also [salesRepository].
 @ProviderFor(salesRepository)
@@ -20,7 +20,7 @@ final salesRepositoryProvider = AutoDisposeProvider<SalesRepository>.internal(
 // ignore: unused_element
 typedef SalesRepositoryRef = AutoDisposeProviderRef<SalesRepository>;
 String _$createInvoiceUseCaseHash() =>
-    r'c819646b5b61553647a68a3fcf7b77c1f06bbbc5';
+    r'159eef039e34dede176882b391f2c8abd9e75fec';
 
 /// See also [createInvoiceUseCase].
 @ProviderFor(createInvoiceUseCase)

@@ -6,7 +6,7 @@ part of 'inventory_stats_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$inventoryStatsHash() => r'189819f1e50ac71cb0e62d181f805fdbff9bf1ea';
+String _$inventoryStatsHash() => r'9d5f691633ba0a2ad2b6ec684f8b0e48d96acf56';
 
 /// See also [inventoryStats].
 @ProviderFor(inventoryStats)

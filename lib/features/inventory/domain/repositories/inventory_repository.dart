@@ -14,6 +14,6 @@ abstract class InventoryRepository {
   Future<Result<List<Warehouse>>> getWarehouses();
   Future<Result<bool>> createWarehouse(Warehouse warehouse);
   Future<Result<Map<String, double>>> getStockBreakdown(String sku);
-  Future<Result<bool>> adjustStock(String sku, String warehouseId, double quantity);
+  Future<Result<bool>> adjustStock(String sku, String warehouseId, double quantity, {String? reason, String? notes});
   Future<Result<bool>> transferStock(StockTransfer transfer);
 }

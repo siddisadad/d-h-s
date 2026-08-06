@@ -3,14 +3,25 @@ import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/entities/app_user.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../../data/repositories/auth_repository_impl.dart';
+import '../../data/datasources/auth_remote_data_source.dart';
+import '../../data/datasources/auth_mock_data_source.dart';
 import '../../data/repositories/token_repository.dart';
-import '../../../../core/di/injection_container.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../../core/config/app_config.dart';
 
 part 'auth_provider.g.dart';
 
 @riverpod
 AuthRepository authRepository(AuthRepositoryRef ref) {
-  return sl.authRepository;
+  final client = ref.watch(apiClientProvider);
+  final useMocks = AppConfig.useMocks;
+
+  final authDataSource = useMocks
+      ? AuthMockDataSource()
+      : AuthRemoteDataSourceImpl(client);
+
+  return AuthRepositoryImpl(authDataSource);
 }
 
 @Riverpod(keepAlive: true)

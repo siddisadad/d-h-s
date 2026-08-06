@@ -10,7 +10,6 @@ import 'package:deshmukh_steel_e_r_p/features/analytics/presentation/providers/p
 import 'package:deshmukh_steel_e_r_p/features/analytics/domain/entities/restock_suggestion.dart';
 import 'package:deshmukh_steel_e_r_p/features/crm/presentation/providers/crm_provider.dart';
 import 'package:deshmukh_steel_e_r_p/features/crm/domain/entities/contact.dart';
-import 'package:deshmukh_steel_e_r_p/features/purchases/presentation/providers/purchase_provider.dart';
 import 'package:deshmukh_steel_e_r_p/features/purchases/domain/entities/purchase_item.dart';
 import 'package:deshmukh_steel_e_r_p/features/purchases/presentation/screens/purchase_entry_screen.dart';
 
@@ -77,7 +76,6 @@ class ProcurementPlannerScreen extends ConsumerWidget {
   }
 
   Widget _buildSupplierGroup(BuildContext context, Contact supplier, List<RestockSuggestion> suggestions) {
-    final tokens = context.tokens;
     final currency = NumberFormat.currency(symbol: '₹', locale: 'en_IN', decimalDigits: 0);
     final totalValue = suggestions.fold(0.0, (sum, s) => sum + (s.suggestedQty * s.product.price));
 

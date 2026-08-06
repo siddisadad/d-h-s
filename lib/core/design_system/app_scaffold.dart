@@ -6,6 +6,12 @@ import 'package:deshmukh_steel_e_r_p/core/providers/side_nav_provider.dart';
 import 'package:deshmukh_steel_e_r_p/core/providers/app_bar_provider.dart';
 import 'package:deshmukh_steel_e_r_p/core/services/connectivity_service.dart';
 import 'package:deshmukh_steel_e_r_p/core/services/sync_service.dart';
+import 'package:go_router/go_router.dart';
+import '../../features/notifications/presentation/providers/notification_provider.dart';
+import '../constants/app_strings.dart';
+import '../widgets/sync_status_indicator.dart';
+import '../widgets/permission_wrapper.dart';
+import '../security/permissions.dart';
 
 class AppScaffold extends ConsumerWidget {
   final String title;
@@ -34,10 +40,17 @@ class AppScaffold extends ConsumerWidget {
     final tokens = context.tokens;
 
     if (!isLargeScreen) {
+      final unreadCount = ref.watch(notificationNotifierProvider.notifier).unreadCount;
+
       return Scaffold(
         appBar: AppBar(
           title: Text(appBarState.title),
-          actions: appBarState.actions,
+          actions: [
+            if (appBarState.actions != null) ...appBarState.actions!,
+            const SyncStatusIndicator(),
+            _buildNotificationIcon(context, unreadCount, () => context.push('/notifications')),
+            const SizedBox(width: 8),
+          ],
         ),
         drawer: const SideNavWidget(),
         body: Column(
@@ -46,6 +59,7 @@ class AppScaffold extends ConsumerWidget {
             Expanded(child: body),
           ],
         ),
+        floatingActionButton: appBarState.floatingActionButton,
       );
     }
 
@@ -65,6 +79,7 @@ class AppScaffold extends ConsumerWidget {
           ),
         ],
       ),
+      floatingActionButton: appBarState.floatingActionButton,
     );
   }
 
@@ -80,7 +95,7 @@ class AppScaffold extends ConsumerWidget {
           Icon(isSyncing ? Icons.sync_rounded : Icons.wifi_off_rounded, color: Colors.white, size: 14),
           const SizedBox(width: 8),
           Text(
-            isSyncing ? 'SYNCING DATA...' : 'OFFLINE MODE ACTIVE',
+            isSyncing ? AppStrings.syncingData : AppStrings.offlineMode,
             style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
           ),
         ],
@@ -105,7 +120,7 @@ class AppScaffold extends ConsumerWidget {
           IconButton(
             icon: Icon(isExpanded ? Icons.menu_open_rounded : Icons.menu_rounded, color: theme.colorScheme.primary),
             onPressed: () => ref.read(sideNavNotifierProvider.notifier).toggle(),
-            tooltip: 'Toggle Side Navigation',
+            tooltip: AppStrings.toggleSideNav,
           ),
           const SizedBox(width: 16),
           Column(
@@ -120,7 +135,7 @@ class AppScaffold extends ConsumerWidget {
                 ),
               ),
               Text(
-                'Deshmukh Hardware ERP',
+                AppStrings.appName,
                 style: context.textTheme.bodySmall?.copyWith(fontSize: 10, fontWeight: FontWeight.w600),
               ),
             ],
@@ -128,9 +143,18 @@ class AppScaffold extends ConsumerWidget {
           const Spacer(),
           if (appBarState.actions != null) ...appBarState.actions!,
           const SizedBox(width: 16),
-          _buildHeaderAction(context, Icons.notifications_none_rounded, () {}),
+          const SyncStatusIndicator(),
           const SizedBox(width: 12),
-          _buildHeaderAction(context, Icons.settings_outlined, () {}),
+          _buildNotificationIcon(
+            context,
+            ref.watch(notificationNotifierProvider.notifier).unreadCount,
+            () => context.push('/notifications'),
+          ),
+          const SizedBox(width: 12),
+          PermissionWrapper(
+            requiredPermissions: const [AppPermission.manageSettings],
+            child: _buildHeaderAction(context, Icons.settings_outlined, () => context.push('/settings')),
+          ),
           const SizedBox(width: 16),
           Container(
             padding: const EdgeInsets.all(2),
@@ -146,6 +170,34 @@ class AppScaffold extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildNotificationIcon(BuildContext context, int count, VoidCallback onTap) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        _buildHeaderAction(context, Icons.notifications_none_rounded, onTap),
+        if (count > 0)
+          Positioned(
+            right: 4,
+            top: 4,
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                color: context.colorScheme.error,
+                shape: BoxShape.circle,
+                border: Border.all(color: context.colorScheme.surface, width: 2),
+              ),
+              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+              child: Text(
+                count > 9 ? '9+' : count.toString(),
+                style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+      ],
     );
   }
 

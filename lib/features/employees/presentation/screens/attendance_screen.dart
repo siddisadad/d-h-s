@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:deshmukh_steel_e_r_p/core/design_system/theme/app_theme.dart';
 import 'package:deshmukh_steel_e_r_p/core/widgets/custom_card.dart';
 import '../providers/employee_provider.dart';
-import '../../../../components/base_list_item.dart';
 import '../../../../core/providers/app_bar_provider.dart';
+
 
 class AttendanceScreen extends ConsumerWidget {
   const AttendanceScreen({super.key});
@@ -53,7 +53,7 @@ class AttendanceScreen extends ConsumerWidget {
                   const SizedBox(width: 12),
                   Switch(
                     value: isPresent,
-                    activeColor: context.tokens.success,
+                    activeThumbColor: context.tokens.success,
                     onChanged: (val) {
                       ref.read(employeeNotifierProvider.notifier).updateAttendance(
                         emp.id, 

@@ -13,16 +13,21 @@ import '../datasources/sales_remote_data_source.dart';
 import '../models/invoice_model.dart';
 import '../models/quotation_model.dart';
 import '../models/return_model.dart';
-import '../../../../core/di/injection_container.dart';
+import '../../../../core/services/firebase_database_service.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../../../core/config/app_config.dart';
 
 class SalesRepositoryImpl implements SalesRepository {
   final SalesRemoteDataSource remoteDataSource;
   final LocalDatabase localDatabase;
+  final FirebaseDatabaseService firebaseDb;
+  final NotificationService notificationService;
 
   SalesRepositoryImpl({
     required this.remoteDataSource,
     required this.localDatabase,
+    required this.firebaseDb,
+    required this.notificationService,
   });
 
   @override
@@ -38,8 +43,8 @@ class SalesRepositoryImpl implements SalesRepository {
           items: invoice.items,
           discount: invoice.discount,
         );
-        await sl.firebaseDb.setData('sales/${invoice.id}', model.toJson());
-        await sl.firebaseDb.pushData('activities', {
+        await firebaseDb.setData('sales/${invoice.id}', model.toJson());
+        await firebaseDb.pushData('activities', {
           'id': invoice.id,
           'title': 'New Sale Created (Web)',
           'subtitle': '${invoice.customerName} - ₹${invoice.grandTotal.toStringAsFixed(0)}',
@@ -98,6 +103,18 @@ class SalesRepositoryImpl implements SalesRepository {
 
             // Update Per-Warehouse Stock Level (Default to Main Yard)
             await localDatabase.updateStockLevel(item.sku, 'main_yard', -item.qty);
+
+            // Record Movement Record
+            await localDatabase.saveStockMovement({
+              'id': 'SALE-${invoice.id}-${item.sku}',
+              'productSku': item.sku,
+              'productName': item.name,
+              'warehouseId': 'main_yard',
+              'quantity': -item.qty,
+              'reason': 'Sale (Invoice #${invoice.id})',
+              'timestamp': DateTime.now().millisecondsSinceEpoch,
+              'performedBy': 'System',
+            });
           }
         }
 
@@ -134,24 +151,42 @@ class SalesRepositoryImpl implements SalesRepository {
 
         // 4. Cloud Sync
         try {
-          await sl.firebaseDb.setData('sales/${invoice.id}', model.toJson());
+          await firebaseDb.setData('sales/${invoice.id}', model.toJson());
           for (var item in invoice.items) {
              final List<Map<String, dynamic>> updatedProd = await txn.query('inventory', where: 'sku = ?', whereArgs: [item.sku]);
              if (updatedProd.isNotEmpty) {
-                await sl.firebaseDb.updateData('inventory/${item.sku}', {
+                await firebaseDb.updateData('inventory/${item.sku}', {
                   'stock': updatedProd.first['stock'],
                   'isLowStock': updatedProd.first['isLowStock'] == 1,
                 });
              }
           }
-          await sl.firebaseDb.updateData('contacts/${invoice.customerId}', {'balance': newBalance});
-          await sl.firebaseDb.pushData('activities', {
+          await firebaseDb.updateData('contacts/${invoice.customerId}', {'balance': newBalance});
+
+          // Sync Ledger to Firebase
+          await firebaseDb.setData('ledgers/${invoice.customerId}/${invoice.id}', {
+            'date': invoice.date.toIso8601String(),
+            'type': 'Invoice',
+            'amount': invoice.grandTotal,
+            'balance': newBalance,
+            'isDebit': true,
+          });
+
+          await firebaseDb.pushData('activities', {
             'id': invoice.id,
             'title': 'New Sale Created',
             'subtitle': '${invoice.customerName} - ₹${invoice.grandTotal.toStringAsFixed(0)}',
             'timestamp': DateTime.now().millisecondsSinceEpoch,
             'type': 'sale',
           });
+
+          if (invoice.grandTotal > 50000) {
+            await notificationService.showLocalAlert(
+              title: 'HIGH VALUE SALE',
+              body: 'New sale for ${invoice.customerName} of ₹${invoice.grandTotal.toStringAsFixed(0)}',
+              path: '/sales',
+            );
+          }
         } catch (_) {}
 
         return Result.success(true);
@@ -164,8 +199,8 @@ class SalesRepositoryImpl implements SalesRepository {
   @override
   Future<Result<List<SalesInvoice>>> getRecentInvoices() async {
     try {
-      if (AppConfig.useFirebase) {
-        final snapshot = await sl.firebaseDb.getData('sales');
+      if (kIsWeb) {
+        final snapshot = await firebaseDb.getData('sales');
         if (!snapshot.exists || snapshot.value == null) return Result.success([]);
         
         final Map<dynamic, dynamic> data = snapshot.value as Map<dynamic, dynamic>;
@@ -177,10 +212,11 @@ class SalesRepositoryImpl implements SalesRepository {
         return Result.success(invoices);
       }
 
-      if (kIsWeb) {
-        final remote = await remoteDataSource.getRecentInvoices();
-        return Result.success(remote);
+      // 1. Background refresh from Cloud (Firebase)
+      if (AppConfig.useFirebase) {
+        _refreshSalesFromFirebase();
       }
+
       final db = await localDatabase.database;
       final List<Map<String, dynamic>> maps = await db.query('sales', orderBy: 'date DESC');
       final invoices = maps.map((m) {
@@ -200,6 +236,30 @@ class SalesRepositoryImpl implements SalesRepository {
     }
   }
 
+  Future<void> _refreshSalesFromFirebase() async {
+    try {
+      final snapshot = await firebaseDb.getData('sales');
+      if (snapshot.exists && snapshot.value != null) {
+        final Map<dynamic, dynamic> data = snapshot.value as Map<dynamic, dynamic>;
+        data.forEach((key, value) async {
+          final invMap = Map<String, dynamic>.from(value as Map);
+          final model = InvoiceModel.fromJson(invMap);
+          await localDatabase.saveInvoice({
+            'id': model.id,
+            'customerId': model.customerId,
+            'customerName': model.customerName,
+            'date': model.date.millisecondsSinceEpoch,
+            'discount': model.discount,
+            'grandTotal': model.grandTotal,
+            'items': jsonEncode(invMap['items']),
+          });
+        });
+      }
+    } catch (e) {
+      Log.w('Could not refresh sales from Firebase: $e', name: 'Sales');
+    }
+  }
+
   @override
   Future<Result<bool>> createQuotation(SalesQuotation quotation) async {
     try {
@@ -215,7 +275,7 @@ class SalesRepositoryImpl implements SalesRepository {
           discount: quotation.discount,
           status: quotation.status,
         );
-        await sl.firebaseDb.setData('quotations/${quotation.id}', model.toJson());
+        await firebaseDb.setData('quotations/${quotation.id}', model.toJson());
         return Result.success(true);
       }
       final db = await localDatabase.database;
@@ -233,8 +293,8 @@ class SalesRepositoryImpl implements SalesRepository {
       await db.insert('quotations', model.toJson()..['items'] = jsonEncode(model.toJson()['items']), conflictAlgorithm: ConflictAlgorithm.replace);
 
       try {
-        await sl.firebaseDb.setData('quotations/${quotation.id}', model.toJson());
-        await sl.firebaseDb.pushData('activities', {
+        await firebaseDb.setData('quotations/${quotation.id}', model.toJson());
+        await firebaseDb.pushData('activities', {
           'id': quotation.id,
           'title': 'New Quotation Generated',
           'subtitle': '${quotation.customerName} - ₹${quotation.grandTotal.toStringAsFixed(0)}',
@@ -298,7 +358,7 @@ class SalesRepositoryImpl implements SalesRepository {
       if (result.isSuccess) {
         await db.update('quotations', {'status': QuotationStatus.converted.name}, where: 'id = ?', whereArgs: [quotationId]);
         try {
-          await sl.firebaseDb.updateData('quotations/$quotationId', {'status': QuotationStatus.converted.name});
+          await firebaseDb.updateData('quotations/$quotationId', {'status': QuotationStatus.converted.name});
         } catch (_) {}
       }
       return result;
@@ -333,7 +393,7 @@ class SalesRepositoryImpl implements SalesRepository {
             final newStock = currentStock + item.qty;
             await txn.update('inventory', {'stock': newStock, 'isLowStock': newStock < 10 ? 1 : 0}, where: 'sku = ?', whereArgs: [item.sku]);
             try {
-              await sl.firebaseDb.updateData('inventory/${item.sku}', {'stock': newStock, 'isLowStock': newStock < 10});
+              await firebaseDb.updateData('inventory/${item.sku}', {'stock': newStock, 'isLowStock': newStock < 10});
             } catch (_) {}
           }
         }
@@ -344,13 +404,13 @@ class SalesRepositoryImpl implements SalesRepository {
           final newBalance = currentBalance - salesReturn.grandTotal;
           await txn.update('contacts', {'balance': newBalance}, where: 'id = ?', whereArgs: [salesReturn.customerId]);
           try {
-            await sl.firebaseDb.updateData('contacts/${salesReturn.customerId}', {'balance': newBalance});
+            await firebaseDb.updateData('contacts/${salesReturn.customerId}', {'balance': newBalance});
           } catch (_) {}
         }
 
         try {
-          await sl.firebaseDb.setData('returns/${salesReturn.id}', model.toJson());
-          await sl.firebaseDb.pushData('activities', {
+          await firebaseDb.setData('returns/${salesReturn.id}', model.toJson());
+          await firebaseDb.pushData('activities', {
             'id': salesReturn.id,
             'title': 'Sales Return Processed',
             'subtitle': '${salesReturn.customerName} - Credit ₹${salesReturn.grandTotal.toStringAsFixed(0)}',

@@ -95,7 +95,12 @@ class SideNavWidget extends ConsumerWidget {
                   children: [
                     _buildSubNavItem(context, label: 'Employees', path: '/employees'),
                     _buildSubNavItem(context, label: 'Attendance', path: '/employees/attendance'),
-                    _buildSubNavItem(context, label: 'Payroll', path: '/employees/payroll'),
+                    _buildSubNavItem(
+                      context,
+                      label: 'Payroll',
+                      path: '/employees/payroll',
+                      permissions: [AppPermission.viewSalaries],
+                    ),
                   ],
                 ),
               
@@ -121,6 +126,7 @@ class SideNavWidget extends ConsumerWidget {
         ),
         child: Material(
           color: Colors.transparent,
+          clipBehavior: Clip.antiAlias,
           child: content,
         ),
       );
@@ -356,15 +362,19 @@ class SideNavWidget extends ConsumerWidget {
       padding: EdgeInsets.all(tokens.space24),
       child: InkWell(
         onTap: () => ref.read(authProvider.notifier).logout(),
-        child: Row(
-          children: [
-            Icon(Icons.logout_rounded, color: context.colorScheme.error),
-            const SizedBox(width: 16),
-            Text(
-              'Logout Session',
-              style: TextStyle(color: context.colorScheme.error, fontWeight: FontWeight.bold),
-            ),
-          ],
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const NeverScrollableScrollPhysics(),
+          child: Row(
+            children: [
+              Icon(Icons.logout_rounded, color: context.colorScheme.error),
+              const SizedBox(width: 16),
+              Text(
+                'Logout Session',
+                style: TextStyle(color: context.colorScheme.error, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
         ),
       ),
     );

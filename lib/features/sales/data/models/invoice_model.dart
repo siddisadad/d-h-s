@@ -40,6 +40,7 @@ class InvoiceItemModel extends InvoiceItem {
   InvoiceItemModel({
     required super.name,
     required super.sku,
+    super.hsnCode,
     required super.price,
     required super.qty,
     required super.gstRate,
@@ -49,6 +50,7 @@ class InvoiceItemModel extends InvoiceItem {
     return InvoiceItemModel(
       name: json['name'] as String,
       sku: json['sku'] as String? ?? '',
+      hsnCode: json['hsnCode'] as String?,
       price: (json['price'] as num).toDouble(),
       qty: (json['qty'] as num).toDouble(),
       gstRate: (json['gstRate'] as num).toDouble(),
@@ -59,6 +61,7 @@ class InvoiceItemModel extends InvoiceItem {
     return InvoiceItemModel(
       name: entity.name,
       sku: entity.sku,
+      hsnCode: entity.hsnCode,
       price: entity.price,
       qty: entity.qty,
       gstRate: entity.gstRate,
@@ -69,6 +72,7 @@ class InvoiceItemModel extends InvoiceItem {
     return {
       'name': name,
       'sku': sku,
+      'hsnCode': hsnCode,
       'price': price,
       'qty': qty,
       'gstRate': gstRate,

@@ -88,6 +88,92 @@ class ExcelService extends _$ExcelService {
     }
   }
 
+  Future<void> exportPurchaseReport(List<dynamic> purchases) async {
+    var excel = Excel.createExcel();
+    Sheet sheetObject = excel['Purchase Report'];
+
+    // Header
+    sheetObject.appendRow([
+      TextCellValue('Purchase ID'),
+      TextCellValue('Date'),
+      TextCellValue('Supplier'),
+      TextCellValue('Items Count'),
+      TextCellValue('Grand Total'),
+    ]);
+
+    // Data
+    for (var p in purchases) {
+      sheetObject.appendRow([
+        TextCellValue(p.id),
+        TextCellValue(p.date.toIso8601String()),
+        TextCellValue(p.supplierName),
+        IntCellValue(p.items.length),
+        DoubleCellValue(p.grandTotal),
+      ]);
+    }
+
+    final fileBytes = excel.encode();
+    if (fileBytes == null) return;
+
+    if (kIsWeb) {
+      _downloadWeb(fileBytes, 'Purchase_Report.xlsx');
+    } else {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/Purchase_Report.xlsx');
+      await file.writeAsBytes(fileBytes);
+    }
+  }
+
+  Future<void> exportGstReport(List<dynamic> invoices) async {
+    var excel = Excel.createExcel();
+    Sheet sheetObject = excel['GST Report'];
+
+    // Header
+    sheetObject.appendRow([
+      TextCellValue('Invoice ID'),
+      TextCellValue('Date'),
+      TextCellValue('Customer'),
+      TextCellValue('HSN (Default)'),
+      TextCellValue('Taxable Value'),
+      TextCellValue('GST Rate (%)'),
+      TextCellValue('CGST (9%)'),
+      TextCellValue('SGST (9%)'),
+      TextCellValue('Total GST'),
+      TextCellValue('Invoice Total'),
+    ]);
+
+    // Data
+    for (var inv in invoices) {
+      final taxableValue = inv.grandTotal / 1.18; // Reverse calculation for demonstration
+      final totalGst = inv.grandTotal - taxableValue;
+      final centralTax = totalGst / 2;
+
+      sheetObject.appendRow([
+        TextCellValue(inv.id),
+        TextCellValue(inv.date.toIso8601String().split('T')[0]),
+        TextCellValue(inv.customerName),
+        TextCellValue('7214'), // Steel HSN
+        DoubleCellValue(taxableValue),
+        IntCellValue(18),
+        DoubleCellValue(centralTax),
+        DoubleCellValue(centralTax),
+        DoubleCellValue(totalGst),
+        DoubleCellValue(inv.grandTotal),
+      ]);
+    }
+
+    final fileBytes = excel.encode();
+    if (fileBytes == null) return;
+
+    if (kIsWeb) {
+      _downloadWeb(fileBytes, 'GST_Tax_Report.xlsx');
+    } else {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/GST_Tax_Report.xlsx');
+      await file.writeAsBytes(fileBytes);
+    }
+  }
+
   void _downloadWeb(List<int> bytes, String fileName) {
     final base64 = base64Encode(bytes);
     final anchor = web.HTMLAnchorElement()

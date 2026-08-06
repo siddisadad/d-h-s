@@ -1,6 +1,10 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/repositories/finance_repository.dart';
-import '../../../../core/di/injection_container.dart';
+import '../../data/repositories/finance_repository_impl.dart';
+import '../../data/datasources/finance_remote_data_source.dart';
+import '../../../../core/providers/database_providers.dart';
+import '../../../../core/providers/firebase_providers.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/utils/logger.dart';
 import '../../data/models/transaction_model.dart';
 import '../../../sales/presentation/providers/sales_history_provider.dart';
@@ -9,7 +13,17 @@ import '../../../purchases/presentation/providers/purchase_history_provider.dart
 part 'finance_provider.g.dart';
 
 @riverpod
-FinanceRepository financeRepository(FinanceRepositoryRef ref) => sl.financeRepository;
+FinanceRepository financeRepository(FinanceRepositoryRef ref) {
+  final client = ref.watch(apiClientProvider);
+  final firebaseDb = ref.watch(firebaseDatabaseServiceProvider);
+  final localDb = ref.watch(localDatabaseProvider);
+
+  return FinanceRepositoryImpl(
+    remoteDataSource: FinanceRemoteDataSourceImpl(client),
+    localDatabase: localDb,
+    firebaseDb: firebaseDb,
+  );
+}
 
 @riverpod
 class FinanceNotifier extends _$FinanceNotifier {
@@ -66,10 +80,11 @@ class FinanceNotifier extends _$FinanceNotifier {
       (success) async {
         // Sync to Firebase
         try {
-           await sl.firebaseDb.pushData('finance', model.toJson());
+           final firebaseDb = ref.read(firebaseDatabaseServiceProvider);
+           await firebaseDb.pushData('finance', model.toJson());
            
            // Record Activity
-           await sl.firebaseDb.pushData('activities', {
+           await firebaseDb.pushData('activities', {
              'id': 'FIN-${DateTime.now().millisecondsSinceEpoch}',
              'title': 'Finance Entry: $category',
              'subtitle': '$title - ₹$amount',

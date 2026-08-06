@@ -1,15 +1,21 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../config/app_config.dart';
+import '../providers/database_providers.dart';
 import '../database/local_database.dart';
 import '../network/api_client.dart';
 import 'connectivity_service.dart';
+import '../providers/firebase_providers.dart';
 import '../utils/logger.dart';
-import '../di/injection_container.dart';
 import '../../features/inventory/data/models/product_model.dart';
 import '../../features/crm/data/models/contact_model.dart';
+import '../../features/employees/data/models/employee_model.dart';
+import '../../features/sales/data/models/invoice_model.dart';
+import '../../features/purchases/data/models/purchase_model.dart';
+import '../../features/finance/data/models/transaction_model.dart';
 
 part 'sync_service.g.dart';
 
@@ -22,12 +28,18 @@ class SyncService extends _$SyncService {
 
   @override
   bool build() {
+    _apiClient = ref.watch(apiClientProvider);
+
     if (kIsWeb) {
-      Log.i('🛠️ Sync Service: Disabled on Web platform', name: 'Sync');
+      Log.i('🛠️ Sync Service: Running in Web mode (Local Sync Queue disabled)', name: 'Sync');
+      // On Web, we can still listen to Cloud Sync if Firebase is available
+      if (!AppConfig.useMocks) {
+        _initCloudSync();
+      }
       return false;
     }
-    _localDb = LocalDatabase();
-    _apiClient = ref.read(apiClientProvider);
+
+    _localDb = ref.watch(localDatabaseProvider);
 
     // 1. Listen to connectivity changes for legacy queue
     ref.listen(connectivityNotifierProvider, (previous, next) {
@@ -58,61 +70,46 @@ class SyncService extends _$SyncService {
 
   void _initCloudSync() {
     try {
+      final firebaseDb = ref.read(firebaseDatabaseServiceProvider);
+
+      if (!firebaseDb.isInitialized) {
+        Log.w('☁️ Cloud Sync deferred: Firebase Database not initialized', name: 'Sync');
+        return;
+      }
+
       Log.i('☁️ Initializing Cloud Sync Listeners...', name: 'Sync');
 
       // Sync Inventory
-      _subscriptions.add(sl.firebaseDb.watchPath('inventory').listen((event) async {
+      _subscriptions.add(firebaseDb.watchPath('inventory').listen((event) async {
       final data = event.snapshot.value as Map?;
       if (data == null) return;
 
-      final products = <Map<String, dynamic>>[];
-      data.forEach((key, value) {
-        final model = ProductModel.fromJson(Map<String, dynamic>.from(value as Map));
-        products.add({
-          'sku': model.sku,
-          'name': model.name,
-          'category': model.category,
-          'price': model.price,
-          'stock': model.stock,
-          'unit': model.unit,
-          'isLowStock': model.isLowStock ? 1 : 0,
-          'lastUpdated': DateTime.now().millisecondsSinceEpoch,
-        });
-      });
+      final products = await compute(_parseInventoryData, data);
 
-      await _localDb.saveProducts(products);
-      Log.d('✓ Inventory synced from Cloud (${products.length} items)', name: 'Sync');
+      if (!kIsWeb) {
+        await _localDb.saveProducts(products);
+        Log.d('✓ Inventory synced from Cloud (${products.length} items)', name: 'Sync');
+      }
     }));
 
     // Sync Contacts
-    _subscriptions.add(sl.firebaseDb.watchPath('contacts').listen((event) async {
+    _subscriptions.add(firebaseDb.watchPath('contacts').listen((event) async {
       final data = event.snapshot.value as Map?;
       if (data == null) return;
 
-      final contacts = <Map<String, dynamic>>[];
-      data.forEach((key, value) {
-        final model = ContactModel.fromJson(Map<String, dynamic>.from(value as Map));
-        contacts.add({
-          'id': model.id,
-          'name': model.name,
-          'initials': model.initials,
-          'contact': model.contact,
-          'gstin': model.gstin,
-          'balance': model.balance,
-          'location': model.location,
-          'type': model.type.name,
-          'lastUpdated': DateTime.now().millisecondsSinceEpoch,
-        });
-      });
+      final contacts = await compute(_parseContactData, data);
 
-      await _localDb.saveContacts(contacts);
-      Log.d('✓ Contacts synced from Cloud (${contacts.length} items)', name: 'Sync');
+      if (!kIsWeb) {
+        await _localDb.saveContacts(contacts);
+        Log.d('✓ Contacts synced from Cloud (${contacts.length} items)', name: 'Sync');
+      }
     }));
 
     // Sync Quotations
-    _subscriptions.add(sl.firebaseDb.watchPath('quotations').listen((event) async {
+    _subscriptions.add(firebaseDb.watchPath('quotations').listen((event) async {
       final data = event.snapshot.value as Map?;
       if (data == null) return;
+      if (kIsWeb) return;
       data.forEach((key, value) async {
         final Map<String, dynamic> qMap = Map<String, dynamic>.from(value as Map);
         await _localDb.saveQuotation(qMap..['items'] = jsonEncode(qMap['items']));
@@ -121,14 +118,126 @@ class SyncService extends _$SyncService {
     }));
 
     // Sync Returns
-    _subscriptions.add(sl.firebaseDb.watchPath('returns').listen((event) async {
+    _subscriptions.add(firebaseDb.watchPath('returns').listen((event) async {
       final data = event.snapshot.value as Map?;
       if (data == null) return;
+      if (kIsWeb) return;
       data.forEach((key, value) async {
         final Map<String, dynamic> rMap = Map<String, dynamic>.from(value as Map);
         await _localDb.saveReturn(rMap..['returnedItems'] = jsonEncode(rMap['returnedItems']));
       });
       Log.d('✓ Returns synced from Cloud', name: 'Sync');
+    }));
+
+    // Sync Employees
+    _subscriptions.add(firebaseDb.watchPath('employees').listen((event) async {
+      final data = event.snapshot.value as Map?;
+      if (data == null) return;
+
+      final employees = <Map<String, dynamic>>[];
+      data.forEach((key, value) {
+        final model = EmployeeModel.fromJson(Map<String, dynamic>.from(value as Map));
+        employees.add({
+          ...model.toJson(),
+          'lastUpdated': DateTime.now().millisecondsSinceEpoch,
+        });
+      });
+
+      if (!kIsWeb) {
+        await _localDb.saveEmployees(employees);
+        Log.d('✓ Employees synced from Cloud (${employees.length} items)', name: 'Sync');
+      }
+    }));
+
+    // Sync Sales (Invoices)
+    _subscriptions.add(firebaseDb.watchPath('sales').listen((event) async {
+      final data = event.snapshot.value as Map?;
+      if (data == null) return;
+      if (kIsWeb) return;
+
+      data.forEach((key, value) async {
+        final Map<String, dynamic> invMap = Map<String, dynamic>.from(value as Map);
+        final model = InvoiceModel.fromJson(invMap);
+        await _localDb.saveInvoice({
+          'id': model.id,
+          'customerId': model.customerId,
+          'customerName': model.customerName,
+          'date': model.date.millisecondsSinceEpoch,
+          'discount': model.discount,
+          'grandTotal': model.grandTotal,
+          'items': jsonEncode(invMap['items']),
+        });
+      });
+      Log.d('✓ Sales synced from Cloud', name: 'Sync');
+    }));
+
+    // Sync Purchases
+    _subscriptions.add(firebaseDb.watchPath('purchases').listen((event) async {
+      final data = event.snapshot.value as Map?;
+      if (data == null) return;
+      if (kIsWeb) return;
+
+      data.forEach((key, value) async {
+        final Map<String, dynamic> purMap = Map<String, dynamic>.from(value as Map);
+        final model = PurchaseModel.fromJson(purMap);
+        await _localDb.savePurchase({
+          'id': model.id,
+          'supplierId': model.supplierId,
+          'supplierName': model.supplierName,
+          'date': model.date.millisecondsSinceEpoch,
+          'discount': model.discount,
+          'totalAmount': model.grandTotal,
+          'status': model.status,
+          'items': jsonEncode(purMap['items']),
+        });
+      });
+      Log.d('✓ Purchases synced from Cloud', name: 'Sync');
+    }));
+
+    // Sync Finance
+    _subscriptions.add(firebaseDb.watchPath('finance').listen((event) async {
+      final data = event.snapshot.value as Map?;
+      if (data == null) return;
+      if (kIsWeb) return;
+
+      data.forEach((key, value) async {
+        final Map<String, dynamic> finMap = Map<String, dynamic>.from(value as Map);
+        final model = TransactionModel.fromJson(finMap);
+        await _localDb.saveFinanceEntry({
+          'title': model.title,
+          'category': model.category,
+          'amount': model.amount,
+          'date': model.date.millisecondsSinceEpoch,
+          'paymentMode': model.paymentMode,
+        });
+      });
+      Log.d('✓ Finance synced from Cloud', name: 'Sync');
+    }));
+
+    // Sync Ledgers
+    _subscriptions.add(firebaseDb.watchPath('ledgers').listen((event) async {
+      final data = event.snapshot.value as Map?;
+      if (data == null) return;
+      if (kIsWeb) return;
+
+      final db = await _localDb.database;
+      data.forEach((contactId, entries) {
+        if (entries is Map) {
+          entries.forEach((ref, value) async {
+            final Map<String, dynamic> ledgerMap = Map<String, dynamic>.from(value as Map);
+            await db.insert('ledgers', {
+              'contactId': contactId,
+              'date': DateTime.parse(ledgerMap['date'] as String).millisecondsSinceEpoch,
+              'type': ledgerMap['type'],
+              'ref': ref,
+              'amount': (ledgerMap['amount'] as num).toDouble(),
+              'balanceAfter': (ledgerMap['balance'] as num).toDouble(),
+              'isDebit': (ledgerMap['isDebit'] as bool) ? 1 : 0,
+            }, conflictAlgorithm: ConflictAlgorithm.replace);
+          });
+        }
+      });
+      Log.d('✓ Ledgers synced from Cloud', name: 'Sync');
     }));
     } catch (e) {
       Log.e('❌ Cloud Sync Initialization Failed', error: e, name: 'Sync');
@@ -170,4 +279,44 @@ class SyncService extends _$SyncService {
       state = false;
     }
   }
+}
+
+// Top-level parsing functions for compute()
+List<Map<String, dynamic>> _parseInventoryData(Map data) {
+  final products = <Map<String, dynamic>>[];
+  data.forEach((key, value) {
+    final model = ProductModel.fromJson(Map<String, dynamic>.from(value as Map));
+    products.add({
+      'sku': model.sku,
+      'name': model.name,
+      'category': model.category,
+      'price': model.price,
+      'stock': model.stock,
+      'unit': model.unit,
+      'isLowStock': model.isLowStock ? 1 : 0,
+      'hsnCode': model.hsnCode,
+      'lastUpdated': DateTime.now().millisecondsSinceEpoch,
+    });
+  });
+  return products;
+}
+
+List<Map<String, dynamic>> _parseContactData(Map data) {
+  final contacts = <Map<String, dynamic>>[];
+  data.forEach((key, value) {
+    final model = ContactModel.fromJson(Map<String, dynamic>.from(value as Map));
+    contacts.add({
+      'id': model.id,
+      'name': model.name,
+      'initials': model.initials,
+      'contact': model.contact,
+      'gstin': model.gstin,
+      'balance': model.balance,
+      'creditLimit': model.creditLimit,
+      'location': model.location,
+      'type': model.type.name,
+      'lastUpdated': DateTime.now().millisecondsSinceEpoch,
+    });
+  });
+  return contacts;
 }

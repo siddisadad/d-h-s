@@ -6,7 +6,7 @@ part of 'adjustment_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$productHistoryHash() => r'219cb36b8f534b6c0996deac57766de17f81d57a';
+String _$productHistoryHash() => r'15ac7c7a99fd9d9d8e52b70e035235329864f489';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -34,7 +34,7 @@ class _SystemHash {
 const productHistoryProvider = ProductHistoryFamily();
 
 /// See also [productHistory].
-class ProductHistoryFamily extends Family<List<StockAdjustment>> {
+class ProductHistoryFamily extends Family<AsyncValue<List<StockAdjustment>>> {
   /// See also [productHistory].
   const ProductHistoryFamily();
 
@@ -73,7 +73,7 @@ class ProductHistoryFamily extends Family<List<StockAdjustment>> {
 
 /// See also [productHistory].
 class ProductHistoryProvider
-    extends AutoDisposeProvider<List<StockAdjustment>> {
+    extends AutoDisposeFutureProvider<List<StockAdjustment>> {
   /// See also [productHistory].
   ProductHistoryProvider(
     String sku,
@@ -108,7 +108,7 @@ class ProductHistoryProvider
 
   @override
   Override overrideWith(
-    List<StockAdjustment> Function(ProductHistoryRef provider) create,
+    FutureOr<List<StockAdjustment>> Function(ProductHistoryRef provider) create,
   ) {
     return ProviderOverride(
       origin: this,
@@ -125,7 +125,7 @@ class ProductHistoryProvider
   }
 
   @override
-  AutoDisposeProviderElement<List<StockAdjustment>> createElement() {
+  AutoDisposeFutureProviderElement<List<StockAdjustment>> createElement() {
     return _ProductHistoryProviderElement(this);
   }
 
@@ -145,13 +145,13 @@ class ProductHistoryProvider
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-mixin ProductHistoryRef on AutoDisposeProviderRef<List<StockAdjustment>> {
+mixin ProductHistoryRef on AutoDisposeFutureProviderRef<List<StockAdjustment>> {
   /// The parameter `sku` of this provider.
   String get sku;
 }
 
 class _ProductHistoryProviderElement
-    extends AutoDisposeProviderElement<List<StockAdjustment>>
+    extends AutoDisposeFutureProviderElement<List<StockAdjustment>>
     with ProductHistoryRef {
   _ProductHistoryProviderElement(super.provider);
 

@@ -7,7 +7,7 @@ import 'package:deshmukh_steel_e_r_p/core/design_system/theme/app_theme.dart';
 import 'package:deshmukh_steel_e_r_p/features/authentication/presentation/providers/auth_provider.dart';
 import 'package:deshmukh_steel_e_r_p/core/providers/app_bar_provider.dart';
 import 'package:deshmukh_steel_e_r_p/core/providers/theme_provider.dart';
-import 'package:deshmukh_steel_e_r_p/.artifacts/a552a74c-7194-45c7-885b-c3ead5813cab/scratch/seed_firebase.dart';
+import '../providers/settings_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -89,9 +89,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             BaseListItem(
               title: 'Language',
               showDivider: false,
-              trailing: Text('English (US)', style: context.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600)),
+              trailing: ref.watch(settingsNotifierProvider).when(
+                data: (s) => _buildLanguageDropdown(context, ref, s.language),
+                loading: () => const SizedBox.shrink(),
+                error: (_, __) => const SizedBox.shrink(),
+              ),
               leadingIcon: Icons.language_rounded,
-              onTap: () {},
+            ),
+          ],
+        ),
+        SettingsGroupWidget(
+          title: 'Regional',
+          children: [
+            BaseListItem(
+              title: 'Default Currency',
+              subtitle: 'Local display currency',
+              leadingIcon: Icons.payments_rounded,
+              showDivider: false,
+              trailing: ref.watch(settingsNotifierProvider).when(
+                data: (s) => _buildCurrencyDropdown(context, ref, s.currency),
+                loading: () => const SizedBox.shrink(),
+                error: (_, __) => const SizedBox.shrink(),
+              ),
             ),
           ],
         ),
@@ -128,21 +147,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ],
         ),
         SettingsGroupWidget(
-          title: 'Developer Tools',
+          title: 'System Information',
           children: [
             BaseListItem(
-              title: 'Seed Firebase Database',
-              subtitle: 'Populate cloud DB with dummy data',
-              leadingIcon: Icons.cloud_upload_rounded,
+              title: 'Application Version',
+              trailing: Text('1.0.0+1', style: context.textTheme.labelMedium),
+              leadingIcon: Icons.info_outline_rounded,
+              showDivider: true,
+            ),
+            BaseListItem(
+              title: 'Database Schema',
+              trailing: Text('v8 (Optimized)', style: context.textTheme.labelMedium),
+              leadingIcon: Icons.storage_rounded,
+              showDivider: true,
+            ),
+            BaseListItem(
+              title: 'Sync Status',
+              trailing: Icon(Icons.check_circle_rounded, color: context.tokens.success, size: 20),
+              leadingIcon: Icons.cloud_done_rounded,
               showDivider: false,
-              onTap: () async {
-                 try {
-                   await FirebaseSeeder.seed();
-                   if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Database Seeded Successfully')));
-                 } catch (e) {
-                   if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Seeding Failed: $e'), backgroundColor: Colors.red));
-                 }
-              },
             ),
           ],
         ),
@@ -166,5 +189,54 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       case ThemeMode.dark:
         return 'Dark';
     }
+  }
+
+  Widget _buildLanguageDropdown(BuildContext context, WidgetRef ref, String current) {
+    return PopupMenuButton<String>(
+      initialValue: current,
+      onSelected: (val) => ref.read(settingsNotifierProvider.notifier).setLanguage(val),
+      itemBuilder: (context) => [
+        const PopupMenuItem(value: 'en', child: Text('English')),
+        const PopupMenuItem(value: 'hi', child: Text('Hindi')),
+        const PopupMenuItem(value: 'mr', child: Text('Marathi')),
+      ],
+      child: _dropdownTrigger(context, current == 'en' ? 'English' : (current == 'hi' ? 'Hindi' : 'Marathi')),
+    );
+  }
+
+  Widget _buildCurrencyDropdown(BuildContext context, WidgetRef ref, String current) {
+    return PopupMenuButton<String>(
+      initialValue: current,
+      onSelected: (val) => ref.read(settingsNotifierProvider.notifier).setCurrency(val),
+      itemBuilder: (context) => [
+        const PopupMenuItem(value: 'INR', child: Text('Indian Rupee (₹)')),
+        const PopupMenuItem(value: 'USD', child: Text('US Dollar (\$)')),
+      ],
+      child: _dropdownTrigger(context, current),
+    );
+  }
+
+  Widget _dropdownTrigger(BuildContext context, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: context.colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: context.textTheme.labelMedium?.copyWith(
+              color: context.colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(width: 4),
+          const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: Colors.grey),
+        ],
+      ),
+    );
   }
 }

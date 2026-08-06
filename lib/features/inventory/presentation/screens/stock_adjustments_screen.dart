@@ -193,7 +193,7 @@ class _AdjustmentFormDialogState extends ConsumerState<AdjustmentFormDialog> {
             const SizedBox(height: 8),
             productsAsync.when(
               data: (products) => DropdownButtonFormField<Product>(
-                value: selectedProduct,
+                initialValue: selectedProduct,
                 isExpanded: true,
                 hint: const Text('Select a product'),
                 items: products.map((p) => DropdownMenuItem(
@@ -220,7 +220,7 @@ class _AdjustmentFormDialogState extends ConsumerState<AdjustmentFormDialog> {
                 }
 
                 return DropdownButtonFormField<Warehouse>(
-                  value: selectedWarehouse,
+                  initialValue: selectedWarehouse,
                   isExpanded: true,
                   hint: const Text('Select warehouse'),
                   items: warehouses.map((w) => DropdownMenuItem(

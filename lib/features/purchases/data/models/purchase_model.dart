@@ -43,6 +43,7 @@ class PurchaseItemModel extends PurchaseItem {
   PurchaseItemModel({
     required super.name,
     required super.sku,
+    super.hsnCode,
     required super.costPrice,
     required super.qty,
     required super.gstRate,
@@ -52,6 +53,7 @@ class PurchaseItemModel extends PurchaseItem {
     return PurchaseItemModel(
       name: json['name'] as String,
       sku: json['sku'] as String? ?? '',
+      hsnCode: json['hsnCode'] as String?,
       costPrice: (json['costPrice'] as num).toDouble(),
       qty: (json['qty'] as num).toDouble(),
       gstRate: (json['gstRate'] as num).toDouble(),
@@ -62,6 +64,7 @@ class PurchaseItemModel extends PurchaseItem {
     return PurchaseItemModel(
       name: entity.name,
       sku: entity.sku,
+      hsnCode: entity.hsnCode,
       costPrice: entity.costPrice,
       qty: entity.qty,
       gstRate: entity.gstRate,
@@ -72,6 +75,7 @@ class PurchaseItemModel extends PurchaseItem {
     return {
       'name': name,
       'sku': sku,
+      'hsnCode': hsnCode,
       'costPrice': costPrice,
       'qty': qty,
       'gstRate': gstRate,

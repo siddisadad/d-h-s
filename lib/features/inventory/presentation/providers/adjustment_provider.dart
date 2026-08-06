@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/entities/stock_adjustment.dart';
 import 'inventory_provider.dart';
+import '../../../../core/providers/database_providers.dart';
 
 part 'adjustment_provider.g.dart';
 
@@ -59,7 +60,30 @@ class AdjustmentNotifier extends _$AdjustmentNotifier {
 }
 
 @riverpod
-List<StockAdjustment> productHistory(ProductHistoryRef ref, String sku) {
-  final allAdjustments = ref.watch(adjustmentNotifierProvider);
-  return allAdjustments.where((adj) => adj.productSku == sku).toList();
+Future<List<StockAdjustment>> productHistory(ProductHistoryRef ref, String sku) async {
+  final localDb = ref.watch(localDatabaseProvider);
+  final maps = await localDb.getStockMovements(sku);
+
+  return maps.map((m) => StockAdjustment(
+    id: m['id'],
+    productSku: m['productSku'],
+    productName: m['productName'],
+    warehouseId: m['warehouseId'],
+    quantityChange: (m['quantity'] as num).toDouble(),
+    reason: _mapReason(m['reason']),
+    timestamp: DateTime.fromMillisecondsSinceEpoch(m['timestamp']),
+    performedBy: m['performedBy'],
+    notes: m['notes'],
+  )).toList();
+}
+
+AdjustmentReason _mapReason(String reason) {
+  if (reason.contains('Sale')) return AdjustmentReason.correction; // Or add a new enum
+  if (reason.contains('Purchase')) return AdjustmentReason.restock;
+  if (reason.contains('Transfer')) return AdjustmentReason.correction;
+
+  return AdjustmentReason.values.firstWhere(
+    (r) => r.label == reason,
+    orElse: () => AdjustmentReason.correction,
+  );
 }

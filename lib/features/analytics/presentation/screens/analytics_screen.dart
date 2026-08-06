@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:deshmukh_steel_e_r_p/core/design_system/theme/app_theme.dart';
 import 'package:deshmukh_steel_e_r_p/core/widgets/custom_card.dart';
 import 'package:deshmukh_steel_e_r_p/core/providers/app_bar_provider.dart';
 import 'package:deshmukh_steel_e_r_p/core/services/excel_service.dart';
-import '../providers/analytics_provider.dart';
+import 'package:deshmukh_steel_e_r_p/core/widgets/permission_wrapper.dart';
+import 'package:deshmukh_steel_e_r_p/core/security/permissions.dart';
+
 import '../../../sales/presentation/providers/sales_history_provider.dart';
-import '../../../purchases/presentation/providers/purchase_history_provider.dart';
-import '../../../employees/presentation/providers/employee_provider.dart';
-import 'package:intl/intl.dart';
+import '../../../inventory/presentation/providers/inventory_provider.dart';
+import '../widgets/profit_loss_card.dart';
+import '../widgets/performance_matrix_card.dart';
+import '../widgets/report_grid.dart';
+import '../providers/cash_flow_provider.dart';
+import 'package:fl_chart/fl_chart.dart';
+import '../../../../core/widgets/custom_charts.dart';
 
 enum TimeRange { week, month, quarter, year }
 
@@ -26,19 +31,21 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-
     // Update Global AppBar
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(appBarNotifierProvider.notifier).update(
         title: 'BUSINESS ANALYTICS',
         actions: [
-          IconButton(
-            icon: const Icon(Icons.file_download_outlined),
-            onPressed: () {
-              final sales = ref.read(salesHistoryProvider).value ?? [];
-              ref.read(excelServiceProvider.notifier).exportSalesReport(sales);
-            },
-            tooltip: 'Export Report',
+          PermissionWrapper(
+            requiredPermissions: const [AppPermission.exportData],
+            child: IconButton(
+              icon: const Icon(Icons.file_download_outlined),
+              onPressed: () {
+                final sales = ref.read(salesHistoryProvider).value ?? [];
+                ref.read(excelServiceProvider.notifier).exportSalesReport(sales);
+              },
+              tooltip: 'Export Report',
+            ),
           ),
         ],
       );
@@ -51,15 +58,19 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
         children: [
           _buildTimeRangeSelector(context),
           const SizedBox(height: 24),
-          _buildMainComparisonChart(context),
+          const PerformanceMatrixCard(),
           const SizedBox(height: 32),
           Text('QUICK REPORTS',
               style: context.textTheme.labelLarge
                   ?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 1.2)),
           const SizedBox(height: 16),
-          _buildReportGrid(context),
+          const ReportGrid(),
           const SizedBox(height: 32),
-          _buildProfitAndLossCard(context),
+          _buildInventoryInsights(context),
+          const SizedBox(height: 32),
+          _buildCashFlowTrend(context),
+          const SizedBox(height: 32),
+          const ProfitLossCard(),
           const SizedBox(height: 32),
           _buildPerformanceSummary(context),
         ],
@@ -67,77 +78,91 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
     );
   }
 
-  Widget _buildProfitAndLossCard(BuildContext context) {
-    final tokens = context.tokens;
+  Widget _buildInventoryInsights(BuildContext context) {
+    final inventoryAsync = ref.watch(inventoryNotifierProvider);
     final salesAsync = ref.watch(salesHistoryProvider);
-    final purchasesAsync = ref.watch(purchaseHistoryProvider);
-    final employeesAsync = ref.watch(employeeNotifierProvider);
-    final currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
 
-    return salesAsync.when(
-      data: (sales) => purchasesAsync.when(
-        data: (purchases) => employeesAsync.when(
-          data: (employees) {
-            final grossSales = sales.fold(0.0, (sum, s) => sum + s.grandTotal);
-            final cogs = purchases.fold(0.0, (sum, p) => sum + p.grandTotal);
-            final salaries = employees.fold(0.0, (sum, e) => sum + (double.tryParse(e.salary.replaceAll('₹', '').replaceAll(',', '')) ?? 0.0));
-            final totalExpenses = cogs + salaries;
-            final netProfit = grossSales - totalExpenses;
-            final margin = grossSales > 0 ? (netProfit / grossSales) * 100 : 0.0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('INVENTORY INSIGHTS',
+            style: context.textTheme.labelLarge
+                ?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 1.2)),
+        const SizedBox(height: 16),
+        inventoryAsync.when(
+          data: (products) => salesAsync.when(
+            data: (sales) {
+              // Calculate Dead Stock (No sales in last 90 days)
+              final ninetyDaysAgo = DateTime.now().subtract(const Duration(days: 90));
+              final soldSkus = sales
+                  .where((s) => s.date.isAfter(ninetyDaysAgo))
+                  .expand((s) => s.items)
+                  .map((i) => i.sku)
+                  .toSet();
 
-            return CustomCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              final deadStockCount = products.where((p) => !soldSkus.contains(p.sku)).length;
+
+              // Top Moving (by quantity in last 30 days)
+              final thirtyDaysAgo = DateTime.now().subtract(const Duration(days: 30));
+              final salesMap = <String, double>{};
+              for (final sale in sales.where((s) => s.date.isAfter(thirtyDaysAgo))) {
+                for (final item in sale.items) {
+                  salesMap[item.name] = (salesMap[item.name] ?? 0) + item.qty;
+                }
+              }
+              final topMoving = salesMap.entries.toList()
+                ..sort((a, b) => b.value.compareTo(a.value));
+              final topItem = topMoving.isNotEmpty ? topMoving.first.key : 'N/A';
+
+              return Row(
                 children: [
-                  Text('PROFIT & LOSS (YTD)', style: context.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 1.2)),
-                  const SizedBox(height: 16),
-                  _plRow(context, 'Gross Sales', currency.format(grossSales), isPositive: true),
-                  _plRow(context, 'Cost of Goods', currency.format(cogs), isPositive: false),
-                  _plRow(context, 'Payroll / Salaries', currency.format(salaries), isPositive: false),
-                  const Divider(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('NET PROFIT', style: context.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
-                      Text(currency.format(netProfit), style: context.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, color: netProfit >= 0 ? context.tokens.success : context.colorScheme.error)),
-                    ],
+                  Expanded(
+                    child: CustomCard(
+                      padding: const EdgeInsets.all(16),
+                      color: context.colorScheme.errorContainer.withValues(alpha: 0.3),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.Inventory_2_outlined, color: context.colorScheme.error),
+                          const SizedBox(height: 12),
+                          Text('$deadStockCount Items',
+                              style: context.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+                          Text('DEAD STOCK (90D)',
+                              style: context.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold, color: context.colorScheme.error)),
+                        ],
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 8),
-                  Text('Margin: ${margin.toStringAsFixed(1)}%', style: context.textTheme.labelSmall),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: CustomCard(
+                      padding: const EdgeInsets.all(16),
+                      color: context.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.trending_up_rounded, color: context.colorScheme.primary),
+                          const SizedBox(height: 12),
+                          Text(topItem,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: context.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                          Text('TOP MOVING (30D)',
+                              style: context.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold, color: context.colorScheme.primary)),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
-              ),
-            );
-          },
-          loading: () => const LinearProgressIndicator(),
-          error: (e, s) => Text('Error loading employees: $e'),
-        ),
-        loading: () => const LinearProgressIndicator(),
-        error: (e, s) => Text('Error loading purchases: $e'),
-      ),
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, s) => Text('Error loading sales: $e'),
-    );
-  }
-
-  Widget _plRow(BuildContext context, String label, String value,
-      {required bool isPositive}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: context.textTheme.bodyMedium),
-          Text(
-            '${isPositive ? '+' : '-'} $value',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: isPositive
-                  ? context.colorScheme.primary
-                  : context.colorScheme.error,
-            ),
+              );
+            },
+            loading: () => const LinearProgressIndicator(),
+            error: (e, s) => const SizedBox.shrink(),
           ),
-        ],
-      ),
+          loading: () => const SizedBox.shrink(),
+          error: (e, s) => const SizedBox.shrink(),
+        ),
+      ],
     );
   }
 
@@ -179,115 +204,65 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
     );
   }
 
-  Widget _buildMainComparisonChart(BuildContext context) {
-    final tokens = context.tokens;
-    final salesAsync = ref.watch(salesHistoryProvider);
-    final purchasesAsync = ref.watch(purchaseHistoryProvider);
+  Widget _buildCashFlowTrend(BuildContext context) {
+    final cashFlowAsync = ref.watch(cashFlowProvider);
 
-    return salesAsync.when(
-      data: (sales) => purchasesAsync.when(
-        data: (purchases) {
-          final salesSpots = _getDailySpots(
-              sales.map((e) => _DataPoint(e.date, e.grandTotal)).toList());
-          final purchaseSpots = _getDailySpots(
-              purchases.map((e) => _DataPoint(e.date, e.grandTotal)).toList());
-
-          return CustomCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return cashFlowAsync.when(
+      data: (data) => CustomCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Performance Matrix',
-                            style: context.textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.w700)),
-                        Text('Sales vs Purchases (Last 7 Days)',
-                            style: context.textTheme.bodySmall),
-                      ],
-                    ),
-                    _chartLegend(context),
-                  ],
-                ),
-                const SizedBox(height: 32),
-                SizedBox(
-                  height: 220,
-                  child: LineChart(
-                    LineChartData(
-                      gridData: const FlGridData(show: false),
-                      borderData: FlBorderData(show: false),
-                      titlesData: const FlTitlesData(show: false),
-                      lineBarsData: [
-                        LineChartBarData(
-                          spots: salesSpots,
-                          isCurved: true,
-                          color: context.colorScheme.primary,
-                          barWidth: 3,
-                          dotData: const FlDotData(show: false),
-                          belowBarData: BarAreaData(
-                              show: true,
-                              color: context.colorScheme.primary
-                                  .withValues(alpha: 0.1)),
-                        ),
-                        LineChartBarData(
-                          spots: purchaseSpots,
-                          isCurved: true,
-                          color: context.colorScheme.error,
-                          barWidth: 2,
-                          dashArray: [5, 5],
-                          dotData: const FlDotData(show: false),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                Text('FUNDS FLOW (LAST 30 DAYS)', style: context.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 1.2)),
+                _chartLegend(context),
               ],
             ),
-          );
-        },
-        loading: () => const SizedBox(
-            height: 220, child: Center(child: CircularProgressIndicator())),
-        error: (e, s) => Text('Error: $e'),
+            const SizedBox(height: 24),
+            SizedBox(
+              height: 200,
+              child: LineChart(
+                LineChartData(
+                  gridData: const FlGridData(show: false),
+                  borderData: FlBorderData(show: false),
+                  titlesData: const FlTitlesData(show: false),
+                  maxY: data.maxY,
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: data.inflowSpots,
+                      isCurved: true,
+                      color: context.tokens.success,
+                      barWidth: 3,
+                      dotData: const FlDotData(show: false),
+                    ),
+                    LineChartBarData(
+                      spots: data.outflowSpots,
+                      isCurved: true,
+                      color: context.colorScheme.error,
+                      barWidth: 3,
+                      dotData: const FlDotData(show: false),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text('Scaling: Units in ₹1,000s', style: context.textTheme.labelSmall?.copyWith(color: context.tokens.textSecondary)),
+          ],
+        ),
       ),
-      loading: () => const SizedBox(
-          height: 220, child: Center(child: CircularProgressIndicator())),
-      error: (e, s) => Text('Error: $e'),
+      loading: () => const Center(child: LinearProgressIndicator()),
+      error: (e, s) => Text('Error loading cash flow: $e'),
     );
-  }
-
-  List<FlSpot> _getDailySpots(List<_DataPoint> data) {
-    final now = DateTime.now();
-    final Map<int, double> dailyTotals = {};
-
-    for (int i = 0; i < 7; i++) {
-      final date = now.subtract(Duration(days: i));
-      final dayKey =
-          DateTime(date.year, date.month, date.day).millisecondsSinceEpoch;
-      dailyTotals[dayKey] = 0;
-    }
-
-    for (var p in data) {
-      final dayKey =
-          DateTime(p.date.year, p.date.month, p.date.day).millisecondsSinceEpoch;
-      if (dailyTotals.containsKey(dayKey)) {
-        dailyTotals[dayKey] = dailyTotals[dayKey]! + p.value;
-      }
-    }
-
-    final sortedKeys = dailyTotals.keys.toList()..sort();
-    return List.generate(sortedKeys.length,
-        (i) => FlSpot(i.toDouble(), dailyTotals[sortedKeys[i]]!));
   }
 
   Widget _chartLegend(BuildContext context) {
     return Row(
       children: [
-        _legendItem('Sales', context.colorScheme.primary),
+        _legendItem('Inflow', context.tokens.success),
         const SizedBox(width: 12),
-        _legendItem('Purchases', context.colorScheme.error),
+        _legendItem('Outflow', context.colorScheme.error),
       ],
     );
   }
@@ -295,47 +270,10 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
   Widget _legendItem(String label, Color color) {
     return Row(
       children: [
-        Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
         const SizedBox(width: 4),
-        Text(label,
-            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+        Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
       ],
-    );
-  }
-
-  Widget _buildReportGrid(BuildContext context) {
-    final reports = [
-      {'icon': Icons.trending_up, 'label': 'Sales Register'},
-      {'icon': Icons.inventory_2, 'label': 'Stock Ledger'},
-      {'icon': Icons.account_balance, 'label': 'Profit & Loss'},
-      {'icon': Icons.pie_chart, 'label': 'GST Reports'},
-    ];
-
-    return GridView.count(
-      crossAxisCount: 2,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 2.2,
-      children: reports
-          .map((r) => CustomCard(
-                onTap: () {},
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    Icon(r['icon'] as IconData,
-                        color: context.colorScheme.primary, size: 24),
-                    const SizedBox(width: 12),
-                    Text(r['label'] as String,
-                        style: const TextStyle(fontWeight: FontWeight.w600)),
-                  ],
-                ),
-              ))
-          .toList(),
     );
   }
 
@@ -380,10 +318,4 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
       ),
     );
   }
-}
-
-class _DataPoint {
-  final DateTime date;
-  final double value;
-  _DataPoint(this.date, this.value);
 }

@@ -1,7 +1,9 @@
-- [x] Fix CRM Repository CRUD for Web
-- [x] Fix Inventory Repository CRUD for Web
-- [x] Fix Purchase Repository CRUD for Web
-- [x] Fix Sales Repository CRUD for Web
-- [x] Fix Analytics Repository for Web
-- [x] Disable Sync Service on Web
-- [/] Verify CRUD operations on Web (Mock mode)
+- [x] Update UI Theme Colors in `app_theme.dart`
+- [x] Update PDF Service brand color in `pdf_service.dart`
+- [x] Update Web Manifest colors in `manifest.json`
+- [x] Update Design System documentation in `01_Design_System.md`
+- [x] Configure Firebase Realtime Database in `AppConfig`
+- [x] Refactor repositories for Firebase live CRUD
+- [x] Implement Web-safe database bypass
+- [x] Add "Seed Firebase" utility in Settings (Removed due to build errors)
+- [x] Commit and Push changes

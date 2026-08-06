@@ -8,6 +8,9 @@ import 'package:deshmukh_steel_e_r_p/features/crm/presentation/providers/crm_pro
 import 'package:deshmukh_steel_e_r_p/features/crm/presentation/providers/ledger_provider.dart';
 import 'package:deshmukh_steel_e_r_p/features/crm/domain/entities/contact.dart';
 import 'package:deshmukh_steel_e_r_p/core/providers/app_bar_provider.dart';
+import 'package:deshmukh_steel_e_r_p/core/services/pdf_service.dart';
+import 'package:deshmukh_steel_e_r_p/core/services/sharing_service.dart';
+import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
 
 class CustomerLedgerScreen extends ConsumerWidget {
@@ -32,6 +35,13 @@ class CustomerLedgerScreen extends ConsumerWidget {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           ref.read(appBarNotifierProvider.notifier).update(
             title: customer.name.toUpperCase(),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.share_rounded),
+                onPressed: () => _showShareOptions(context, ref, customer),
+                tooltip: 'Share Statement',
+              ),
+            ],
           );
         });
 
@@ -44,7 +54,7 @@ class CustomerLedgerScreen extends ConsumerWidget {
               const SizedBox(height: 24),
               _buildStats(context, customer),
               const SizedBox(height: 24),
-              _buildActions(context, customer),
+              _buildActions(context, ref, customer),
               const SizedBox(height: 32),
               Text('TRANSACTION HISTORY', style: context.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 1.2)),
               const SizedBox(height: 16),
@@ -118,11 +128,15 @@ class CustomerLedgerScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildActions(BuildContext context, Contact customer) {
+  Widget _buildActions(BuildContext context, WidgetRef ref, Contact customer) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        _actionIcon(context, Icons.picture_as_pdf_outlined, 'Statement', context.colorScheme.primary, () {}),
+        _actionIcon(context, Icons.picture_as_pdf_outlined, 'Statement', context.colorScheme.primary, () async {
+          final entries = await ref.read(ledgerNotifierProvider(customer.id).future);
+          final pdfBytes = await ref.read(pdfServiceProvider.notifier).generateLedgerStatement(customer, entries);
+          await Printing.layoutPdf(onLayout: (format) async => pdfBytes);
+        }),
         _actionIcon(context, Icons.chat_outlined, 'WhatsApp', context.tokens.success, () async {
           final url = 'whatsapp://send?phone=${customer.contact.replaceAll(' ', '')}';
           if (await canLaunchUrl(Uri.parse(url))) await launchUrl(Uri.parse(url));
@@ -196,6 +210,61 @@ class CustomerLedgerScreen extends ConsumerWidget {
       style: context.textTheme.bodyMedium?.copyWith(
         fontWeight: FontWeight.w700,
         color: isDebit ? context.colorScheme.error : context.tokens.success,
+      ),
+    );
+  }
+
+  void _showShareOptions(BuildContext context, WidgetRef ref, Contact customer) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('SHARE STATEMENT', style: context.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 24),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(color: context.colorScheme.primary.withValues(alpha: 0.1), shape: BoxShape.circle),
+                child: Icon(Icons.picture_as_pdf_rounded, color: context.colorScheme.primary),
+              ),
+              title: const Text('Share as PDF'),
+              subtitle: const Text('Branded statement with transaction history'),
+              onTap: () async {
+                Navigator.pop(context);
+                final entries = await ref.read(ledgerNotifierProvider(customer.id).future);
+                final pdfBytes = await ref.read(pdfServiceProvider.notifier).generateLedgerStatement(customer, entries);
+                await ref.read(sharingServiceProvider.notifier).shareFile(
+                  pdfBytes,
+                  'Statement_${customer.name}_${DateTime.now().millisecondsSinceEpoch}.pdf',
+                  phoneNumber: customer.contact,
+                );
+              },
+            ),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(color: context.tokens.success.withValues(alpha: 0.1), shape: BoxShape.circle),
+                child: Icon(Icons.text_fields_rounded, color: context.tokens.success),
+              ),
+              title: const Text('Share as Text Summary'),
+              subtitle: const Text('Quick balance summary for WhatsApp'),
+              onTap: () async {
+                Navigator.pop(context);
+                final summary = 'Hello ${customer.name},\n\n'
+                    'This is a summary of your account with Deshmukh Hardware & Steel.\n'
+                    'Current Outstanding Balance: ₹${NumberFormat.currency(locale: 'en_IN', symbol: '', decimalDigits: 0).format(customer.balance)}\n\n'
+                    'Please settle the dues at your earliest convenience.\n\n'
+                    'Thank you!';
+                await ref.read(sharingServiceProvider.notifier).shareText(summary);
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
       ),
     );
   }

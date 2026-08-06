@@ -1,7 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/entities/ledger_entry.dart';
-import '../../domain/repositories/crm_repository.dart';
+
 import '../providers/crm_provider.dart';
+
 
 part 'ledger_provider.g.dart';
 

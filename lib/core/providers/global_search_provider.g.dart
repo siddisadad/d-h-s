@@ -6,7 +6,7 @@ part of 'global_search_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$globalSearchHash() => r'c70d76ceed94182e18a2ddeddf34ddf1e4985653';
+String _$globalSearchHash() => r'f3770a85eaff04add9b7802703e39d79c00566e3';
 
 /// See also [GlobalSearch].
 @ProviderFor(GlobalSearch)

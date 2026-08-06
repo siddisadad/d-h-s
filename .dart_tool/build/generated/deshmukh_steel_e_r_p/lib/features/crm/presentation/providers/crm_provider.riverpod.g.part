@@ -2,7 +2,7 @@
 // RiverpodGenerator
 // **************************************************************************
 
-String _$crmRepositoryHash() => r'f1f03f9653324b7c1f63dda01c213ca28b838581';
+String _$crmRepositoryHash() => r'ee5dfba1ee3fc53da97329aca3185bab3cd3bb66';
 
 /// See also [crmRepository].
 @ProviderFor(crmRepository)
@@ -20,7 +20,7 @@ final crmRepositoryProvider = AutoDisposeProvider<CrmRepository>.internal(
 // ignore: unused_element
 typedef CrmRepositoryRef = AutoDisposeProviderRef<CrmRepository>;
 String _$getContactsUseCaseHash() =>
-    r'49509aec8dd1caebc6ae3c8284be4f6624e82a6c';
+    r'4663d610a2eab064c6fe07697d5a1d0e660f2fc4';
 
 /// See also [getContactsUseCase].
 @ProviderFor(getContactsUseCase)

@@ -1,13 +1,29 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/entities/purchase_order.dart';
 import '../../domain/repositories/purchase_repository.dart';
-import '../../../../core/di/injection_container.dart';
+import '../../data/repositories/purchase_repository_impl.dart';
+import '../../data/datasources/purchase_remote_data_source.dart';
+import '../../../../core/providers/database_providers.dart';
+import '../../../../core/providers/firebase_providers.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/utils/logger.dart';
 
 part 'purchase_provider.g.dart';
 
 @riverpod
-PurchaseRepository purchaseRepository(PurchaseRepositoryRef ref) => sl.purchaseRepository;
+PurchaseRepository purchaseRepository(PurchaseRepositoryRef ref) {
+  final client = ref.watch(apiClientProvider);
+  final firebaseDb = ref.watch(firebaseDatabaseServiceProvider);
+  final localDb = ref.watch(localDatabaseProvider);
+
+  final purchaseDataSource = PurchaseRemoteDataSourceImpl(client);
+
+  return PurchaseRepositoryImpl(
+    remoteDataSource: purchaseDataSource,
+    localDatabase: localDb,
+    firebaseDb: firebaseDb,
+  );
+}
 
 @riverpod
 class PurchaseNotifier extends _$PurchaseNotifier {

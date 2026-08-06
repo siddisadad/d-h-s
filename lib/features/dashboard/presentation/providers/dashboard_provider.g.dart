@@ -7,7 +7,7 @@ part of 'dashboard_provider.dart';
 // **************************************************************************
 
 String _$dashboardRepositoryHash() =>
-    r'44c84df7fc43171b90c15a08e7ff25fb2608e8ff';
+    r'6c50029b504f48b523badf41381a507cad558528';
 
 /// See also [dashboardRepository].
 @ProviderFor(dashboardRepository)
@@ -26,7 +26,7 @@ final dashboardRepositoryProvider =
 // ignore: unused_element
 typedef DashboardRepositoryRef = AutoDisposeProviderRef<DashboardRepository>;
 String _$getDashboardStatsUseCaseHash() =>
-    r'bd1f1abd505a465426354417874bb8a87dcfc444';
+    r'3d9ceb6c219b3bebac81d3ee5c1ef2c305f27eae';
 
 /// See also [getDashboardStatsUseCase].
 @ProviderFor(getDashboardStatsUseCase)
@@ -45,7 +45,7 @@ final getDashboardStatsUseCaseProvider =
 // ignore: unused_element
 typedef GetDashboardStatsUseCaseRef = AutoDisposeProviderRef<GetDashboardStats>;
 String _$dashboardStatsNotifierHash() =>
-    r'9e509c20558fdaa8fbf162f8690759f359a5670f';
+    r'62744b66cf5e143bc0a5b53707a400e58e009da5';
 
 /// See also [DashboardStatsNotifier].
 @ProviderFor(DashboardStatsNotifier)

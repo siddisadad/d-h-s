@@ -6,6 +6,7 @@ class StatCard extends StatelessWidget {
   final String label;
   final String value;
   final IconData? icon;
+  final Widget? customIcon;
   final Color? color;
   final String? trend;
   final bool isAlert;
@@ -16,6 +17,7 @@ class StatCard extends StatelessWidget {
     required this.label,
     required this.value,
     this.icon,
+    this.customIcon,
     this.color,
     this.trend,
     this.isAlert = false,
@@ -48,14 +50,14 @@ class StatCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                if (icon != null)
+                if (customIcon != null || icon != null)
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: primaryColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(icon, color: primaryColor, size: 20),
+                    child: customIcon ?? Icon(icon, color: primaryColor, size: 20),
                   ),
                 if (trend != null && !isAlert)
                   Container(

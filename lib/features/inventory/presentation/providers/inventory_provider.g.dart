@@ -7,7 +7,7 @@ part of 'inventory_provider.dart';
 // **************************************************************************
 
 String _$inventoryRepositoryHash() =>
-    r'af0c0bd555edb3ec20b9e0eee1aa7f027aa199e3';
+    r'148fff5ffe1ae5c22df33547b0d03c9a0af2093d';
 
 /// See also [inventoryRepository].
 @ProviderFor(inventoryRepository)
@@ -26,7 +26,7 @@ final inventoryRepositoryProvider =
 // ignore: unused_element
 typedef InventoryRepositoryRef = AutoDisposeProviderRef<InventoryRepository>;
 String _$getProductsUseCaseHash() =>
-    r'fc5105a925752196384df90b320142316757fe35';
+    r'0bbc75d3b3f87f3876a81126ffb9854593098e5d';
 
 /// See also [getProductsUseCase].
 @ProviderFor(getProductsUseCase)

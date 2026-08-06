@@ -1,3 +1,4 @@
+import '../../../../core/constants/app_strings.dart';
 import '../../../../components/base_list_item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,7 +14,7 @@ import 'package:timeago/timeago.dart' as timeago;
 import 'package:go_router/go_router.dart';
 import 'package:deshmukh_steel_e_r_p/core/widgets/global_search_overlay.dart';
 import 'package:deshmukh_steel_e_r_p/core/widgets/custom_charts.dart';
-import 'package:deshmukh_steel_e_r_p/components/kpi_card/kpi_card_widget.dart';
+import 'package:deshmukh_steel_e_r_p/core/widgets/stat_card.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:deshmukh_steel_e_r_p/core/providers/app_bar_provider.dart';
 import 'package:deshmukh_steel_e_r_p/core/security/permissions.dart';
@@ -34,7 +35,7 @@ class DashboardScreen extends ConsumerWidget {
     // Update Global AppBar
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(appBarNotifierProvider.notifier).update(
-        title: 'DCI ERP DASHBOARD',
+        title: AppStrings.dashboardTitle,
         actions: [
           IconButton(
             icon: const Icon(Icons.search_rounded),
@@ -88,7 +89,7 @@ class DashboardScreen extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Welcome back, $name 👋',
+          '${AppStrings.welcomeBack}, $name 👋',
           style: context.textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.w800,
             letterSpacing: -0.5,
@@ -96,7 +97,7 @@ class DashboardScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'Monitor your business performance and inventory in real-time.',
+          AppStrings.dashboardSubtitle,
           style: context.textTheme.bodyMedium?.copyWith(
             color: context.colorScheme.onSurface.withValues(alpha: 0.7),
             fontWeight: FontWeight.w500,
@@ -120,35 +121,35 @@ class DashboardScreen extends ConsumerWidget {
           physics: const NeverScrollableScrollPhysics(),
           childAspectRatio: 1.4,
           children: [
-            KpiCardWidget(
-              label: 'Today\'s Sales',
+            StatCard(
+              label: AppStrings.todaySales,
               value: stats?.sales ?? '₹0',
-              icon: const Icon(Icons.payments_rounded),
-              tone: context.colorScheme.primary,
-              trend: '+12%',
+              customIcon: const Icon(Icons.payments_rounded),
+              color: context.colorScheme.primary,
+              trend: stats?.salesTrend,
             ),
-            KpiCardWidget(
-              label: 'Today\'s Purchase',
+            StatCard(
+              label: AppStrings.todayPurchase,
               value: stats?.purchases ?? '₹0',
-              icon: const Icon(Icons.shopping_cart_rounded),
-              tone: context.colorScheme.secondary,
-              trend: '+5%',
+              customIcon: const Icon(Icons.shopping_cart_rounded),
+              color: context.colorScheme.secondary,
+              trend: stats?.purchasesTrend,
             ),
             PermissionWrapper(
               requiredPermissions: const [AppPermission.viewFinance],
-              child: KpiCardWidget(
-                label: 'Collections',
+              child: StatCard(
+                label: AppStrings.collections,
                 value: stats?.collections ?? '₹0',
-                icon: const Icon(Icons.account_balance_wallet_rounded),
-                tone: context.colorScheme.tertiary,
-                trend: '+8%',
+                customIcon: const Icon(Icons.account_balance_wallet_rounded),
+                color: context.colorScheme.tertiary,
+                trend: stats?.collectionsTrend,
               ),
             ),
-            KpiCardWidget(
-              label: 'Low Stock',
+            StatCard(
+              label: AppStrings.lowStock,
               value: stats?.lowStock ?? '0 Items',
-              icon: const Icon(Icons.inventory_2_rounded),
-              tone: context.colorScheme.error,
+              customIcon: const Icon(Icons.inventory_2_rounded),
+              color: context.colorScheme.error,
               isAlert: true,
             ),
           ],
@@ -184,7 +185,7 @@ class DashboardScreen extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'REVENUE TREND (LAST 7 DAYS)',
+                AppStrings.revenueTrend,
                 style: context.textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.2,
@@ -213,7 +214,7 @@ class DashboardScreen extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'QUICK ACTIONS',
+          AppStrings.quickActions,
           style: context.textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w700,
             letterSpacing: 1.2,
@@ -225,16 +226,16 @@ class DashboardScreen extends ConsumerWidget {
           children: [
             PermissionWrapper(
               requiredPermissions: const [AppPermission.createInvoice],
-              child: Expanded(child: _buildActionItem(context, Icons.add_shopping_cart_rounded, 'New Sale', context.colorScheme.primary, '/sales')),
+              child: Expanded(child: _buildActionItem(context, Icons.add_shopping_cart_rounded, AppStrings.newSale, context.colorScheme.primary, '/sales')),
             ),
             const SizedBox(width: 16),
             Expanded(child: _buildActionItem(context, Icons.inventory_2_outlined, 'Inventory', context.colorScheme.secondary, '/inventory')),
             const SizedBox(width: 16),
-            Expanded(child: _buildActionItem(context, Icons.people_outline_rounded, 'Customers', context.colorScheme.tertiary, '/customers')),
+            Expanded(child: _buildActionItem(context, Icons.people_outline_rounded, AppStrings.customers, context.colorScheme.tertiary, '/customers')),
             const SizedBox(width: 16),
             PermissionWrapper(
               requiredPermissions: const [AppPermission.viewAnalytics],
-              child: Expanded(child: _buildActionItem(context, Icons.assessment_outlined, 'Reports', context.colorScheme.primaryContainer, '/analytics')),
+              child: Expanded(child: _buildActionItem(context, Icons.assessment_outlined, AppStrings.reports, context.colorScheme.primaryContainer, '/analytics')),
             ),
           ],
         ),
@@ -247,7 +248,7 @@ class DashboardScreen extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'RECENT ACTIVITY',
+          AppStrings.recentActivity,
           style: context.textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w700,
             letterSpacing: 1.2,

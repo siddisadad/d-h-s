@@ -1,3 +1,4 @@
+import '../../core/constants/app_strings.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:deshmukh_steel_e_r_p/core/design_system/theme/app_theme.dart';
 import 'package:deshmukh_steel_e_r_p/core/widgets/custom_card.dart';
@@ -60,7 +61,7 @@ class ProductListItemWidget extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(tokens.radiusFull),
                     ),
                     child: Text(
-                      product.isLowStock ? 'Low Stock' : 'In Stock',
+                      product.isLowStock ? AppStrings.lowStock : AppStrings.inStock,
                       style: context.textTheme.labelSmall?.copyWith(
                         color: product.isLowStock ? tokens.error : tokens.success,
                         fontWeight: FontWeight.w700,
@@ -73,7 +74,7 @@ class ProductListItemWidget extends ConsumerWidget {
                       ? Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(color: context.colorScheme.error, borderRadius: BorderRadius.circular(4)),
-                          child: const Text('PRIORITY', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                          child: const Text(AppStrings.priority, style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
                         )
                       : const SizedBox.shrink(),
                     orElse: () => const SizedBox.shrink(),
@@ -91,20 +92,20 @@ class ProductListItemWidget extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildDetail(context, 'CATEGORY', product.category),
-              _buildDetail(context, 'UNIT', product.unit),
+              _buildDetail(context, AppStrings.category, product.category),
+              _buildDetail(context, AppStrings.unit, product.unit),
               PermissionWrapper(
                 requiredPermissions: const [AppPermission.viewPrices],
                 child: _buildDetail(
                   context,
-                  'PRICE',
+                  AppStrings.price,
                   NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2).format(product.price),
                   isPrimary: true,
                 ),
               ),
               _buildDetail(
                 context,
-                'STOCK',
+                AppStrings.stock,
                 '${NumberFormat.decimalPattern().format(product.stock)} ${product.unit}',
                 isBold: true,
                 color: product.isLowStock ? tokens.error : context.colorScheme.primary,
@@ -130,7 +131,7 @@ class ProductListItemWidget extends ConsumerWidget {
             children: [
               Icon(Icons.edit_outlined, size: 18),
               SizedBox(width: 8),
-              Text('Edit Product'),
+              Text(AppStrings.editProduct),
             ],
           ),
         ),
@@ -140,7 +141,7 @@ class ProductListItemWidget extends ConsumerWidget {
             children: [
               Icon(Icons.delete_outline_rounded, size: 18, color: context.colorScheme.error),
               const SizedBox(width: 8),
-              Text('Delete', style: TextStyle(color: context.colorScheme.error)),
+              Text(AppStrings.delete, style: TextStyle(color: context.colorScheme.error)),
             ],
           ),
         ),

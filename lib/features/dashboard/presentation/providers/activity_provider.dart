@@ -1,12 +1,13 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:deshmukh_steel_e_r_p/features/dashboard/domain/entities/activity.dart';
-import 'package:deshmukh_steel_e_r_p/core/di/injection_container.dart';
+import 'package:deshmukh_steel_e_r_p/core/providers/firebase_providers.dart';
 
 part 'activity_provider.g.dart';
 
 @riverpod
 Stream<List<Activity>> activityStream(ActivityStreamRef ref) {
-  return sl.firebaseDb.watchPath('activities').map((event) {
+  final firebaseDb = ref.watch(firebaseDatabaseServiceProvider);
+  return firebaseDb.watchPath('activities').map((event) {
     final snapshot = event.snapshot;
     if (!snapshot.exists || snapshot.value == null) return [];
 
@@ -32,6 +33,7 @@ class ActivityNotifier extends _$ActivityNotifier {
   }
 
   Future<void> addActivity(String title, String subtitle, ActivityType type) async {
+    final firebaseDb = ref.read(firebaseDatabaseServiceProvider);
     final newActivity = Activity(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       title: title,
@@ -40,6 +42,6 @@ class ActivityNotifier extends _$ActivityNotifier {
       type: type,
     );
 
-    await sl.firebaseDb.pushData('activities', newActivity.toJson());
+    await firebaseDb.pushData('activities', newActivity.toJson());
   }
 }

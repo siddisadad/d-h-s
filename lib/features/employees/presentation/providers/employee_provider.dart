@@ -1,13 +1,27 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/entities/employee.dart';
 import '../../domain/repositories/employee_repository.dart';
-import '../../../../core/di/injection_container.dart';
+import '../../data/repositories/employee_repository_impl.dart';
+import '../../data/datasources/employee_remote_data_source.dart';
+import '../../../../core/providers/database_providers.dart';
+import '../../../../core/providers/firebase_providers.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/utils/logger.dart';
 
 part 'employee_provider.g.dart';
 
 @riverpod
-EmployeeRepository employeeRepository(EmployeeRepositoryRef ref) => sl.employeeRepository;
+EmployeeRepository employeeRepository(EmployeeRepositoryRef ref) {
+  final client = ref.watch(apiClientProvider);
+  final firebaseDb = ref.watch(firebaseDatabaseServiceProvider);
+  final localDb = ref.watch(localDatabaseProvider);
+
+  return EmployeeRepositoryImpl(
+    remoteDataSource: EmployeeRemoteDataSourceImpl(client),
+    localDatabase: localDb,
+    firebaseDb: firebaseDb,
+  );
+}
 
 @riverpod
 class EmployeeNotifier extends _$EmployeeNotifier {

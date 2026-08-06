@@ -18,7 +18,7 @@ class InvoiceItemList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final draft = ref.watch(salesInvoiceNotifierProvider);
-    final tokens = context.tokens;
+
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -4,9 +4,14 @@ import '../../domain/entities/sales_quotation.dart';
 import '../../domain/entities/sales_invoice.dart';
 import '../../domain/entities/invoice_item.dart';
 import '../../domain/repositories/sales_repository.dart';
+import '../../data/repositories/sales_repository_impl.dart';
+import '../../data/datasources/sales_remote_data_source.dart';
 import '../../domain/usecases/create_invoice.dart';
 import '../../../crm/domain/entities/contact.dart';
-import '../../../../core/di/injection_container.dart';
+import '../../../../core/providers/database_providers.dart';
+import '../../../../core/providers/firebase_providers.dart';
+import '../../../../core/services/notification_service.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/services/pdf_service.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../dashboard/presentation/providers/activity_provider.dart';
@@ -15,10 +20,27 @@ import '../../../dashboard/domain/entities/activity.dart';
 part 'sales_provider.g.dart';
 
 @riverpod
-SalesRepository salesRepository(SalesRepositoryRef ref) => sl.salesRepository;
+SalesRepository salesRepository(SalesRepositoryRef ref) {
+  final client = ref.watch(apiClientProvider);
+  final firebaseDb = ref.watch(firebaseDatabaseServiceProvider);
+  final localDb = ref.watch(localDatabaseProvider);
+  final notificationService = ref.watch(notificationServiceProvider);
+
+  final salesDataSource = SalesRemoteDataSourceImpl(client);
+
+  return SalesRepositoryImpl(
+    remoteDataSource: salesDataSource,
+    localDatabase: localDb,
+    firebaseDb: firebaseDb,
+    notificationService: notificationService,
+  );
+}
 
 @riverpod
-CreateInvoice createInvoiceUseCase(CreateInvoiceUseCaseRef ref) => sl.createInvoiceUseCase;
+CreateInvoice createInvoiceUseCase(CreateInvoiceUseCaseRef ref) {
+  final repository = ref.watch(salesRepositoryProvider);
+  return CreateInvoice(repository);
+}
 
 @riverpod
 class SalesInvoiceNotifier extends _$SalesInvoiceNotifier {

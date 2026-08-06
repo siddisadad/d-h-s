@@ -23,6 +23,7 @@ class _ContactFormScreenState extends ConsumerState<ContactFormScreen> {
   late TextEditingController _gstinController;
   late TextEditingController _locationController;
   late TextEditingController _balanceController;
+  late TextEditingController _creditLimitController;
 
   @override
   void initState() {
@@ -32,6 +33,7 @@ class _ContactFormScreenState extends ConsumerState<ContactFormScreen> {
     _gstinController = TextEditingController(text: widget.contact?.gstin);
     _locationController = TextEditingController(text: widget.contact?.location);
     _balanceController = TextEditingController(text: widget.contact?.balance.toString() ?? '0');
+    _creditLimitController = TextEditingController(text: widget.contact?.creditLimit.toString() ?? '0');
   }
 
   @override
@@ -41,6 +43,7 @@ class _ContactFormScreenState extends ConsumerState<ContactFormScreen> {
     _gstinController.dispose();
     _locationController.dispose();
     _balanceController.dispose();
+    _creditLimitController.dispose();
     super.dispose();
   }
 
@@ -61,6 +64,7 @@ class _ContactFormScreenState extends ConsumerState<ContactFormScreen> {
       contact: _contactController.text.trim(),
       gstin: _gstinController.text.trim().toUpperCase(),
       balance: double.tryParse(_balanceController.text.trim()) ?? 0,
+      creditLimit: double.tryParse(_creditLimitController.text.trim()) ?? 0,
       location: _locationController.text.trim(),
       type: widget.type,
     );
@@ -129,6 +133,15 @@ class _ContactFormScreenState extends ConsumerState<ContactFormScreen> {
                 keyboardType: TextInputType.number,
                 enabled: !isEdit, // Only set initial balance on create
               ),
+              if (widget.type == ContactType.customer) ...[
+                const SizedBox(height: 20),
+                CustomTextField(
+                  label: 'Credit Limit (₹)',
+                  hint: '0.00',
+                  controller: _creditLimitController,
+                  keyboardType: TextInputType.number,
+                ),
+              ],
               const SizedBox(height: 32),
               CustomButton(
                 text: isEdit ? 'Update Details' : 'Create Account',

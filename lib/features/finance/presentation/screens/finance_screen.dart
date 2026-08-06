@@ -9,6 +9,9 @@ import '../../../sales/presentation/providers/sales_history_provider.dart';
 import '../../../purchases/presentation/providers/purchase_history_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:deshmukh_steel_e_r_p/core/providers/app_bar_provider.dart';
+import '../../../../core/widgets/permission_wrapper.dart';
+import '../../../../core/security/permissions.dart';
+import '../../../../core/widgets/custom_button.dart';
 
 class FinanceScreen extends ConsumerWidget {
   const FinanceScreen({super.key});
@@ -24,6 +27,17 @@ class FinanceScreen extends ConsumerWidget {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(appBarNotifierProvider.notifier).update(
             title: 'FINANCE & CASH BOOK',
+            actions: [
+              PermissionWrapper(
+                requiredPermissions: const [AppPermission.manageTransactions],
+                child: CustomButton(
+                  text: 'Add Entry',
+                  icon: Icons.add_rounded,
+                  variant: CustomButtonVariant.primary,
+                  onPressed: () => _showAddEntryDialog(context, ref),
+                ),
+              ),
+            ],
           );
     });
 
@@ -37,7 +51,11 @@ class FinanceScreen extends ConsumerWidget {
         if (salesData != null && purchasesData != null) {
           final totalSales = salesData.fold(0.0, (sum, s) => sum + s.grandTotal);
           final totalPurchases = purchasesData.fold(0.0, (sum, p) => sum + p.grandTotal);
-          totalBalance = totalSales - totalPurchases;
+
+          final netGeneral = transactions.fold(0.0, (sum, t) =>
+            t.category == 'Income' ? sum + t.amount : sum - t.amount);
+
+          totalBalance = totalSales - totalPurchases + netGeneral;
         }
 
         return SingleChildScrollView(
@@ -137,6 +155,67 @@ class FinanceScreen extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  void _showAddEntryDialog(BuildContext context, WidgetRef ref) {
+    final titleController = TextEditingController();
+    final amountController = TextEditingController();
+    String category = 'Income';
+    String paymentMode = 'Cash';
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Add Finance Entry'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(labelText: 'Title', hintText: 'e.g. Office Rent'),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: amountController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Amount', prefixText: '₹ '),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                initialValue: category,
+                items: ['Income', 'Expense'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                onChanged: (val) => setState(() => category = val!),
+                decoration: const InputDecoration(labelText: 'Category'),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                initialValue: paymentMode,
+                items: ['Cash', 'Bank Transfer', 'UPI'].map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
+                onChanged: (val) => setState(() => paymentMode = val!),
+                decoration: const InputDecoration(labelText: 'Payment Mode'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+            ElevatedButton(
+              onPressed: () async {
+                if (titleController.text.isEmpty || amountController.text.isEmpty) return;
+                await ref.read(financeNotifierProvider.notifier).addTransaction(
+                  title: titleController.text,
+                  category: category,
+                  amount: double.tryParse(amountController.text) ?? 0,
+                  paymentMode: paymentMode,
+                );
+                if (context.mounted) Navigator.pop(context);
+              },
+              child: const Text('Save Entry'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
+
 import '../../../../core/design_system/theme/app_theme.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/custom_text_field.dart';
 import '../../../../core/widgets/custom_card.dart';
 import '../../../../core/providers/app_bar_provider.dart';
 import '../providers/inventory_provider.dart';
+import '../../../../core/services/pdf_service.dart';
+import '../../../../core/services/printer_service.dart';
+import '../../../sales/domain/entities/sales_invoice.dart';
+import '../../../sales/domain/entities/invoice_item.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/entities/warehouse.dart';
 import '../../domain/entities/stock_transfer.dart';
@@ -63,7 +67,7 @@ class _StockTransferScreenState extends ConsumerState<StockTransferScreen> {
                   const SizedBox(height: 12),
                   productsAsync.when(
                     data: (products) => DropdownButtonFormField<Product>(
-                      value: selectedProduct,
+                      initialValue: selectedProduct,
                       isExpanded: true,
                       hint: const Text('Search or select product'),
                       items: products.map((p) => DropdownMenuItem(
@@ -87,7 +91,7 @@ class _StockTransferScreenState extends ConsumerState<StockTransferScreen> {
                             const SizedBox(height: 12),
                             warehousesAsync.when(
                               data: (warehouses) => DropdownButtonFormField<Warehouse>(
-                                value: fromWarehouse,
+                                initialValue: fromWarehouse,
                                 hint: const Text('Source'),
                                 items: warehouses.map((w) => DropdownMenuItem(value: w, child: Text(w.name))).toList(),
                                 onChanged: (val) => setState(() => fromWarehouse = val),
@@ -109,7 +113,7 @@ class _StockTransferScreenState extends ConsumerState<StockTransferScreen> {
                             const SizedBox(height: 12),
                             warehousesAsync.when(
                               data: (warehouses) => DropdownButtonFormField<Warehouse>(
-                                value: toWarehouse,
+                                initialValue: toWarehouse,
                                 hint: const Text('Destination'),
                                 items: warehouses.map((w) => DropdownMenuItem(value: w, child: Text(w.name))).toList(),
                                 onChanged: (val) => setState(() => toWarehouse = val),
@@ -217,11 +221,39 @@ class _StockTransferScreenState extends ConsumerState<StockTransferScreen> {
         SnackBar(
           content: const Text('Stock Transferred Successfully!'),
           backgroundColor: context.successColor,
+          action: SnackBarAction(
+            label: 'PRINT SLIP',
+            textColor: Colors.white,
+            onPressed: () => _printTransferSlip(transfer),
+          ),
         ),
       );
       Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Transfer failed: ${result.failure?.message}')));
     }
+  }
+
+  void _printTransferSlip(StockTransfer transfer) async {
+    // Generate a pseudo-invoice for the challan generator
+    final pseudoInvoice = SalesInvoice(
+      id: transfer.id,
+      customerId: 'INTERNAL',
+      customerName: 'TRANSFER: ${transfer.fromWarehouseId} ➡ ${transfer.toWarehouseId}',
+      date: transfer.timestamp,
+      items: [
+        InvoiceItem(
+          name: transfer.productName,
+          sku: transfer.productSku,
+          price: 0,
+          qty: transfer.quantity,
+          gstRate: 0,
+        ),
+      ],
+      discount: 0,
+    );
+
+    final pdfBytes = await ref.read(pdfServiceProvider.notifier).generateDeliveryChallan(pseudoInvoice);
+    await ref.read(printerServiceProvider.notifier).directPrint(pdfBytes, jobName: 'Transfer_Slip');
   }
 }

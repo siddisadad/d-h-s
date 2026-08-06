@@ -9,4 +9,6 @@ class AppConfig {
 
   // Set this to TRUE to use Firebase Realtime Database as the remote source
   static const bool useFirebase = true;
+
+  static bool get isDevelopment => true; // Could be determined by kDebugMode
 }

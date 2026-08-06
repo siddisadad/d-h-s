@@ -7,8 +7,10 @@ class Contact {
   final String contact;
   final String gstin;
   final double balance;
+  final double creditLimit;
   final String location;
   final ContactType type;
+  final DateTime? lastReminderSent;
 
   const Contact({
     required this.id,
@@ -17,7 +19,9 @@ class Contact {
     required this.contact,
     required this.gstin,
     required this.balance,
+    this.creditLimit = 0.0,
     required this.location,
     required this.type,
+    this.lastReminderSent,
   });
 }

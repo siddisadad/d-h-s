@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../features/inventory/presentation/providers/inventory_provider.dart';
 import '../../features/crm/presentation/providers/crm_provider.dart';
 import '../../features/crm/domain/entities/contact.dart';
+import '../../features/sales/presentation/providers/sales_history_provider.dart';
 
 part 'global_search_provider.g.dart';
 
@@ -79,6 +80,20 @@ class GlobalSearch extends _$GlobalSearch {
           subtitle: s.location,
           category: SearchCategory.supplier,
           path: '/suppliers',
+        ));
+      }
+    }
+
+    // Search within current in-memory invoices
+    final invoices = ref.read(salesHistoryProvider).value ?? [];
+    for (final inv in invoices) {
+      if (inv.id.toLowerCase().contains(keyword) || inv.customerName.toLowerCase().contains(keyword)) {
+        results.add(SearchResult(
+          id: inv.id,
+          title: inv.id,
+          subtitle: '${inv.customerName} - ₹${inv.grandTotal.toStringAsFixed(0)}',
+          category: SearchCategory.invoice,
+          path: '/sales',
         ));
       }
     }

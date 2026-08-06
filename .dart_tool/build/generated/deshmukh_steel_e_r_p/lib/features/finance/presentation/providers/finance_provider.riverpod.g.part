@@ -2,7 +2,7 @@
 // RiverpodGenerator
 // **************************************************************************
 
-String _$financeRepositoryHash() => r'bdafb2122a342c0c9a32cb7126a76a1cb4900850';
+String _$financeRepositoryHash() => r'072c2891e3e6edcf92f85b14b26f3b5222cdf829';
 
 /// See also [financeRepository].
 @ProviderFor(financeRepository)
@@ -20,7 +20,7 @@ final financeRepositoryProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef FinanceRepositoryRef = AutoDisposeProviderRef<FinanceRepository>;
-String _$financeNotifierHash() => r'84309c3963d91da6f895000d63370d9fe628b38a';
+String _$financeNotifierHash() => r'83cb328653d52029ebd2d6596306a698cca2d01d';
 
 /// See also [FinanceNotifier].
 @ProviderFor(FinanceNotifier)

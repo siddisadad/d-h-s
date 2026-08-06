@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../core/constants/app_strings.dart';
 import '../../../../core/design_system/theme/app_theme.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/custom_text_field.dart';
@@ -49,7 +50,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter email and password')),
+        const SnackBar(content: Text(AppStrings.enterEmailPassword)),
       );
       return;
     }
@@ -88,7 +89,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        'Secure Login',
+                        AppStrings.secureLogin,
                         style: context.textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.w700,
                           color: context.colorScheme.primary,
@@ -96,7 +97,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Enter your credentials to access the ERP dashboard',
+                        AppStrings.secureLoginSubtitle,
                         style: context.textTheme.bodyMedium?.copyWith(
                           color: context.colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
@@ -104,7 +105,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       const SizedBox(height: 24),
                       
                       CustomTextField(
-                        label: 'Email Address',
+                        label: AppStrings.emailAddress,
                         hint: 'admin@dhs.com',
                         controller: _emailController,
                         prefixIcon: Icons.email_outlined,
@@ -114,7 +115,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       const SizedBox(height: 16),
                       
                       CustomTextField(
-                        label: 'Password',
+                        label: AppStrings.password,
                         hint: '••••••••',
                         controller: _passwordController,
                         obscureText: true,
@@ -139,7 +140,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Remember Me',
+                            AppStrings.rememberMe,
                             style: context.textTheme.bodyMedium?.copyWith(
                               color: context.colorScheme.onSurface.withValues(alpha: 0.7),
                             ),
@@ -149,7 +150,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             onPressed: authState.isLoading 
                               ? null 
                               : () => _showResetPasswordDialog(context),
-                            child: const Text('Forgot Password?'),
+                            child: const Text(AppStrings.forgotPassword),
                           ),
                         ],
                       ),
@@ -180,7 +181,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ],
                       
                       CustomButton(
-                        text: 'Login to ERP',
+                        text: AppStrings.loginTitle,
                         onPressed: authState.isLoading ? null : _handleLogin,
                         loading: authState.isLoading,
                         fullWidth: true,
@@ -211,14 +212,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Reset Password'),
+          title: const Text(AppStrings.resetPassword),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Enter your email address to receive a password reset link.'),
+              const Text(AppStrings.resetPasswordSubtitle),
               const SizedBox(height: 16),
               CustomTextField(
-                label: 'Email Address',
+                label: AppStrings.emailAddress,
                 hint: 'admin@dhs.com',
                 controller: emailController,
                 prefixIcon: Icons.email_outlined,
@@ -228,16 +229,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: const Text(AppStrings.cancel),
             ),
             CustomButton(
-              text: 'Send Link',
+              text: AppStrings.sendLink,
               loading: isResetting,
               onPressed: () async {
                 final email = emailController.text.trim();
                 if (email.isEmpty || !email.contains('@')) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please enter a valid email address')),
+                    const SnackBar(content: Text(AppStrings.enterValidEmail)),
                   );
                   return;
                 }
@@ -249,7 +250,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: const Text('Password reset link sent to your email'),
+                        content: const Text(AppStrings.resetLinkSent),
                         backgroundColor: context.successColor,
                       ),
                     );
@@ -258,7 +259,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   if (context.mounted) {
                     String message = e.toString().replaceFirst('Exception: ', '');
                     if (message.contains('XMLHttpRequest')) {
-                      message = 'Connection to backend failed. Please check if your server is running.';
+                      message = AppStrings.backendConnectionError;
                     }
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(message), backgroundColor: context.colorScheme.error),
@@ -310,7 +311,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ),
         SizedBox(height: tokens.space16),
         Text(
-          'DESHMUKH ERP',
+          AppStrings.deshmukhErp,
           style: context.textTheme.headlineMedium?.copyWith(
             letterSpacing: 2,
             fontWeight: FontWeight.w800,

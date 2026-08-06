@@ -20,6 +20,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   late TextEditingController _skuController;
   late TextEditingController _priceController;
   late TextEditingController _stockController;
+  late TextEditingController _hsnController;
   String _selectedCategory = 'Steel';
   String _selectedUnit = 'Kg';
 
@@ -33,7 +34,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _skuController = TextEditingController(text: widget.product?.sku);
     _priceController = TextEditingController(text: widget.product?.price.toString());
     _stockController = TextEditingController(text: widget.product?.stock.toString());
-    
+    _hsnController = TextEditingController(text: widget.product?.hsnCode);
+
     if (widget.product != null) {
       if (_categories.contains(widget.product!.category)) {
         _selectedCategory = widget.product!.category;
@@ -50,6 +52,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _skuController.dispose();
     _priceController.dispose();
     _stockController.dispose();
+    _hsnController.dispose();
     super.dispose();
   }
 
@@ -62,6 +65,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       category: _selectedCategory,
       price: double.tryParse(_priceController.text.trim()) ?? 0,
       stock: double.tryParse(_stockController.text.trim()) ?? 0,
+      hsnCode: _hsnController.text.trim().isEmpty ? null : _hsnController.text.trim(),
       unit: _selectedUnit,
       isLowStock: (double.tryParse(_stockController.text.trim()) ?? 0) < 50,
     );
@@ -119,6 +123,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 value: _selectedCategory,
                 items: _categories,
                 onChanged: (val) => setState(() => _selectedCategory = val!),
+              ),
+              const SizedBox(height: 20),
+              CustomTextField(
+                label: 'HSN / SAC Code',
+                hint: 'e.g. 7208',
+                controller: _hsnController,
               ),
               const SizedBox(height: 20),
               Row(

@@ -1,6 +1,7 @@
 class PurchaseItem {
   final String name;
   final String sku;
+  final String? hsnCode;
   final double costPrice;
   final double qty;
   final double gstRate;
@@ -8,6 +9,7 @@ class PurchaseItem {
   PurchaseItem({
     required this.name,
     required this.sku,
+    this.hsnCode,
     required this.costPrice,
     required this.qty,
     required this.gstRate,

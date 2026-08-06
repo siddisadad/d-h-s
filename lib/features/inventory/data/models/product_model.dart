@@ -9,6 +9,7 @@ class ProductModel extends Product {
     required super.stock,
     required super.unit,
     required super.isLowStock,
+    super.hsnCode,
     super.preferredSupplierId,
     super.reorderPoint = 0.0,
   });
@@ -22,6 +23,7 @@ class ProductModel extends Product {
       stock: (json['stock'] as num).toDouble(),
       unit: json['unit'] as String,
       isLowStock: json['isLowStock'] as bool? ?? false,
+      hsnCode: json['hsnCode'] as String?,
       preferredSupplierId: json['preferredSupplierId'] as String?,
       reorderPoint: (json['reorderPoint'] as num?)?.toDouble() ?? 0.0,
     );
@@ -36,6 +38,7 @@ class ProductModel extends Product {
       'stock': stock,
       'unit': unit,
       'isLowStock': isLowStock,
+      'hsnCode': hsnCode,
       'preferredSupplierId': preferredSupplierId,
       'reorderPoint': reorderPoint,
     };
@@ -50,6 +53,7 @@ class ProductModel extends Product {
       stock: stock,
       unit: unit,
       isLowStock: isLowStock,
+      hsnCode: hsnCode,
       preferredSupplierId: preferredSupplierId,
       reorderPoint: reorderPoint,
     );

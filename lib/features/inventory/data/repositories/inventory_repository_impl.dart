@@ -11,23 +11,48 @@ import '../models/product_model.dart';
 import '../models/warehouse_model.dart';
 import '../../domain/entities/warehouse.dart';
 import '../../domain/entities/stock_transfer.dart';
-import '../../../../core/di/injection_container.dart';
+import '../../../../core/services/firebase_database_service.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../../../core/config/app_config.dart';
 
 class InventoryRepositoryImpl implements InventoryRepository {
   final InventoryRemoteDataSource remoteDataSource;
   final LocalDatabase localDb;
+  final FirebaseDatabaseService firebaseDb;
+  final NotificationService notificationService;
 
   InventoryRepositoryImpl({
     required this.remoteDataSource,
     required this.localDb,
+    required this.firebaseDb,
+    required this.notificationService,
   });
 
   @override
   Future<Result<List<Product>>> getProducts({String? category}) async {
     try {
+      if (kIsWeb) {
+        if (AppConfig.useFirebase) {
+          final snapshot = await firebaseDb.getData('inventory');
+          if (!snapshot.exists || snapshot.value == null) return Result.success([]);
+
+          final Map<dynamic, dynamic> data = snapshot.value as Map<dynamic, dynamic>;
+          final List<Product> products = [];
+          data.forEach((key, value) {
+            final product = ProductModel.fromJson(Map<String, dynamic>.from(value as Map)).toEntity();
+            if (category == null || category == 'All Items' || product.category == category) {
+              products.add(product);
+            }
+          });
+          return Result.success(products);
+        } else {
+          final products = await remoteDataSource.getProducts(category: category);
+          return Result.success(products);
+        }
+      }
+
       if (AppConfig.useFirebase) {
-        final snapshot = await sl.firebaseDb.getData('inventory');
+        final snapshot = await firebaseDb.getData('inventory');
         if (!snapshot.exists || snapshot.value == null) return Result.success([]);
         
         final Map<dynamic, dynamic> data = snapshot.value as Map<dynamic, dynamic>;
@@ -41,19 +66,13 @@ class InventoryRepositoryImpl implements InventoryRepository {
         return Result.success(products);
       }
 
-      if (kIsWeb) {
-        final products = await remoteDataSource.getProducts(category: category);
-        return Result.success(products);
-      }
-
       final db = await localDb.database;
       
       // 1. Background refresh from Cloud (Firebase) - Real-time Source
       try {
-        final snapshot = await sl.firebaseDb.getData('inventory');
+        final snapshot = await firebaseDb.getData('inventory');
         if (snapshot.exists && snapshot.value != null) {
           final Map<dynamic, dynamic> cloudData = snapshot.value as Map<dynamic, dynamic>;
-          final List<Product> cloudProducts = [];
           cloudData.forEach((key, value) async {
             final productMap = Map<String, dynamic>.from(value as Map);
             final product = ProductModel.fromJson(productMap).toEntity();
@@ -79,6 +98,8 @@ class InventoryRepositoryImpl implements InventoryRepository {
         stock: m['stock'],
         unit: m['unit'],
         isLowStock: m['isLowStock'] == 1,
+        hsnCode: m['hsnCode'],
+        lastUpdated: m['lastUpdated'] ?? 0,
       )).toList();
 
       if (category != null && category != 'All Items') {
@@ -121,6 +142,8 @@ class InventoryRepositoryImpl implements InventoryRepository {
           stock: m['stock'],
           unit: m['unit'],
           isLowStock: m['isLowStock'] == 1,
+          hsnCode: m['hsnCode'],
+          lastUpdated: m['lastUpdated'] ?? 0,
         ));
       }
       return Result.error(ServerFailure('Product not found locally'));
@@ -155,13 +178,13 @@ class InventoryRepositoryImpl implements InventoryRepository {
       
       // 2. Push to Cloud (Firebase)
       try {
-        await sl.firebaseDb.setData('inventory/${product.sku}', model.toJson());
+        await firebaseDb.setData('inventory/${product.sku}', model.toJson());
         if (product.stock != 0) {
-           await sl.firebaseDb.setData('inventory/${product.sku}/stocks/main_yard', product.stock);
+           await firebaseDb.setData('inventory/${product.sku}/stocks/main_yard', product.stock);
         }
         
         // Record Activity
-        await sl.firebaseDb.pushData('activities', {
+        await firebaseDb.pushData('activities', {
           'id': 'PROD-${product.sku}',
           'title': 'New Product Added',
           'subtitle': '${product.name} (${product.sku})',
@@ -216,10 +239,10 @@ class InventoryRepositoryImpl implements InventoryRepository {
       
       // 2. Push to Cloud (Firebase)
       try {
-        await sl.firebaseDb.updateData('inventory/${product.sku}', model.toJson());
+        await firebaseDb.updateData('inventory/${product.sku}', model.toJson());
         
         // Record Activity
-        await sl.firebaseDb.pushData('activities', {
+        await firebaseDb.pushData('activities', {
           'id': 'UPDT-${product.sku}',
           'title': 'Product Updated',
           'subtitle': '${product.name} specifications modified',
@@ -259,7 +282,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
       
       // 2. Delete from Cloud
       try {
-        await sl.firebaseDb.deleteData('inventory/$sku');
+        await firebaseDb.deleteData('inventory/$sku');
       } catch (e) {
         Log.w('Firebase delete failed: $e', name: 'Inventory');
       }
@@ -282,11 +305,11 @@ class InventoryRepositoryImpl implements InventoryRepository {
   }
 
   @override
-  Future<Result<bool>> adjustStock(String sku, String warehouseId, double quantity) async {
+  Future<Result<bool>> adjustStock(String sku, String warehouseId, double quantity, {String? reason, String? notes}) async {
     try {
       if (kIsWeb) {
         // Simple mock adjustment for Web (updates won't persist locally but will try Firebase)
-        await sl.firebaseDb.updateData('inventory/$sku', {
+        await firebaseDb.updateData('inventory/$sku', {
           'stock': quantity, // Note: This should ideally be an increment in a real app
         });
         return Result.success(true);
@@ -298,7 +321,8 @@ class InventoryRepositoryImpl implements InventoryRepository {
       final List<Map<String, dynamic>> results = await db.query('inventory', where: 'sku = ?', whereArgs: [sku]);
       if (results.isEmpty) return Result.error(ServerFailure('Product not found'));
       
-      final currentTotalStock = (results.first['stock'] as num).toDouble();
+      final product = results.first;
+      final currentTotalStock = (product['stock'] as num).toDouble();
       final newTotalStock = currentTotalStock + quantity;
       
       // 2. Update Local Tables (Transactional via localDb helpers or direct)
@@ -314,6 +338,28 @@ class InventoryRepositoryImpl implements InventoryRepository {
         whereArgs: [sku],
       );
 
+      // 3. Record Movement (Audit Trail)
+      await localDb.saveStockMovement({
+        'id': 'MV-${DateTime.now().millisecondsSinceEpoch}',
+        'productSku': sku,
+        'productName': product['name'],
+        'warehouseId': warehouseId,
+        'quantity': quantity,
+        'reason': reason ?? (quantity > 0 ? 'Adjustment (+)' : 'Adjustment (-)'),
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+        'performedBy': 'System/Admin',
+        'notes': notes,
+      });
+
+      // Trigger Notification if Low Stock
+      if (newTotalStock < 10) {
+        await notificationService.showLocalAlert(
+          title: 'LOW STOCK ALERT',
+          body: '${results.first['name']} is running low (${newTotalStock.toStringAsFixed(0)} items remaining)',
+          path: '/inventory/$sku',
+        );
+      }
+
       // 3. Update Cloud (Firebase)
       try {
         // Fetch current per-warehouse stock from Firebase to be safe, or just update delta if using increments
@@ -321,14 +367,14 @@ class InventoryRepositoryImpl implements InventoryRepository {
         final breakdownResult = await getStockBreakdown(sku);
         final breakdown = breakdownResult.getOrElse((_) => {});
 
-        await sl.firebaseDb.updateData('inventory/$sku', {
+        await firebaseDb.updateData('inventory/$sku', {
           'stock': newTotalStock,
           'isLowStock': newTotalStock < 10,
           'stocks': breakdown,
         });
 
         // Record Activity
-        await sl.firebaseDb.pushData('activities', {
+        await firebaseDb.pushData('activities', {
           'id': 'ADJ-$sku-${DateTime.now().millisecondsSinceEpoch}',
           'title': 'Stock Adjusted',
           'subtitle': '$sku quantity changed by ${quantity > 0 ? "+" : ""}$quantity in $warehouseId',
@@ -371,7 +417,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
       
       // 2. Push to Firebase
       try {
-        await sl.firebaseDb.setData('warehouses/${warehouse.id}', model.toJson());
+        await firebaseDb.setData('warehouses/${warehouse.id}', model.toJson());
       } catch (e) {
         Log.w('Firebase warehouse sync failed: $e', name: 'Inventory');
       }
@@ -401,12 +447,28 @@ class InventoryRepositoryImpl implements InventoryRepository {
   Future<Result<bool>> transferStock(StockTransfer transfer) async {
     try {
       // 1. Subtract from source
-      await adjustStock(transfer.productSku, transfer.fromWarehouseId, -transfer.quantity);
+      await adjustStock(transfer.productSku, transfer.fromWarehouseId, -transfer.quantity, reason: 'Transfer Out', notes: 'To: ${transfer.toWarehouseId}');
       // 2. Add to destination
-      await adjustStock(transfer.productSku, transfer.toWarehouseId, transfer.quantity);
+      await adjustStock(transfer.productSku, transfer.toWarehouseId, transfer.quantity, reason: 'Transfer In', notes: 'From: ${transfer.fromWarehouseId}');
       
-      // 3. Record Activity
-      await sl.firebaseDb.pushData('activities', {
+      // 3. Record Movement Record
+      if (!kIsWeb) {
+        await localDb.saveStockMovement({
+          'id': transfer.id,
+          'productSku': transfer.productSku,
+          'productName': transfer.productName,
+          'warehouseId': transfer.fromWarehouseId,
+          'toWarehouseId': transfer.toWarehouseId,
+          'quantity': transfer.quantity,
+          'reason': 'Inter-Yard Transfer',
+          'timestamp': transfer.timestamp.millisecondsSinceEpoch,
+          'performedBy': transfer.performedBy,
+          'notes': transfer.notes,
+        });
+      }
+
+      // 4. Record Activity
+      await firebaseDb.pushData('activities', {
         'id': transfer.id,
         'title': 'Stock Transferred',
         'subtitle': '${transfer.productName}: ${transfer.fromWarehouseId} ➡️ ${transfer.toWarehouseId}',
@@ -461,6 +523,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
       'stock': p.stock,
       'unit': p.unit,
       'isLowStock': p.isLowStock ? 1 : 0,
+      'hsnCode': p.hsnCode,
       'lastUpdated': DateTime.now().millisecondsSinceEpoch,
     };
   }

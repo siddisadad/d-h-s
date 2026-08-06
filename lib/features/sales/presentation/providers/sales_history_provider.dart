@@ -1,6 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/entities/sales_invoice.dart';
-import '../../domain/repositories/sales_repository.dart';
+
 import 'sales_provider.dart';
 
 part 'sales_history_provider.g.dart';

@@ -1,6 +1,7 @@
 class InvoiceItem {
   final String name;
   final String sku;
+  final String? hsnCode;
   final double price;
   final double qty;
   final double gstRate;
@@ -8,6 +9,7 @@ class InvoiceItem {
   InvoiceItem({
     required this.name,
     required this.sku,
+    this.hsnCode,
     required this.price,
     required this.qty,
     required this.gstRate,

@@ -1,29 +1,41 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../di/injection_container.dart';
-
-part 'firebase_database_service.g.dart';
-
-@riverpod
-FirebaseDatabaseService firebaseDatabaseService(FirebaseDatabaseServiceRef ref) => sl.firebaseDb;
+import '../utils/logger.dart';
 
 class FirebaseDatabaseService {
   FirebaseDatabase? _db;
 
   FirebaseDatabaseService() {
+    _initialize();
+  }
+
+  void _initialize() {
     try {
+      if (Firebase.apps.isEmpty) {
+        Log.w('RTDB: Firebase App not initialized. Waiting for Main...', name: 'Firebase');
+        return;
+      }
+
       _db = FirebaseDatabase.instance;
       // Enable offline persistence for real-time sync when connection is lost
-      _db?.setPersistenceEnabled(true);
+      if (!kIsWeb) {
+        _db?.setPersistenceEnabled(true);
+      }
+      Log.i('RTDB: Connected Successfully', name: 'Firebase');
     } catch (e) {
-      debugPrint('⚠️ [RTDB] Firebase Database not available: $e');
+      Log.w('RTDB: Firebase Database not available: $e', name: 'Firebase');
     }
   }
 
+  bool get isInitialized => _db != null;
+
   /// Write data to a specific path
   Future<void> setData(String path, dynamic value) async {
-    if (_db == null) return;
+    if (_db == null) {
+      _initialize();
+      if (_db == null) throw Exception('Firebase Database not initialized');
+    }
     try {
       await _db!.ref(path).set(value);
     } catch (e) {
@@ -45,9 +57,13 @@ class FirebaseDatabaseService {
 
   /// Read data once from a path
   Future<DataSnapshot> getData(String path) async {
-    if (_db == null) throw Exception('Firebase Database not initialized');
+    final db = _db;
+    if (db == null) {
+      Log.w('RTDB: Cannot fetch $path - Database not initialized', name: 'Firebase');
+      return _MockDataSnapshot();
+    }
     try {
-      final snapshot = await _db!.ref(path).get();
+      final snapshot = await db.ref(path).get();
       return snapshot;
     } catch (e) {
       debugPrint('❌ [RTDB] Error fetching data at $path: $e');
@@ -57,8 +73,9 @@ class FirebaseDatabaseService {
 
   /// Listen to real-time changes at a path
   Stream<DatabaseEvent> watchPath(String path) {
-    if (_db == null) return const Stream.empty();
-    return _db!.ref(path).onValue;
+    final db = _db;
+    if (db == null) return const Stream.empty();
+    return db.ref(path).onValue;
   }
 
   /// Delete data at a path
@@ -86,4 +103,34 @@ class FirebaseDatabaseService {
       rethrow;
     }
   }
+}
+
+/// A simple mock class to return when Firebase is not initialized
+class _MockDataSnapshot implements DataSnapshot {
+  @override
+  bool get exists => false;
+
+  @override
+  String? get key => null;
+
+  @override
+  Object? get value => null;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+
+  @override
+  DataSnapshot child(String path) => this;
+
+  @override
+  Iterable<DataSnapshot> get children => const [];
+
+  @override
+  bool hasChild(String path) => false;
+
+  @override
+  int get priority => 0;
+
+  @override
+  DatabaseReference get ref => throw UnimplementedError();
 }

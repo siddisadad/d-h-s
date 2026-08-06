@@ -1,0 +1,18 @@
+{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
+    "inventory": {
+      ".indexOn": ["category", "sku"]
+    },
+    "sales": {
+      ".indexOn": ["customerId", "date"]
+    },
+    "purchases": {
+      ".indexOn": ["supplierId", "date"]
+    },
+    "employees": {
+      ".indexOn": ["role"]
+    }
+  }
+}

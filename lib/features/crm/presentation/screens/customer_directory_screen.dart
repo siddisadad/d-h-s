@@ -8,7 +8,6 @@ import 'package:deshmukh_steel_e_r_p/core/widgets/custom_text_field.dart';
 import 'package:deshmukh_steel_e_r_p/core/widgets/empty_state_widget.dart';
 import 'package:deshmukh_steel_e_r_p/core/widgets/custom_button.dart';
 import 'package:deshmukh_steel_e_r_p/features/crm/presentation/providers/crm_search_provider.dart';
-import 'package:deshmukh_steel_e_r_p/features/crm/presentation/providers/crm_provider.dart';
 import 'package:deshmukh_steel_e_r_p/features/crm/domain/entities/contact.dart';
 import 'package:deshmukh_steel_e_r_p/core/security/permissions.dart';
 import 'package:deshmukh_steel_e_r_p/core/widgets/permission_wrapper.dart';
@@ -41,6 +40,11 @@ class _CustomerDirectoryScreenState extends ConsumerState<CustomerDirectoryScree
       ref.read(appBarNotifierProvider.notifier).update(
         title: 'CUSTOMER DIRECTORY',
         actions: [
+          IconButton(
+            icon: const Icon(Icons.notification_important_outlined),
+            tooltip: 'Payment Reminders',
+            onPressed: () => context.push('/customers/reminders'),
+          ),
           PermissionWrapper(
             requiredPermissions: const [AppPermission.manageContacts],
             child: CustomButton(
@@ -200,10 +204,13 @@ class _CustomerDirectoryScreenState extends ConsumerState<CustomerDirectoryScree
                   _actionButton(Icons.call_outlined, context.primaryColor, () => _launchCall(customer.contact)),
                 ],
               ),
-              TextButton.icon(
-                onPressed: () => context.push('/customers/${customer.id}'),
-                icon: const Icon(Icons.receipt_long_rounded, size: 16),
-                label: const Text('View Ledger'),
+              PermissionWrapper(
+                requiredPermissions: const [AppPermission.viewLedgers],
+                child: TextButton.icon(
+                  onPressed: () => context.push('/customers/${customer.id}'),
+                  icon: const Icon(Icons.receipt_long_rounded, size: 16),
+                  label: const Text('View Ledger'),
+                ),
               ),
             ],
           ),

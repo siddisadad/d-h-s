@@ -9,27 +9,47 @@ import '../../domain/entities/purchase_order.dart';
 import '../../domain/repositories/purchase_repository.dart';
 import '../datasources/purchase_remote_data_source.dart';
 import '../models/purchase_model.dart';
-import '../../../../core/di/injection_container.dart';
+import '../../../../core/services/firebase_database_service.dart';
+import '../../../../core/config/app_config.dart';
 
 class PurchaseRepositoryImpl implements PurchaseRepository {
   final PurchaseRemoteDataSource remoteDataSource;
   final LocalDatabase localDatabase;
+  final FirebaseDatabaseService firebaseDb;
 
   PurchaseRepositoryImpl({
     required this.remoteDataSource,
     required this.localDatabase,
+    required this.firebaseDb,
   });
 
   @override
   Future<Result<List<PurchaseOrder>>> getRecentPurchases() async {
     try {
       if (kIsWeb) {
+        if (AppConfig.useFirebase) {
+          final snapshot = await firebaseDb.getData('purchases');
+          if (!snapshot.exists || snapshot.value == null) return Result.success([]);
+          
+          final Map<dynamic, dynamic> data = snapshot.value as Map<dynamic, dynamic>;
+          final List<PurchaseOrder> purchases = [];
+          data.forEach((key, value) {
+            purchases.add(PurchaseModel.fromJson(Map<String, dynamic>.from(value as Map)));
+          });
+          return Result.success(purchases);
+        }
         final remote = await remoteDataSource.getRecentPurchases();
         return Result.success(remote);
       }
-      final db = await localDatabase.database;
-      _refreshPurchasesInBackground();
+      
+      // 1. Background refresh from Firebase if enabled
+      if (AppConfig.useFirebase) {
+        _refreshPurchasesFromFirebase();
+      } else {
+        _refreshPurchasesInBackground();
+      }
 
+      final db = await localDatabase.database;
       final List<Map<String, dynamic>> maps = await db.query('purchases', orderBy: 'date DESC');
       final purchases = maps.map((m) {
         final List<dynamic> itemsJson = jsonDecode(m['items']);
@@ -65,8 +85,8 @@ class PurchaseRepositoryImpl implements PurchaseRepository {
             discount: purchase.discount,
             status: purchase.status,
           );
-          await sl.firebaseDb.setData('purchases/${purchase.id}', model.toJson());
-          await sl.firebaseDb.pushData('activities', {
+          await firebaseDb.setData('purchases/${purchase.id}', model.toJson());
+          await firebaseDb.pushData('activities', {
             'id': purchase.id,
             'title': 'New Purchase Recorded (Web)',
             'subtitle': '${purchase.supplierName} - ₹${purchase.grandTotal.toStringAsFixed(0)}',
@@ -107,8 +127,29 @@ class PurchaseRepositoryImpl implements PurchaseRepository {
             final product = results.first;
             final currentStock = (product['stock'] as num).toDouble();
             final newStock = currentStock + item.qty;
-            await txn.update('inventory', {'stock': newStock, 'isLowStock': newStock < 10 ? 1 : 0}, where: 'sku = ?', whereArgs: [item.sku]);
+
+            final updateMap = {
+              'stock': newStock,
+              'isLowStock': newStock < 10 ? 1 : 0,
+            };
+            if (item.hsnCode != null) {
+              updateMap['hsnCode'] = item.hsnCode!;
+            }
+
+            await txn.update('inventory', updateMap, where: 'sku = ?', whereArgs: [item.sku]);
             await localDatabase.updateStockLevel(item.sku, 'main_yard', item.qty);
+
+            // Record Movement Record
+            await localDatabase.saveStockMovement({
+              'id': 'PUR-${purchase.id}-${item.sku}',
+              'productSku': item.sku,
+              'productName': item.name,
+              'warehouseId': 'main_yard',
+              'quantity': item.qty,
+              'reason': 'Purchase (GRN #${purchase.id})',
+              'timestamp': DateTime.now().millisecondsSinceEpoch,
+              'performedBy': 'System',
+            });
           }
         }
 
@@ -134,9 +175,19 @@ class PurchaseRepositoryImpl implements PurchaseRepository {
 
         // 4. Push to Cloud (Firebase)
         try {
-          await sl.firebaseDb.setData('purchases/${purchase.id}', model.toJson());
-          await sl.firebaseDb.updateData('contacts/${purchase.supplierId}', {'balance': newBalance});
-          await sl.firebaseDb.pushData('activities', {
+          await firebaseDb.setData('purchases/${purchase.id}', model.toJson());
+          await firebaseDb.updateData('contacts/${purchase.supplierId}', {'balance': newBalance});
+          
+          // Sync Ledger to Firebase
+          await firebaseDb.setData('ledgers/${purchase.supplierId}/${purchase.id}', {
+            'date': purchase.date.toIso8601String(),
+            'type': 'Purchase',
+            'amount': purchase.grandTotal,
+            'balance': newBalance,
+            'isDebit': false,
+          });
+
+          await firebaseDb.pushData('activities', {
             'id': purchase.id,
             'title': 'New Purchase Recorded',
             'subtitle': '${purchase.supplierName} - ₹${purchase.grandTotal.toStringAsFixed(0)}',
@@ -173,5 +224,30 @@ class PurchaseRepositoryImpl implements PurchaseRepository {
       }
       await batch.commit(noResult: true);
     } catch (e) { Log.w('Purchase refresh failed: $e'); }
+  }
+
+  Future<void> _refreshPurchasesFromFirebase() async {
+    try {
+      final snapshot = await firebaseDb.getData('purchases');
+      if (snapshot.exists && snapshot.value != null) {
+        final Map<dynamic, dynamic> data = snapshot.value as Map<dynamic, dynamic>;
+        for (var value in data.values) {
+          final Map<String, dynamic> purMap = Map<String, dynamic>.from(value as Map);
+          final model = PurchaseModel.fromJson(purMap);
+          await localDatabase.savePurchase({
+            'id': model.id,
+            'supplierId': model.supplierId,
+            'supplierName': model.supplierName,
+            'date': model.date.millisecondsSinceEpoch,
+            'discount': model.discount,
+            'totalAmount': model.grandTotal,
+            'status': model.status,
+            'items': jsonEncode(purMap['items']),
+          });
+        }
+      }
+    } catch (e) {
+      Log.w('Could not refresh purchases from Firebase: $e', name: 'Purchases');
+    }
   }
 }

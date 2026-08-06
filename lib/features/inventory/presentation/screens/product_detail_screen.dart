@@ -1,9 +1,10 @@
+import '../../../../core/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/design_system/theme/app_theme.dart';
 import '../../../../core/widgets/custom_card.dart';
-import '../../../../core/widgets/custom_button.dart';
+
 import '../../../../core/providers/app_bar_provider.dart';
 import '../../../../core/security/permissions.dart';
 import '../../../../core/widgets/permission_wrapper.dart';
@@ -30,9 +31,10 @@ class ProductDetailScreen extends ConsumerWidget {
     final forecastAsync = ref.watch(demandForecastProvider(sku));
     final tokens = context.tokens;
 
+
     return productAsync.when(
       data: (product) {
-        if (product == null) return const Scaffold(body: Center(child: Text('Product not found')));
+        if (product == null) return const Center(child: Text('Product not found'));
 
         // Update Global AppBar
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -69,29 +71,32 @@ class ProductDetailScreen extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('STOCK MOVEMENT', style: context.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 1.2)),
+                  Text(AppStrings.stockMovement, style: context.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 1.2)),
                   PermissionWrapper(
                     requiredPermissions: const [AppPermission.adjustStock],
                     child: TextButton(
                       onPressed: () => _showAdjustmentDialog(context),
-                      child: const Text('Add Adjustment'),
+                      child: const Text(AppStrings.addAdjustment),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
-              _buildHistoryList(context, history),
+              history.when(
+                data: (list) => _buildHistoryList(context, list),
+                loading: () => const Center(child: LinearProgressIndicator()),
+                error: (e, s) => Text('Error loading history: $e'),
+              ),
             ],
           ),
         );
       },
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, s) => Scaffold(body: Center(child: Text('Error: $e'))),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, s) => Center(child: Text('Error: $e')),
     );
   }
 
   Widget _buildHeader(BuildContext context, Product product) {
-    final tokens = context.tokens;
     return CustomCard(
       child: Row(
         children: [
@@ -128,7 +133,6 @@ class ProductDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildStockCard(BuildContext context, Product product) {
-    final tokens = context.tokens;
     final currency = NumberFormat.currency(symbol: '₹', locale: 'en_IN');
 
     return Row(
@@ -138,7 +142,7 @@ class ProductDetailScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('CURRENT STOCK', style: context.textTheme.labelSmall),
+                Text(AppStrings.currentStock, style: context.textTheme.labelSmall),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -160,7 +164,7 @@ class ProductDetailScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('UNIT PRICE', style: context.textTheme.labelSmall),
+                  Text(AppStrings.unitPrice, style: context.textTheme.labelSmall),
                   const SizedBox(height: 8),
                   Text(currency.format(product.price), style: context.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900, color: context.colorScheme.primary)),
                 ],
@@ -184,7 +188,7 @@ class ProductDetailScreen extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('DEMAND INSIGHTS (AI)', style: context.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 1.2)),
+                  Text(AppStrings.demandInsights, style: context.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 1.2)),
                   _buildTrendBadge(context, forecast.trend),
                 ],
               ),
@@ -194,7 +198,7 @@ class ProductDetailScreen extends ConsumerWidget {
                   Expanded(
                     child: _insightStat(
                       context, 
-                      'Predicted Weekly Demand', 
+                      AppStrings.predictedDemand,
                       '${forecast.predictedWeeklyDemand.toStringAsFixed(1)} ${product.unit}',
                       Icons.trending_up_rounded,
                     ),
@@ -203,7 +207,7 @@ class ProductDetailScreen extends ConsumerWidget {
                   Expanded(
                     child: _insightStat(
                       context, 
-                      'Est. Stock-out In', 
+                      AppStrings.estStockOut,
                       forecast.estimatedDaysUntilStockOut > 365 ? '99+ Days' : '${forecast.estimatedDaysUntilStockOut} Days',
                       Icons.timer_outlined,
                       color: forecast.isCritical ? context.colorScheme.error : (forecast.isWarning ? Colors.orange : null),
@@ -223,7 +227,7 @@ class ProductDetailScreen extends ConsumerWidget {
                     children: [
                       Icon(Icons.warning_amber_rounded, color: context.colorScheme.error, size: 16),
                       const SizedBox(width: 8),
-                      Expanded(child: Text('CRITICAL: Stock will run out in less than 3 days based on current burn rate.', style: TextStyle(color: context.colorScheme.error, fontSize: 11, fontWeight: FontWeight.w600))),
+                      Expanded(child: Text(AppStrings.criticalStockOut, style: TextStyle(color: context.colorScheme.error, fontSize: 11, fontWeight: FontWeight.w600))),
                     ],
                   ),
                 ),
@@ -261,17 +265,17 @@ class ProductDetailScreen extends ConsumerWidget {
 
     switch (trend) {
       case TrendDirection.up:
-        label = 'RISING';
+        label = AppStrings.trendRising;
         icon = Icons.trending_up_rounded;
         color = context.tokens.success;
         break;
       case TrendDirection.down:
-        label = 'FALLING';
+        label = AppStrings.trendFalling;
         icon = Icons.trending_down_rounded;
         color = context.colorScheme.error;
         break;
       case TrendDirection.stable:
-        label = 'STABLE';
+        label = AppStrings.trendStable;
         icon = Icons.trending_flat_rounded;
         color = context.colorScheme.secondary;
         break;
@@ -295,7 +299,7 @@ class ProductDetailScreen extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('STOCK BREAKDOWN', style: context.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 1.2)),
+        Text(AppStrings.stockBreakdown, style: context.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 1.2)),
         const SizedBox(height: 16),
         breakdownAsync.when(
           data: (breakdown) => warehousesAsync.when(
@@ -330,7 +334,7 @@ class ProductDetailScreen extends ConsumerWidget {
     if (history.isEmpty) {
       return const CustomCard(
         padding: EdgeInsets.all(32),
-        child: Center(child: Text('No movement history recorded yet.')),
+        child: Center(child: Text(AppStrings.noMovementHistory)),
       );
     }
 

@@ -6,7 +6,7 @@ part of 'excel_service.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$excelServiceHash() => r'33f38da3a05f79563f9b3e61a62b0e84768daaf1';
+String _$excelServiceHash() => r'ba9d9b51109a68b01ed8c942ad591432765f2b29';
 
 /// See also [ExcelService].
 @ProviderFor(ExcelService)

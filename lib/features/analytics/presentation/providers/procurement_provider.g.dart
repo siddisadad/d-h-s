@@ -26,7 +26,7 @@ final procurementServiceProvider =
 // ignore: unused_element
 typedef ProcurementServiceRef = AutoDisposeProviderRef<ProcurementService>;
 String _$restockSuggestionsHash() =>
-    r'd35669387e76da272f6d01117c6d28dc109f9975';
+    r'9a2db61aefeb99871f08b99f94a21e162bc14db7';
 
 /// See also [restockSuggestions].
 @ProviderFor(restockSuggestions)

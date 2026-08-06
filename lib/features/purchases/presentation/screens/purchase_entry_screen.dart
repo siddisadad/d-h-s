@@ -135,7 +135,7 @@ class _PurchaseEntryScreenState extends ConsumerState<PurchaseEntryScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (_) => BarcodeScannerScreen(
-                        onResult: (p) => _addItemWithDialog(p.name, p.sku),
+                        onResult: (p) => _addItemWithDialog(p.name, p.sku, p.hsnCode),
                       ),
                     ),
                   ),
@@ -176,7 +176,15 @@ class _PurchaseEntryScreenState extends ConsumerState<PurchaseEntryScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(item.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                Text('₹${item.costPrice.toStringAsFixed(2)} x ${item.qty}', style: context.textTheme.bodySmall),
+                Row(
+                  children: [
+                    Text('₹${item.costPrice.toStringAsFixed(2)} x ${item.qty}', style: context.textTheme.bodySmall),
+                    if (item.hsnCode != null) ...[
+                      const SizedBox(width: 8),
+                      Text('HSN: ${item.hsnCode}', style: context.textTheme.bodySmall?.copyWith(color: context.colorScheme.primary)),
+                    ],
+                  ],
+                ),
               ],
             ),
           ),
@@ -195,13 +203,14 @@ class _PurchaseEntryScreenState extends ConsumerState<PurchaseEntryScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _ProductSelectionSheet(onSelected: (p) => _addItemWithDialog(p.name, p.sku)),
+      builder: (context) => _ProductSelectionSheet(onSelected: (p) => _addItemWithDialog(p.name, p.sku, p.hsnCode)),
     );
   }
 
-  void _addItemWithDialog(String name, String sku) {
+  void _addItemWithDialog(String name, String sku, [String? initialHsn]) {
     final costController = TextEditingController();
     final qtyController = TextEditingController();
+    final hsnController = TextEditingController(text: initialHsn);
 
     showDialog(
       context: context,
@@ -212,6 +221,7 @@ class _PurchaseEntryScreenState extends ConsumerState<PurchaseEntryScreen> {
           children: [
             TextField(controller: costController, decoration: const InputDecoration(labelText: 'Cost Price'), keyboardType: TextInputType.number),
             TextField(controller: qtyController, decoration: const InputDecoration(labelText: 'Quantity'), keyboardType: TextInputType.number),
+            TextField(controller: hsnController, decoration: const InputDecoration(labelText: 'HSN Code (Optional)')),
           ],
         ),
         actions: [
@@ -220,9 +230,17 @@ class _PurchaseEntryScreenState extends ConsumerState<PurchaseEntryScreen> {
             onPressed: () {
               final price = double.tryParse(costController.text) ?? 0.0;
               final qty = double.tryParse(qtyController.text) ?? 0.0;
+              final hsn = hsnController.text.trim();
               if (price > 0 && qty > 0) {
                 setState(() {
-                  _items.add(PurchaseItem(name: name, sku: sku, costPrice: price, qty: qty, gstRate: 18));
+                  _items.add(PurchaseItem(
+                    name: name,
+                    sku: sku,
+                    hsnCode: hsn.isEmpty ? null : hsn,
+                    costPrice: price,
+                    qty: qty,
+                    gstRate: 18,
+                  ));
                 });
                 Navigator.pop(context);
               }

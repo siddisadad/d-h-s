@@ -1,9 +1,14 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:deshmukh_steel_e_r_p/features/inventory/domain/repositories/inventory_repository.dart';
+import 'package:deshmukh_steel_e_r_p/features/inventory/data/repositories/inventory_repository_impl.dart';
+import 'package:deshmukh_steel_e_r_p/features/inventory/data/datasources/inventory_remote_data_source.dart';
 import 'package:deshmukh_steel_e_r_p/features/inventory/domain/entities/product.dart';
 import 'package:deshmukh_steel_e_r_p/features/inventory/domain/entities/warehouse.dart';
-import 'package:deshmukh_steel_e_r_p/features/inventory/domain/repositories/inventory_repository.dart';
 import 'package:deshmukh_steel_e_r_p/features/inventory/domain/usecases/get_products.dart';
-import 'package:deshmukh_steel_e_r_p/core/di/injection_container.dart';
+import 'package:deshmukh_steel_e_r_p/core/providers/database_providers.dart';
+import 'package:deshmukh_steel_e_r_p/core/providers/firebase_providers.dart';
+import 'package:deshmukh_steel_e_r_p/core/services/notification_service.dart';
+import 'package:deshmukh_steel_e_r_p/core/network/api_client.dart';
 import 'package:deshmukh_steel_e_r_p/core/utils/logger.dart';
 import 'package:deshmukh_steel_e_r_p/features/dashboard/presentation/providers/activity_provider.dart';
 import 'package:deshmukh_steel_e_r_p/features/dashboard/domain/entities/activity.dart' as activity;
@@ -11,10 +16,27 @@ import 'package:deshmukh_steel_e_r_p/features/dashboard/domain/entities/activity
 part 'inventory_provider.g.dart';
 
 @riverpod
-InventoryRepository inventoryRepository(InventoryRepositoryRef ref) => sl.inventoryRepository;
+InventoryRepository inventoryRepository(InventoryRepositoryRef ref) {
+  final client = ref.watch(apiClientProvider);
+  final firebaseDb = ref.watch(firebaseDatabaseServiceProvider);
+  final localDb = ref.watch(localDatabaseProvider);
+  final notificationService = ref.watch(notificationServiceProvider);
+
+  final inventoryDataSource = InventoryRemoteDataSourceImpl(client);
+
+  return InventoryRepositoryImpl(
+    remoteDataSource: inventoryDataSource,
+    localDb: localDb,
+    firebaseDb: firebaseDb,
+    notificationService: notificationService,
+  );
+}
 
 @riverpod
-GetProducts getProductsUseCase(GetProductsUseCaseRef ref) => sl.getProductsUseCase;
+GetProducts getProductsUseCase(GetProductsUseCaseRef ref) {
+  final repository = ref.watch(inventoryRepositoryProvider);
+  return GetProducts(repository);
+}
 
 @riverpod
 class InventoryCategory extends _$InventoryCategory {

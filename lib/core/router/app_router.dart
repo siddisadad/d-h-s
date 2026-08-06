@@ -25,14 +25,17 @@ import '../../features/crm/presentation/screens/contact_form_screen.dart';
 import '../../features/crm/presentation/screens/customer_directory_screen.dart';
 import '../../features/crm/presentation/screens/customer_ledger_screen.dart';
 import '../../features/crm/presentation/screens/supplier_directory_screen.dart';
+import '../../features/crm/presentation/screens/payment_reminders_screen.dart';
 import '../../features/crm/domain/entities/contact.dart';
 import '../../features/finance/presentation/screens/finance_screen.dart';
 import '../../features/analytics/presentation/screens/analytics_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
+import '../../features/settings/presentation/screens/sync_center_screen.dart';
 import '../../features/employees/presentation/screens/employee_list_screen.dart';
 import '../../features/employees/presentation/screens/employee_form_screen.dart';
 import '../../features/employees/presentation/screens/attendance_screen.dart';
 import '../../features/employees/presentation/screens/payroll_screen.dart';
+import '../../features/notifications/presentation/screens/notification_screen.dart';
 import '../design_system/app_scaffold.dart';
 import '../security/permissions.dart';
 
@@ -101,6 +104,12 @@ GoRouter appRouterWidget(AppRouterWidgetRef ref) {
       }
       if (path.startsWith('/inventory/adjustments') && !RolePermissions.hasPermission(role, AppPermission.adjustStock)) {
         return '/inventory';
+      }
+      if (path.startsWith('/customers/') && !RolePermissions.hasPermission(role, AppPermission.viewLedgers)) {
+        return '/customers';
+      }
+      if (path.startsWith('/suppliers/') && !RolePermissions.hasPermission(role, AppPermission.viewLedgers)) {
+        return '/suppliers';
       }
       if (path.startsWith('/settings') && !RolePermissions.hasPermission(role, AppPermission.manageSettings)) {
         return '/dashboard';
@@ -211,6 +220,10 @@ GoRouter appRouterWidget(AppRouterWidgetRef ref) {
             builder: (context, state) => const CustomerDirectoryScreen(),
             routes: [
               GoRoute(
+                path: 'reminders',
+                builder: (context, state) => const PaymentRemindersScreen(),
+              ),
+              GoRoute(
                 path: 'new',
                 builder: (context, state) => const ContactFormScreen(type: ContactType.customer),
               ),
@@ -249,6 +262,16 @@ GoRouter appRouterWidget(AppRouterWidgetRef ref) {
           GoRoute(
             path: '/settings',
             builder: (context, state) => const SettingsScreen(),
+            routes: [
+              GoRoute(
+                path: 'sync',
+                builder: (context, state) => const SyncCenterScreen(),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: '/notifications',
+            builder: (context, state) => const NotificationScreen(),
           ),
           GoRoute(
             path: '/employees',

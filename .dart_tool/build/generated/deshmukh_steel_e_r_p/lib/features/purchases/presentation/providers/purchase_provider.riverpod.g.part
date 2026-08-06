@@ -3,7 +3,7 @@
 // **************************************************************************
 
 String _$purchaseRepositoryHash() =>
-    r'4d4dfd3f2ae1d4ce2e53ab653f56b538cd2714ed';
+    r'6743b07e28c492f3da92bfdbcb832e5604f373aa';
 
 /// See also [purchaseRepository].
 @ProviderFor(purchaseRepository)

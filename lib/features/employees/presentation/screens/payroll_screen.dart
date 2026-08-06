@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:deshmukh_steel_e_r_p/core/design_system/theme/app_theme.dart';
 import 'package:deshmukh_steel_e_r_p/core/widgets/custom_card.dart';
 import 'package:deshmukh_steel_e_r_p/core/widgets/custom_button.dart';
+import 'package:deshmukh_steel_e_r_p/core/widgets/permission_wrapper.dart';
+import 'package:deshmukh_steel_e_r_p/core/security/permissions.dart';
 import '../providers/employee_provider.dart';
 import '../../../../features/finance/presentation/providers/finance_provider.dart';
 import '../../../../core/providers/app_bar_provider.dart';
@@ -63,10 +65,13 @@ class PayrollScreen extends ConsumerWidget {
                   style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
               ],
             ),
-            CustomButton(
-              text: 'Process All',
-              variant: CustomButtonVariant.secondary,
-              onPressed: () {},
+            PermissionWrapper(
+              requiredPermissions: const [AppPermission.manageTransactions],
+              child: CustomButton(
+                text: 'Process All',
+                variant: CustomButtonVariant.secondary,
+                onPressed: () {},
+              ),
             ),
           ],
         ),
@@ -91,10 +96,13 @@ class PayrollScreen extends ConsumerWidget {
                 ],
               ),
             ),
-            CustomButton(
-              text: 'Pay Salary',
-              variant: CustomButtonVariant.outline,
-              onPressed: () => _paySalary(context, ref, emp.name, salary),
+            PermissionWrapper(
+              requiredPermissions: const [AppPermission.manageTransactions],
+              child: CustomButton(
+                text: 'Pay Salary',
+                variant: CustomButtonVariant.outline,
+                onPressed: () => _paySalary(context, ref, emp.name, salary),
+              ),
             ),
           ],
         ),

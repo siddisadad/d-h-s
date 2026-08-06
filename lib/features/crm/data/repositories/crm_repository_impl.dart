@@ -2,29 +2,50 @@ import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
-import '../../../../core/di/injection_container.dart';
 import '../../../../core/database/local_database.dart';
 import '../../../../core/utils/logger.dart';
+import '../../../../core/services/firebase_database_service.dart';
 import '../../domain/entities/contact.dart';
 import '../../domain/entities/ledger_entry.dart';
 import '../../domain/repositories/crm_repository.dart';
+import '../models/contact_model.dart';
 import '../datasources/crm_remote_data_source.dart';
 import '../../../../core/config/app_config.dart';
 
 class CrmRepositoryImpl implements CrmRepository {
   final CrmRemoteDataSource remoteDataSource;
   final LocalDatabase localDatabase;
+  final FirebaseDatabaseService firebaseDb;
 
   CrmRepositoryImpl({
     required this.remoteDataSource,
     required this.localDatabase,
+    required this.firebaseDb,
   });
 
   @override
   Future<Result<List<Contact>>> getContacts(ContactType type) async {
     try {
+      if (kIsWeb) {
+        if (AppConfig.useFirebase) {
+          final snapshot = await firebaseDb.getData('contacts');
+          if (!snapshot.exists || snapshot.value == null) return Result.success([]);
+          
+          final Map<dynamic, dynamic> data = snapshot.value as Map<dynamic, dynamic>;
+          final List<Contact> contacts = [];
+          data.forEach((key, value) {
+            final model = ContactModel.fromJson(Map<String, dynamic>.from(value as Map));
+            if (model.type == type) contacts.add(model);
+          });
+          return Result.success(contacts);
+        } else {
+          final contacts = await remoteDataSource.getContacts(type);
+          return Result.success(contacts);
+        }
+      }
+
       if (AppConfig.useFirebase) {
-        final snapshot = await sl.firebaseDb.getData('contacts');
+        final snapshot = await firebaseDb.getData('contacts');
         if (!snapshot.exists || snapshot.value == null) return Result.success([]);
         
         final Map<dynamic, dynamic> data = snapshot.value as Map<dynamic, dynamic>;
@@ -33,11 +54,6 @@ class CrmRepositoryImpl implements CrmRepository {
           final model = ContactModel.fromJson(Map<String, dynamic>.from(value as Map));
           if (model.type == type) contacts.add(model);
         });
-        return Result.success(contacts);
-      }
-
-      if (kIsWeb) {
-        final contacts = await remoteDataSource.getContacts(type);
         return Result.success(contacts);
       }
 
@@ -64,6 +80,7 @@ class CrmRepositoryImpl implements CrmRepository {
         balance: m['balance'],
         location: m['location'],
         type: m['type'] == 'customer' ? ContactType.customer : ContactType.supplier,
+        lastReminderSent: m['lastReminderSent'] != null ? DateTime.fromMillisecondsSinceEpoch(m['lastReminderSent']) : null,
       )).toList();
 
       return Result.success(contacts);
@@ -126,13 +143,14 @@ class CrmRepositoryImpl implements CrmRepository {
           'balance': contact.balance,
           'location': contact.location,
           'type': contact.type == ContactType.customer ? 'customer' : 'supplier',
+          'lastReminderSent': contact.lastReminderSent?.millisecondsSinceEpoch,
           'lastUpdated': DateTime.now().millisecondsSinceEpoch,
         }, conflictAlgorithm: ConflictAlgorithm.replace);
       }
 
       // 2. Push to Cloud
       try {
-        await sl.firebaseDb.setData('contacts/${contact.id}', {
+        await firebaseDb.setData('contacts/${contact.id}', {
           'id': contact.id,
           'name': contact.name,
           'initials': contact.initials,
@@ -144,7 +162,7 @@ class CrmRepositoryImpl implements CrmRepository {
         });
 
         // Record Activity
-        await sl.firebaseDb.pushData('activities', {
+        await firebaseDb.pushData('activities', {
           'id': 'CONT-${contact.id}',
           'title': contact.type == ContactType.customer ? 'New Customer Added' : 'New Supplier Added',
           'subtitle': '${contact.name} (${contact.location})',
@@ -177,6 +195,7 @@ class CrmRepositoryImpl implements CrmRepository {
             'gstin': contact.gstin,
             'balance': contact.balance,
             'location': contact.location,
+            'lastReminderSent': contact.lastReminderSent?.millisecondsSinceEpoch,
             'lastUpdated': DateTime.now().millisecondsSinceEpoch,
           },
           where: 'id = ?',
@@ -186,7 +205,7 @@ class CrmRepositoryImpl implements CrmRepository {
 
       // 2. Push to Cloud
       try {
-        await sl.firebaseDb.updateData('contacts/${contact.id}', {
+        await firebaseDb.updateData('contacts/${contact.id}', {
           'name': contact.name,
           'initials': contact.initials,
           'contact': contact.contact,
@@ -205,16 +224,6 @@ class CrmRepositoryImpl implements CrmRepository {
   }
 
   // --- Helpers ---
-
-  String _formatDate(int timestamp) {
-    final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
-    return '${date.day} ${_getMonthName(date.month)} ${date.year}';
-  }
-
-  String _getMonthName(int month) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return months[month - 1];
-  }
 
   Future<void> _refreshContactsInBackground(ContactType type) async {
     if (kIsWeb) return;
@@ -240,6 +249,7 @@ class CrmRepositoryImpl implements CrmRepository {
         'balance': c.balance,
         'location': c.location,
         'type': c.type == ContactType.customer ? 'customer' : 'supplier',
+        'lastReminderSent': c.lastReminderSent?.millisecondsSinceEpoch,
         'lastUpdated': DateTime.now().millisecondsSinceEpoch,
       }, conflictAlgorithm: ConflictAlgorithm.replace);
     }
