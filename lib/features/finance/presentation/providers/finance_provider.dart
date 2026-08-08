@@ -112,7 +112,7 @@ class FinanceNotifier extends _$FinanceNotifier {
 }
 
 @riverpod
-Future<CashClosing?> lastCashClosing(LastCashClosingRef ref) async {
+Future<CashClosing?> lastCashClosing(ref) async {
   final repository = ref.read(financeRepositoryProvider);
   final result = await repository.getLastClosing();
   return result.fold((f) => null, (c) => c);

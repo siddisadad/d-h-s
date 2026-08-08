@@ -70,6 +70,7 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
         stock: product.stock,
         unit: product.unit,
         isLowStock: product.isLowStock,
+        lastUpdated: product.lastUpdated,
       );
       final response = await _client.dio.post('/products', data: model.toJson());
       return response.statusCode == 201 || response.statusCode == 200;
@@ -91,6 +92,7 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
         stock: product.stock,
         unit: product.unit,
         isLowStock: product.isLowStock,
+        lastUpdated: product.lastUpdated,
       );
       final response = await _client.dio.put('/products/${product.sku}', data: model.toJson());
       return response.statusCode == 200;

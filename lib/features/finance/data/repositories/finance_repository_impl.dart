@@ -36,277 +36,38 @@ class FinanceRepositoryImpl implements FinanceRepository {
             transactions.add(TransactionModel.fromJson(Map<String, dynamic>.from(value as Map)));
           });
           return Result.success(transactions);
-          @override
-  Future<Result<bool>> saveCashClosing(CashClosing closing) async {
-    try {
-      final model = CashClosingModel(
-        id: closing.id,
-        date: closing.date,
-        openingBalance: closing.openingBalance,
-        totalCashSales: closing.totalCashSales,
-        totalCashExpenses: closing.totalCashExpenses,
-        physicalCashCount: closing.physicalCashCount,
-        notes: closing.notes,
-        performedBy: closing.performedBy,
-        lastUpdated: DateTime.now().millisecondsSinceEpoch,
-      );
-
-      if (!kIsWeb) {
-        await localDatabase.closing.saveClosing(model.toJson());
-      }
-
-      if (AppConfig.useFirebase) {
-        await firebaseDb.setData('closings/${closing.id}', model.toJson());
-      }
-
-      return Result.success(true);
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
-    }
-  }
-
-  @override
-  Future<Result<CashClosing?>> getLastClosing() async {
-    try {
-      if (kIsWeb) return Result.success(null);
-      final map = await localDatabase.closing.getLastClosing();
-      if (map == null) return Result.success(null);
-      return Result.success(CashClosingModel.fromJson(map));
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
-    }
-  }
-}
+        }
         final transactions = await remoteDataSource.getTransactions();
         return Result.success(transactions);
-        @override
-  Future<Result<bool>> saveCashClosing(CashClosing closing) async {
-    try {
-      final model = CashClosingModel(
-        id: closing.id,
-        date: closing.date,
-        openingBalance: closing.openingBalance,
-        totalCashSales: closing.totalCashSales,
-        totalCashExpenses: closing.totalCashExpenses,
-        physicalCashCount: closing.physicalCashCount,
-        notes: closing.notes,
-        performedBy: closing.performedBy,
-        lastUpdated: DateTime.now().millisecondsSinceEpoch,
-      );
-
-      if (!kIsWeb) {
-        await localDatabase.closing.saveClosing(model.toJson());
       }
-
-      if (AppConfig.useFirebase) {
-        await firebaseDb.setData('closings/${closing.id}', model.toJson());
-      }
-
-      return Result.success(true);
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
-    }
-  }
-
-  @override
-  Future<Result<CashClosing?>> getLastClosing() async {
-    try {
-      if (kIsWeb) return Result.success(null);
-      final map = await localDatabase.closing.getLastClosing();
-      if (map == null) return Result.success(null);
-      return Result.success(CashClosingModel.fromJson(map));
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
-    }
-  }
-}
 
       // 1. Background refresh from Firebase if enabled
       if (AppConfig.useFirebase) {
         _refreshFinanceFromFirebase();
-        @override
-  Future<Result<bool>> saveCashClosing(CashClosing closing) async {
-    try {
-      final model = CashClosingModel(
-        id: closing.id,
-        date: closing.date,
-        openingBalance: closing.openingBalance,
-        totalCashSales: closing.totalCashSales,
-        totalCashExpenses: closing.totalCashExpenses,
-        physicalCashCount: closing.physicalCashCount,
-        notes: closing.notes,
-        performedBy: closing.performedBy,
-        lastUpdated: DateTime.now().millisecondsSinceEpoch,
-      );
-
-      if (!kIsWeb) {
-        await localDatabase.closing.saveClosing(model.toJson());
       }
-
-      if (AppConfig.useFirebase) {
-        await firebaseDb.setData('closings/${closing.id}', model.toJson());
-      }
-
-      return Result.success(true);
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
-    }
-  }
-
-  @override
-  Future<Result<CashClosing?>> getLastClosing() async {
-    try {
-      if (kIsWeb) return Result.success(null);
-      final map = await localDatabase.closing.getLastClosing();
-      if (map == null) return Result.success(null);
-      return Result.success(CashClosingModel.fromJson(map));
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
-    }
-  }
-}
 
       // 2. Return from Local DB
       final maps = await localDatabase.getFinanceEntries();
       final transactions = maps.map((m) => TransactionModel(
-        id: m['id'],
+        id: m['id'] ?? '',
         title: m['title'],
         category: m['category'],
         amount: (m['amount'] as num).toDouble(),
         date: DateTime.fromMillisecondsSinceEpoch(m['date']),
         paymentMode: m['paymentMode'],
+        lastUpdated: m['lastUpdated'] ?? 0,
       )).toList();
 
       if (transactions.isEmpty) {
         final remote = await remoteDataSource.getTransactions();
         return Result.success(remote);
-        @override
-  Future<Result<bool>> saveCashClosing(CashClosing closing) async {
-    try {
-      final model = CashClosingModel(
-        id: closing.id,
-        date: closing.date,
-        openingBalance: closing.openingBalance,
-        totalCashSales: closing.totalCashSales,
-        totalCashExpenses: closing.totalCashExpenses,
-        physicalCashCount: closing.physicalCashCount,
-        notes: closing.notes,
-        performedBy: closing.performedBy,
-        lastUpdated: DateTime.now().millisecondsSinceEpoch,
-      );
-
-      if (!kIsWeb) {
-        await localDatabase.closing.saveClosing(model.toJson());
       }
-
-      if (AppConfig.useFirebase) {
-        await firebaseDb.setData('closings/${closing.id}', model.toJson());
-      }
-
-      return Result.success(true);
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
-    }
-  }
-
-  @override
-  Future<Result<CashClosing?>> getLastClosing() async {
-    try {
-      if (kIsWeb) return Result.success(null);
-      final map = await localDatabase.closing.getLastClosing();
-      if (map == null) return Result.success(null);
-      return Result.success(CashClosingModel.fromJson(map));
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
-    }
-  }
-}
 
       return Result.success(transactions);
     } catch (e) {
       return Result.error(ServerFailure(e.toString()));
-      @override
-  Future<Result<bool>> saveCashClosing(CashClosing closing) async {
-    try {
-      final model = CashClosingModel(
-        id: closing.id,
-        date: closing.date,
-        openingBalance: closing.openingBalance,
-        totalCashSales: closing.totalCashSales,
-        totalCashExpenses: closing.totalCashExpenses,
-        physicalCashCount: closing.physicalCashCount,
-        notes: closing.notes,
-        performedBy: closing.performedBy,
-        lastUpdated: DateTime.now().millisecondsSinceEpoch,
-      );
-
-      if (!kIsWeb) {
-        await localDatabase.closing.saveClosing(model.toJson());
-      }
-
-      if (AppConfig.useFirebase) {
-        await firebaseDb.setData('closings/${closing.id}', model.toJson());
-      }
-
-      return Result.success(true);
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
     }
   }
-
-  @override
-  Future<Result<CashClosing?>> getLastClosing() async {
-    try {
-      if (kIsWeb) return Result.success(null);
-      final map = await localDatabase.closing.getLastClosing();
-      if (map == null) return Result.success(null);
-      return Result.success(CashClosingModel.fromJson(map));
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
-    }
-  }
-}
-    @override
-  Future<Result<bool>> saveCashClosing(CashClosing closing) async {
-    try {
-      final model = CashClosingModel(
-        id: closing.id,
-        date: closing.date,
-        openingBalance: closing.openingBalance,
-        totalCashSales: closing.totalCashSales,
-        totalCashExpenses: closing.totalCashExpenses,
-        physicalCashCount: closing.physicalCashCount,
-        notes: closing.notes,
-        performedBy: closing.performedBy,
-        lastUpdated: DateTime.now().millisecondsSinceEpoch,
-      );
-
-      if (!kIsWeb) {
-        await localDatabase.closing.saveClosing(model.toJson());
-      }
-
-      if (AppConfig.useFirebase) {
-        await firebaseDb.setData('closings/${closing.id}', model.toJson());
-      }
-
-      return Result.success(true);
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
-    }
-  }
-
-  @override
-  Future<Result<CashClosing?>> getLastClosing() async {
-    try {
-      if (kIsWeb) return Result.success(null);
-      final map = await localDatabase.closing.getLastClosing();
-      if (map == null) return Result.success(null);
-      return Result.success(CashClosingModel.fromJson(map));
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
-    }
-  }
-}
 
   @override
   Future<Result<bool>> createTransaction(TransactionModel transaction) async {
@@ -314,149 +75,34 @@ class FinanceRepositoryImpl implements FinanceRepository {
       if (!kIsWeb) {
         // 1. Save locally
         await localDatabase.saveFinanceEntry({
+          'id': transaction.id,
           'title': transaction.title,
           'category': transaction.category,
           'amount': transaction.amount,
           'date': transaction.date.millisecondsSinceEpoch,
           'paymentMode': transaction.paymentMode,
+          'lastUpdated': transaction.lastUpdated,
         });
-        @override
-  Future<Result<bool>> saveCashClosing(CashClosing closing) async {
-    try {
-      final model = CashClosingModel(
-        id: closing.id,
-        date: closing.date,
-        openingBalance: closing.openingBalance,
-        totalCashSales: closing.totalCashSales,
-        totalCashExpenses: closing.totalCashExpenses,
-        physicalCashCount: closing.physicalCashCount,
-        notes: closing.notes,
-        performedBy: closing.performedBy,
-        lastUpdated: DateTime.now().millisecondsSinceEpoch,
-      );
-
-      if (!kIsWeb) {
-        await localDatabase.closing.saveClosing(model.toJson());
       }
-
-      if (AppConfig.useFirebase) {
-        await firebaseDb.setData('closings/${closing.id}', model.toJson());
-      }
-
-      return Result.success(true);
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
-    }
-  }
-
-  @override
-  Future<Result<CashClosing?>> getLastClosing() async {
-    try {
-      if (kIsWeb) return Result.success(null);
-      final map = await localDatabase.closing.getLastClosing();
-      if (map == null) return Result.success(null);
-      return Result.success(CashClosingModel.fromJson(map));
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
-    }
-  }
-}
 
       // 2. Push to Firebase if enabled
       if (AppConfig.useFirebase) {
         try {
-          await firebaseDb.pushData('finance', transaction.toJson());
+          await firebaseDb.setData('finance/${transaction.id}', transaction.toJson());
         } catch (e) {
           Log.w('Firebase finance sync failed: $e', name: 'Finance');
-          @override
-  Future<Result<bool>> saveCashClosing(CashClosing closing) async {
-    try {
-      final model = CashClosingModel(
-        id: closing.id,
-        date: closing.date,
-        openingBalance: closing.openingBalance,
-        totalCashSales: closing.totalCashSales,
-        totalCashExpenses: closing.totalCashExpenses,
-        physicalCashCount: closing.physicalCashCount,
-        notes: closing.notes,
-        performedBy: closing.performedBy,
-        lastUpdated: DateTime.now().millisecondsSinceEpoch,
-      );
-
-      if (!kIsWeb) {
-        await localDatabase.closing.saveClosing(model.toJson());
+        }
       }
-
-      if (AppConfig.useFirebase) {
-        await firebaseDb.setData('closings/${closing.id}', model.toJson());
-      }
-
-      return Result.success(true);
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
-    }
-  }
-
-  @override
-  Future<Result<CashClosing?>> getLastClosing() async {
-    try {
-      if (kIsWeb) return Result.success(null);
-      final map = await localDatabase.closing.getLastClosing();
-      if (map == null) return Result.success(null);
-      return Result.success(CashClosingModel.fromJson(map));
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
-    }
-  }
-}
-        @override
-  Future<Result<bool>> saveCashClosing(CashClosing closing) async {
-    try {
-      final model = CashClosingModel(
-        id: closing.id,
-        date: closing.date,
-        openingBalance: closing.openingBalance,
-        totalCashSales: closing.totalCashSales,
-        totalCashExpenses: closing.totalCashExpenses,
-        physicalCashCount: closing.physicalCashCount,
-        notes: closing.notes,
-        performedBy: closing.performedBy,
-        lastUpdated: DateTime.now().millisecondsSinceEpoch,
-      );
-
-      if (!kIsWeb) {
-        await localDatabase.closing.saveClosing(model.toJson());
-      }
-
-      if (AppConfig.useFirebase) {
-        await firebaseDb.setData('closings/${closing.id}', model.toJson());
-      }
-
-      return Result.success(true);
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
-    }
-  }
-
-  @override
-  Future<Result<CashClosing?>> getLastClosing() async {
-    try {
-      if (kIsWeb) return Result.success(null);
-      final map = await localDatabase.closing.getLastClosing();
-      if (map == null) return Result.success(null);
-      return Result.success(CashClosingModel.fromJson(map));
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
-    }
-  }
-}
 
       // 3. Remote Data Source
       final success = await remoteDataSource.createTransaction(transaction);
       return Result.success(success);
     } catch (e) {
       return Result.error(ServerFailure(e.toString()));
-      @override
+    }
+  }
+
+  @override
   Future<Result<bool>> saveCashClosing(CashClosing closing) async {
     try {
       final model = CashClosingModel(
@@ -496,48 +142,6 @@ class FinanceRepositoryImpl implements FinanceRepository {
       return Result.error(ServerFailure(e.toString()));
     }
   }
-}
-    @override
-  Future<Result<bool>> saveCashClosing(CashClosing closing) async {
-    try {
-      final model = CashClosingModel(
-        id: closing.id,
-        date: closing.date,
-        openingBalance: closing.openingBalance,
-        totalCashSales: closing.totalCashSales,
-        totalCashExpenses: closing.totalCashExpenses,
-        physicalCashCount: closing.physicalCashCount,
-        notes: closing.notes,
-        performedBy: closing.performedBy,
-        lastUpdated: DateTime.now().millisecondsSinceEpoch,
-      );
-
-      if (!kIsWeb) {
-        await localDatabase.closing.saveClosing(model.toJson());
-      }
-
-      if (AppConfig.useFirebase) {
-        await firebaseDb.setData('closings/${closing.id}', model.toJson());
-      }
-
-      return Result.success(true);
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
-    }
-  }
-
-  @override
-  Future<Result<CashClosing?>> getLastClosing() async {
-    try {
-      if (kIsWeb) return Result.success(null);
-      final map = await localDatabase.closing.getLastClosing();
-      if (map == null) return Result.success(null);
-      return Result.success(CashClosingModel.fromJson(map));
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
-    }
-  }
-}
 
   Future<void> _refreshFinanceFromFirebase() async {
     try {
@@ -547,216 +151,18 @@ class FinanceRepositoryImpl implements FinanceRepository {
         for (var value in data.values) {
           final model = TransactionModel.fromJson(Map<String, dynamic>.from(value as Map));
           await localDatabase.saveFinanceEntry({
+            'id': model.id,
             'title': model.title,
             'category': model.category,
             'amount': model.amount,
             'date': model.date.millisecondsSinceEpoch,
             'paymentMode': model.paymentMode,
+            'lastUpdated': model.lastUpdated,
           });
-          @override
-  Future<Result<bool>> saveCashClosing(CashClosing closing) async {
-    try {
-      final model = CashClosingModel(
-        id: closing.id,
-        date: closing.date,
-        openingBalance: closing.openingBalance,
-        totalCashSales: closing.totalCashSales,
-        totalCashExpenses: closing.totalCashExpenses,
-        physicalCashCount: closing.physicalCashCount,
-        notes: closing.notes,
-        performedBy: closing.performedBy,
-        lastUpdated: DateTime.now().millisecondsSinceEpoch,
-      );
-
-      if (!kIsWeb) {
-        await localDatabase.closing.saveClosing(model.toJson());
+        }
       }
-
-      if (AppConfig.useFirebase) {
-        await firebaseDb.setData('closings/${closing.id}', model.toJson());
-      }
-
-      return Result.success(true);
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
-    }
-  }
-
-  @override
-  Future<Result<CashClosing?>> getLastClosing() async {
-    try {
-      if (kIsWeb) return Result.success(null);
-      final map = await localDatabase.closing.getLastClosing();
-      if (map == null) return Result.success(null);
-      return Result.success(CashClosingModel.fromJson(map));
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
-    }
-  }
-}
-        @override
-  Future<Result<bool>> saveCashClosing(CashClosing closing) async {
-    try {
-      final model = CashClosingModel(
-        id: closing.id,
-        date: closing.date,
-        openingBalance: closing.openingBalance,
-        totalCashSales: closing.totalCashSales,
-        totalCashExpenses: closing.totalCashExpenses,
-        physicalCashCount: closing.physicalCashCount,
-        notes: closing.notes,
-        performedBy: closing.performedBy,
-        lastUpdated: DateTime.now().millisecondsSinceEpoch,
-      );
-
-      if (!kIsWeb) {
-        await localDatabase.closing.saveClosing(model.toJson());
-      }
-
-      if (AppConfig.useFirebase) {
-        await firebaseDb.setData('closings/${closing.id}', model.toJson());
-      }
-
-      return Result.success(true);
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
-    }
-  }
-
-  @override
-  Future<Result<CashClosing?>> getLastClosing() async {
-    try {
-      if (kIsWeb) return Result.success(null);
-      final map = await localDatabase.closing.getLastClosing();
-      if (map == null) return Result.success(null);
-      return Result.success(CashClosingModel.fromJson(map));
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
-    }
-  }
-}
     } catch (e) {
       Log.w('Could not refresh finance from Firebase: $e', name: 'Finance');
-      @override
-  Future<Result<bool>> saveCashClosing(CashClosing closing) async {
-    try {
-      final model = CashClosingModel(
-        id: closing.id,
-        date: closing.date,
-        openingBalance: closing.openingBalance,
-        totalCashSales: closing.totalCashSales,
-        totalCashExpenses: closing.totalCashExpenses,
-        physicalCashCount: closing.physicalCashCount,
-        notes: closing.notes,
-        performedBy: closing.performedBy,
-        lastUpdated: DateTime.now().millisecondsSinceEpoch,
-      );
-
-      if (!kIsWeb) {
-        await localDatabase.closing.saveClosing(model.toJson());
-      }
-
-      if (AppConfig.useFirebase) {
-        await firebaseDb.setData('closings/${closing.id}', model.toJson());
-      }
-
-      return Result.success(true);
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
-    }
-  }
-
-  @override
-  Future<Result<CashClosing?>> getLastClosing() async {
-    try {
-      if (kIsWeb) return Result.success(null);
-      final map = await localDatabase.closing.getLastClosing();
-      if (map == null) return Result.success(null);
-      return Result.success(CashClosingModel.fromJson(map));
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
-    }
-  }
-}
-    @override
-  Future<Result<bool>> saveCashClosing(CashClosing closing) async {
-    try {
-      final model = CashClosingModel(
-        id: closing.id,
-        date: closing.date,
-        openingBalance: closing.openingBalance,
-        totalCashSales: closing.totalCashSales,
-        totalCashExpenses: closing.totalCashExpenses,
-        physicalCashCount: closing.physicalCashCount,
-        notes: closing.notes,
-        performedBy: closing.performedBy,
-        lastUpdated: DateTime.now().millisecondsSinceEpoch,
-      );
-
-      if (!kIsWeb) {
-        await localDatabase.closing.saveClosing(model.toJson());
-      }
-
-      if (AppConfig.useFirebase) {
-        await firebaseDb.setData('closings/${closing.id}', model.toJson());
-      }
-
-      return Result.success(true);
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
-    }
-  }
-
-  @override
-  Future<Result<CashClosing?>> getLastClosing() async {
-    try {
-      if (kIsWeb) return Result.success(null);
-      final map = await localDatabase.closing.getLastClosing();
-      if (map == null) return Result.success(null);
-      return Result.success(CashClosingModel.fromJson(map));
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
-    }
-  }
-}
-  @override
-  Future<Result<bool>> saveCashClosing(CashClosing closing) async {
-    try {
-      final model = CashClosingModel(
-        id: closing.id,
-        date: closing.date,
-        openingBalance: closing.openingBalance,
-        totalCashSales: closing.totalCashSales,
-        totalCashExpenses: closing.totalCashExpenses,
-        physicalCashCount: closing.physicalCashCount,
-        notes: closing.notes,
-        performedBy: closing.performedBy,
-        lastUpdated: DateTime.now().millisecondsSinceEpoch,
-      );
-
-      if (!kIsWeb) {
-        await localDatabase.closing.saveClosing(model.toJson());
-      }
-
-      if (AppConfig.useFirebase) {
-        await firebaseDb.setData('closings/${closing.id}', model.toJson());
-      }
-
-      return Result.success(true);
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
-    }
-  }
-
-  @override
-  Future<Result<CashClosing?>> getLastClosing() async {
-    try {
-      if (kIsWeb) return Result.success(null);
-      final map = await localDatabase.closing.getLastClosing();
-      if (map == null) return Result.success(null);
-      return Result.success(CashClosingModel.fromJson(map));
-    } catch (e) {
-      return Result.error(ServerFailure(e.toString()));
     }
   }
 }

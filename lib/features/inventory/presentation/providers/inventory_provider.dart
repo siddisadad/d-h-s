@@ -65,9 +65,9 @@ class InventoryNotifier extends _$InventoryNotifier {
     } catch (e) { rethrow; }
   }
 
-  Future<void> adjustStock(String sku, String warehouseId, double quantity) async {
+  Future<void> adjustStock(String sku, String warehouseId, double quantity, {String? reason, String? notes}) async {
     final repository = ref.read(inventoryRepositoryProvider);
-    final result = await repository.adjustStock(sku, warehouseId, quantity);
+    final result = await repository.adjustStock(sku, warehouseId, quantity, reason: reason, notes: notes);
     result.fold(
       (failure) => Log.e('Failed to adjust stock', error: failure.message, name: 'Inventory'),
       (success) {

@@ -165,6 +165,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
         stock: product.stock,
         unit: product.unit,
         isLowStock: product.isLowStock,
+        lastUpdated: DateTime.now().millisecondsSinceEpoch,
       );
       
       if (!kIsWeb) {
@@ -226,6 +227,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
         stock: product.stock,
         unit: product.unit,
         isLowStock: product.isLowStock,
+        lastUpdated: DateTime.now().millisecondsSinceEpoch,
       );
       
       if (!kIsWeb) {

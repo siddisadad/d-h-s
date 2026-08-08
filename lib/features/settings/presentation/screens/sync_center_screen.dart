@@ -69,7 +69,7 @@ class SyncCenterScreen extends ConsumerWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
-      color: isSyncing ? context.colorScheme.primaryContainer : context.colorScheme.surfaceVariant.withValues(alpha: 0.5),
+      color: isSyncing ? context.colorScheme.primaryContainer : context.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
       child: Row(
         children: [
           Icon(

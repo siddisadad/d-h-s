@@ -139,6 +139,7 @@ class EmployeeRepositoryImpl implements EmployeeRepository {
         phone: employee.phone,
         salary: employee.salary,
         attendanceStatus: employee.attendanceStatus,
+        lastUpdated: employee.lastUpdated,
       );
 
       if (kIsWeb) {

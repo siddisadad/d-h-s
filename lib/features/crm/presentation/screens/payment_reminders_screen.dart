@@ -51,12 +51,10 @@ class _CustomerReminderCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final tokens = context.tokens;
     final currency = NumberFormat.currency(symbol: '₹', locale: 'en_IN');
     final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
 
     return CustomCard(
-      margin: EdgeInsets.only(bottom: tokens.space12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -111,7 +109,6 @@ class _CustomerReminderCard extends ConsumerWidget {
               ),
               CustomButton(
                 text: 'Send Reminder',
-                size: CustomButtonSize.small,
                 variant: CustomButtonVariant.primary,
                 icon: Icons.notifications_active_outlined,
                 onPressed: () async {

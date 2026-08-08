@@ -2,7 +2,7 @@
 // RiverpodGenerator
 // **************************************************************************
 
-String _$activityStreamHash() => r'cba0ee403537a7b5c1a297a9dcc87d71e383c908';
+String _$activityStreamHash() => r'eed507f30e1b229a4c30149b793386dcb52537df';
 
 /// See also [activityStream].
 @ProviderFor(activityStream)
@@ -20,7 +20,7 @@ final activityStreamProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ActivityStreamRef = AutoDisposeStreamProviderRef<List<Activity>>;
-String _$activityNotifierHash() => r'd104fbf869a233713863ad61a0d4d418d366a372';
+String _$activityNotifierHash() => r'b5981965ef37cdfe5dd4f194161c96c7c958b43e';
 
 /// See also [ActivityNotifier].
 @ProviderFor(ActivityNotifier)

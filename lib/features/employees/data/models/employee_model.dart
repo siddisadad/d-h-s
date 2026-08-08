@@ -25,7 +25,6 @@ class EmployeeModel extends Employee {
     );
   }
 
-  @override
   Map<String, dynamic> toJson() {
     return {
       ...super.toMap(),

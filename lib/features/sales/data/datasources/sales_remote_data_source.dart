@@ -33,6 +33,7 @@ class SalesRemoteDataSourceImpl implements SalesRemoteDataSource {
         date: invoice.date,
         items: invoice.items,
         discount: invoice.discount,
+        lastUpdated: invoice.lastUpdated,
       );
 
       final response = await _client.dio.post(
@@ -78,6 +79,7 @@ class SalesRemoteDataSourceImpl implements SalesRemoteDataSource {
         items: quotation.items,
         discount: quotation.discount,
         status: quotation.status,
+        lastUpdated: quotation.lastUpdated,
       );
       final response = await _client.dio.post('/quotations', data: model.toJson());
       return response.statusCode == 201 || response.statusCode == 200;
@@ -114,6 +116,7 @@ class SalesRemoteDataSourceImpl implements SalesRemoteDataSource {
         items: salesReturn.items,
         reason: salesReturn.reason,
         grandTotal: salesReturn.grandTotal,
+        lastUpdated: salesReturn.lastUpdated,
       );
       final response = await _client.dio.post('/returns', data: model.toJson());
       return response.statusCode == 201 || response.statusCode == 200;

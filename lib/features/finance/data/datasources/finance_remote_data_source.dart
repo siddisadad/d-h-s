@@ -43,8 +43,8 @@ class FinanceRemoteDataSourceImpl implements FinanceRemoteDataSource {
   }
 
   final List<TransactionModel> _mockTransactions = [
-    TransactionModel(id: 1, title: 'Sale - INV001', category: 'Income', amount: 45000, date: DateTime.now(), paymentMode: 'Cash'),
-    TransactionModel(id: 2, title: 'Salary Payment', category: 'Expense', amount: 12000, date: DateTime.now(), paymentMode: 'Bank'),
+    TransactionModel(id: 'MOCK-1', title: 'Sale - INV001', category: 'Income', amount: 45000, date: DateTime.now(), paymentMode: 'Cash', lastUpdated: 0),
+    TransactionModel(id: 'MOCK-2', title: 'Salary Payment', category: 'Expense', amount: 12000, date: DateTime.now(), paymentMode: 'Bank', lastUpdated: 0),
   ];
 }
 

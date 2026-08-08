@@ -9,6 +9,6 @@ LocalDatabase localDatabase(LocalDatabaseRef ref) {
 }
 
 @riverpod
-Future<List<Map<String, dynamic>>> syncQueue(SyncQueueRef ref) {
+Future<List<Map<String, dynamic>>> syncQueue(ref) {
   return ref.watch(localDatabaseProvider).getSyncQueue();
 }

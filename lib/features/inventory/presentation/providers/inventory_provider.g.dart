@@ -374,7 +374,7 @@ final inventorySearchProvider =
 );
 
 typedef _$InventorySearch = AutoDisposeNotifier<String>;
-String _$inventoryNotifierHash() => r'b6915736b507be499cab07fe68fa56970622bcdd';
+String _$inventoryNotifierHash() => r'af9d7e0cc9133d28f4faba4c4ec5dfa383b5a44e';
 
 /// See also [InventoryNotifier].
 @ProviderFor(InventoryNotifier)

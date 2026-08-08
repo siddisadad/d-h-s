@@ -2,7 +2,7 @@
 // RiverpodGenerator
 // **************************************************************************
 
-String _$appRouterWidgetHash() => r'45aceebc56385ec311d83a7b30a2591aae9df63e';
+String _$appRouterWidgetHash() => r'3f2096187f794b4728c7683815e480738bd31aee';
 
 /// See also [appRouterWidget].
 @ProviderFor(appRouterWidget)

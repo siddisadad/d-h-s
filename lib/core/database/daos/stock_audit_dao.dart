@@ -1,5 +1,4 @@
 import 'package:sqflite/sqflite.dart';
-import '../../../features/inventory/data/models/stock_audit_model.dart';
 
 class StockAuditDao {
   final Database db;

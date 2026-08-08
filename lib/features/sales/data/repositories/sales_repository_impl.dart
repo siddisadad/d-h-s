@@ -42,6 +42,7 @@ class SalesRepositoryImpl implements SalesRepository {
           date: invoice.date,
           items: invoice.items,
           discount: invoice.discount,
+          lastUpdated: DateTime.now().millisecondsSinceEpoch,
         );
         await firebaseDb.setData('sales/${invoice.id}', model.toJson());
         await firebaseDb.pushData('activities', {
@@ -65,6 +66,7 @@ class SalesRepositoryImpl implements SalesRepository {
           date: invoice.date,
           items: invoice.items,
           discount: invoice.discount,
+          lastUpdated: DateTime.now().millisecondsSinceEpoch,
         );
 
         // 1. Save invoice locally
@@ -274,6 +276,7 @@ class SalesRepositoryImpl implements SalesRepository {
           items: quotation.items,
           discount: quotation.discount,
           status: quotation.status,
+          lastUpdated: DateTime.now().millisecondsSinceEpoch,
         );
         await firebaseDb.setData('quotations/${quotation.id}', model.toJson());
         return Result.success(true);
@@ -288,6 +291,7 @@ class SalesRepositoryImpl implements SalesRepository {
         items: quotation.items,
         discount: quotation.discount,
         status: quotation.status,
+        lastUpdated: DateTime.now().millisecondsSinceEpoch,
       );
       
       await db.insert('quotations', model.toJson()..['items'] = jsonEncode(model.toJson()['items']), conflictAlgorithm: ConflictAlgorithm.replace);
@@ -382,6 +386,7 @@ class SalesRepositoryImpl implements SalesRepository {
           items: salesReturn.items,
           reason: salesReturn.reason,
           grandTotal: salesReturn.grandTotal,
+          lastUpdated: DateTime.now().millisecondsSinceEpoch,
         );
 
         await txn.insert('returns', model.toJson()..['items'] = jsonEncode(model.toJson()['items']));

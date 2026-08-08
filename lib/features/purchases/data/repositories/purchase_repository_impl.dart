@@ -84,6 +84,7 @@ class PurchaseRepositoryImpl implements PurchaseRepository {
             items: purchase.items,
             discount: purchase.discount,
             status: purchase.status,
+            lastUpdated: DateTime.now().millisecondsSinceEpoch,
           );
           await firebaseDb.setData('purchases/${purchase.id}', model.toJson());
           await firebaseDb.pushData('activities', {
@@ -106,6 +107,7 @@ class PurchaseRepositoryImpl implements PurchaseRepository {
           items: purchase.items,
           discount: purchase.discount,
           status: purchase.status,
+          lastUpdated: DateTime.now().millisecondsSinceEpoch,
         );
 
         // 1. Save locally
@@ -128,7 +130,7 @@ class PurchaseRepositoryImpl implements PurchaseRepository {
             final currentStock = (product['stock'] as num).toDouble();
             final newStock = currentStock + item.qty;
 
-            final updateMap = {
+            final Map<String, dynamic> updateMap = {
               'stock': newStock,
               'isLowStock': newStock < 10 ? 1 : 0,
             };
@@ -210,7 +212,16 @@ class PurchaseRepositoryImpl implements PurchaseRepository {
       final db = await localDatabase.database;
       final batch = db.batch();
       for (var p in remote) {
-        final model = PurchaseModel(id: p.id, supplierId: p.supplierId, supplierName: p.supplierName, date: p.date, items: p.items, discount: p.discount, status: p.status);
+        final model = PurchaseModel(
+          id: p.id,
+          supplierId: p.supplierId,
+          supplierName: p.supplierName,
+          date: p.date,
+          items: p.items,
+          discount: p.discount,
+          status: p.status,
+          lastUpdated: DateTime.now().millisecondsSinceEpoch,
+        );
         batch.insert('purchases', {
           'id': model.id,
           'supplierId': model.supplierId,

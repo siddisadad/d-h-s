@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import '../../../../core/design_system/theme/app_theme.dart';
 import '../../../../core/widgets/custom_card.dart';
 import '../../../../core/widgets/custom_button.dart';
@@ -26,7 +25,6 @@ class _StockAuditScreenState extends ConsumerState<StockAuditScreen> {
   @override
   Widget build(BuildContext context) {
     final warehousesAsync = ref.watch(warehouseNotifierProvider);
-    final tokens = context.tokens;
 
     // Update Global AppBar
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -57,7 +55,7 @@ class _StockAuditScreenState extends ConsumerState<StockAuditScreen> {
       color: context.colorScheme.surface,
       child: warehousesAsync.when(
         data: (list) => DropdownButtonFormField<Warehouse>(
-          value: selectedWarehouse,
+          initialValue: selectedWarehouse,
           decoration: const InputDecoration(
             labelText: 'SELECT YARD FOR AUDIT',
             prefixIcon: Icon(Icons.location_on_outlined),
@@ -117,7 +115,6 @@ class _StockAuditScreenState extends ConsumerState<StockAuditScreen> {
     final color = variance == 0 ? Colors.green : (variance > 0 ? Colors.blue : Colors.red);
 
     return CustomCard(
-      margin: const EdgeInsets.only(bottom: 12),
       child: Column(
         children: [
           Row(
@@ -287,8 +284,6 @@ class _StockAuditScreenState extends ConsumerState<StockAuditScreen> {
           item.productSku,
           selectedWarehouse!.id,
           variance,
-          reason: 'Audit Adjustment',
-          notes: 'Ref: ${audit.id}',
         );
       }
     }

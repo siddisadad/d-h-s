@@ -41,7 +41,7 @@ final getContactsUseCaseProvider = AutoDisposeProvider<GetContacts>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef GetContactsUseCaseRef = AutoDisposeProviderRef<GetContacts>;
-String _$crmNotifierHash() => r'96395e02580c35bb0014bbb099591a8b922da8aa';
+String _$crmNotifierHash() => r'ef423953ab487c465b7719c9053e1acab95c1482';
 
 /// Copied from Dart SDK
 class _SystemHash {

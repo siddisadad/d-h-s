@@ -24,7 +24,25 @@ final financeRepositoryProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef FinanceRepositoryRef = AutoDisposeProviderRef<FinanceRepository>;
-String _$financeNotifierHash() => r'83cb328653d52029ebd2d6596306a698cca2d01d';
+String _$lastCashClosingHash() => r'b0df8a8344bff7259a3d3107a12a328dfafb73e2';
+
+/// See also [lastCashClosing].
+@ProviderFor(lastCashClosing)
+final lastCashClosingProvider =
+    AutoDisposeFutureProvider<CashClosing?>.internal(
+  lastCashClosing,
+  name: r'lastCashClosingProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$lastCashClosingHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef LastCashClosingRef = AutoDisposeFutureProviderRef<CashClosing?>;
+String _$financeNotifierHash() => r'f0b5752d43eae472e0a9b3034cdd09c644b35de9';
 
 /// See also [FinanceNotifier].
 @ProviderFor(FinanceNotifier)

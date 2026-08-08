@@ -14,7 +14,6 @@ import '../widgets/performance_matrix_card.dart';
 import '../widgets/report_grid.dart';
 import '../providers/cash_flow_provider.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../../../core/widgets/custom_charts.dart';
 
 enum TimeRange { week, month, quarter, year }
 
@@ -123,7 +122,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.Inventory_2_outlined, color: context.colorScheme.error),
+                          Icon(Icons.inventory_2_outlined, color: context.colorScheme.error),
                           const SizedBox(height: 12),
                           Text('$deadStockCount Items',
                               style: context.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
