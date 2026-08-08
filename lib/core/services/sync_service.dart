@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:rxdart/rxdart.dart';
 import '../config/app_config.dart';
 import '../providers/database_providers.dart';
 import '../database/local_database.dart';
@@ -77,33 +78,39 @@ class SyncService extends _$SyncService {
         return;
       }
 
-      Log.i('☁️ Initializing Cloud Sync Listeners...', name: 'Sync');
+      Log.i('☁️ Initializing Cloud Sync Listeners (with 500ms Debounce)...', name: 'Sync');
 
       // Sync Inventory
-      _subscriptions.add(firebaseDb.watchPath('inventory').listen((event) async {
-      final data = event.snapshot.value as Map?;
-      if (data == null) return;
+      _subscriptions.add(firebaseDb
+          .watchPath('inventory')
+          .debounceTime(const Duration(milliseconds: 500))
+          .listen((event) async {
+        final data = event.snapshot.value as Map?;
+        if (data == null) return;
 
-      final products = await compute(_parseInventoryData, data);
+        final products = await compute(_parseInventoryData, data);
 
-      if (!kIsWeb) {
-        await _localDb.saveProducts(products);
-        Log.d('✓ Inventory synced from Cloud (${products.length} items)', name: 'Sync');
-      }
-    }));
+        if (!kIsWeb) {
+          await _localDb.saveProducts(products);
+          Log.d('✓ Inventory synced from Cloud (${products.length} items)', name: 'Sync');
+        }
+      }));
 
-    // Sync Contacts
-    _subscriptions.add(firebaseDb.watchPath('contacts').listen((event) async {
-      final data = event.snapshot.value as Map?;
-      if (data == null) return;
+      // Sync Contacts
+      _subscriptions.add(firebaseDb
+          .watchPath('contacts')
+          .debounceTime(const Duration(milliseconds: 500))
+          .listen((event) async {
+        final data = event.snapshot.value as Map?;
+        if (data == null) return;
 
-      final contacts = await compute(_parseContactData, data);
+        final contacts = await compute(_parseContactData, data);
 
-      if (!kIsWeb) {
-        await _localDb.saveContacts(contacts);
-        Log.d('✓ Contacts synced from Cloud (${contacts.length} items)', name: 'Sync');
-      }
-    }));
+        if (!kIsWeb) {
+          await _localDb.saveContacts(contacts);
+          Log.d('✓ Contacts synced from Cloud (${contacts.length} items)', name: 'Sync');
+        }
+      }));
 
     // Sync Quotations
     _subscriptions.add(firebaseDb.watchPath('quotations').listen((event) async {

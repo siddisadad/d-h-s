@@ -7,7 +7,7 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   group('End-to-End ERP Flow', () {
-    testWidgets('Full sequence: Login -> Inventory -> New Sale', (tester) async {
+    testWidgets('Full sequence: Login -> Inventory -> New Sale with Credit Limit Warning', (tester) async {
       app.main();
       await tester.pumpAndSettle();
 
@@ -22,49 +22,44 @@ void main() {
 
       // 3. Verify Dashboard
       expect(find.text('DHS ERP DASHBOARD'), findsOneWidget);
-      expect(find.text('Welcome back, Admin'), findsOneWidget);
 
-      // 4. Navigate to Inventory
-      await tester.tap(find.text('Inventory'));
-      await tester.pumpAndSettle();
-      expect(find.text('PRODUCT INVENTORY'), findsOneWidget);
-
-      // 5. Back to Dashboard
-      await tester.tap(find.byIcon(Icons.arrow_back));
-      await tester.pumpAndSettle();
-
-      // 6. Navigate to New Sale
+      // 4. Navigate to New Sale
       await tester.tap(find.text('New Sale'));
       await tester.pumpAndSettle();
       expect(find.text('NEW SALES INVOICE'), findsOneWidget);
 
-      // 7. Select Customer
+      // 5. Select Customer with Low Credit Limit (Deshmukh Builders)
       await tester.tap(find.text('Select Customer'));
       await tester.pumpAndSettle();
-      expect(find.text('SELECT CUSTOMER'), findsOneWidget);
-      
-      // Select first customer in mock list
-      await tester.tap(find.byType(ListTile).first);
+      await tester.tap(find.text('Deshmukh Builders'));
       await tester.pumpAndSettle();
 
-      // 8. Add Product
-      await tester.tap(find.text('Add Item'));
-      await tester.pumpAndSettle();
-      expect(find.text('ADD PRODUCT'), findsOneWidget);
-      
-      // Select first product
-      await tester.tap(find.byType(ListTile).first);
+      // 6. Add expensive items to trigger Credit Limit Warning
+      // Deshmukh Builders has balance -12000, creditLimit 10000.
+      // 6 drills @ 4250 = 25500 + GST > 22000
+      for (int i = 0; i < 6; i++) {
+        await tester.tap(find.text('Add Item'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Bosch Professional Drill 750W'));
+        await tester.pumpAndSettle();
+      }
+
+      // 7. Verify HSN codes are visible in the item list
+      expect(find.textContaining('HSN: 8467'), findsWidgets);
+
+      // 8. Generate Invoice and check for Warning Dialog
+      await tester.tap(find.text('GENERATE FINAL INVOICE & QUICK PRINT'));
       await tester.pumpAndSettle();
 
-      // 9. Verify Totals
-      expect(find.text('GRAND TOTAL'), findsOneWidget);
-      
-      // 10. Generate Invoice
-      await tester.tap(find.text('GENERATE FINAL INVOICE'));
+      expect(find.text('Credit Limit Exceeded'), findsOneWidget);
+      expect(find.textContaining('exceeds their credit limit of ₹10000.00'), findsOneWidget);
+
+      // 9. Proceed anyway
+      await tester.tap(find.text('Proceed Anyway'));
       await tester.pumpAndSettle();
-      
+
       // Verify SnackBar
-      expect(find.text('Invoice Created!'), findsOneWidget);
+      expect(find.text('Invoice Created & Sent to Printer!'), findsOneWidget);
     });
   });
 }

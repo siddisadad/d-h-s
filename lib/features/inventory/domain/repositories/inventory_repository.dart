@@ -2,6 +2,7 @@ import '../../../../core/error/result.dart';
 import '../entities/product.dart';
 import '../entities/warehouse.dart';
 import '../entities/stock_transfer.dart';
+import '../entities/stock_audit.dart';
 
 abstract class InventoryRepository {
   Future<Result<List<Product>>> getProducts({String? category});
@@ -16,4 +17,8 @@ abstract class InventoryRepository {
   Future<Result<Map<String, double>>> getStockBreakdown(String sku);
   Future<Result<bool>> adjustStock(String sku, String warehouseId, double quantity, {String? reason, String? notes});
   Future<Result<bool>> transferStock(StockTransfer transfer);
+
+  // Stock Audit
+  Future<Result<bool>> createStockAudit(StockAudit audit);
+  Future<Result<List<StockAudit>>> getStockAudits();
 }

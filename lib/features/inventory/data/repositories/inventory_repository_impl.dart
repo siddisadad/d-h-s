@@ -9,7 +9,9 @@ import '../../domain/repositories/inventory_repository.dart';
 import '../datasources/inventory_remote_data_source.dart';
 import '../models/product_model.dart';
 import '../models/warehouse_model.dart';
+import '../models/stock_audit_model.dart';
 import '../../domain/entities/warehouse.dart';
+import '../../domain/entities/stock_audit.dart';
 import '../../domain/entities/stock_transfer.dart';
 import '../../../../core/services/firebase_database_service.dart';
 import '../../../../core/services/notification_service.dart';
@@ -308,86 +310,89 @@ class InventoryRepositoryImpl implements InventoryRepository {
   Future<Result<bool>> adjustStock(String sku, String warehouseId, double quantity, {String? reason, String? notes}) async {
     try {
       if (kIsWeb) {
-        // Simple mock adjustment for Web (updates won't persist locally but will try Firebase)
         await firebaseDb.updateData('inventory/$sku', {
-          'stock': quantity, // Note: This should ideally be an increment in a real app
+          'stock': quantity,
         });
         return Result.success(true);
       }
 
       final db = await localDb.database;
-      
-      // 1. Get current TOTAL stock
-      final List<Map<String, dynamic>> results = await db.query('inventory', where: 'sku = ?', whereArgs: [sku]);
-      if (results.isEmpty) return Result.error(ServerFailure('Product not found'));
-      
-      final product = results.first;
-      final currentTotalStock = (product['stock'] as num).toDouble();
-      final newTotalStock = currentTotalStock + quantity;
-      
-      // 2. Update Local Tables (Transactional via localDb helpers or direct)
-      await localDb.updateStockLevel(sku, warehouseId, quantity);
-      
-      await db.update(
-        'inventory',
-        {
-          'stock': newTotalStock,
-          'isLowStock': newTotalStock < 10 ? 1 : 0,
-        },
-        where: 'sku = ?',
-        whereArgs: [sku],
-      );
-
-      // 3. Record Movement (Audit Trail)
-      await localDb.saveStockMovement({
-        'id': 'MV-${DateTime.now().millisecondsSinceEpoch}',
-        'productSku': sku,
-        'productName': product['name'],
-        'warehouseId': warehouseId,
-        'quantity': quantity,
-        'reason': reason ?? (quantity > 0 ? 'Adjustment (+)' : 'Adjustment (-)'),
-        'timestamp': DateTime.now().millisecondsSinceEpoch,
-        'performedBy': 'System/Admin',
-        'notes': notes,
-      });
-
-      // Trigger Notification if Low Stock
-      if (newTotalStock < 10) {
-        await notificationService.showLocalAlert(
-          title: 'LOW STOCK ALERT',
-          body: '${results.first['name']} is running low (${newTotalStock.toStringAsFixed(0)} items remaining)',
-          path: '/inventory/$sku',
-        );
-      }
-
-      // 3. Update Cloud (Firebase)
-      try {
-        // Fetch current per-warehouse stock from Firebase to be safe, or just update delta if using increments
-        // For simplicity with setData/updateData, we'll try to get latest from DB and set
-        final breakdownResult = await getStockBreakdown(sku);
-        final breakdown = breakdownResult.getOrElse((_) => {});
-
-        await firebaseDb.updateData('inventory/$sku', {
-          'stock': newTotalStock,
-          'isLowStock': newTotalStock < 10,
-          'stocks': breakdown,
-        });
-
-        // Record Activity
-        await firebaseDb.pushData('activities', {
-          'id': 'ADJ-$sku-${DateTime.now().millisecondsSinceEpoch}',
-          'title': 'Stock Adjusted',
-          'subtitle': '$sku quantity changed by ${quantity > 0 ? "+" : ""}$quantity in $warehouseId',
-          'timestamp': DateTime.now().millisecondsSinceEpoch,
-          'type': 'stockAdjustment',
-        });
-      } catch (e) {
-        Log.w('Firebase stock adjustment failed: $e', name: 'Inventory');
-      }
-      
-      return Result.success(true);
+      return await _adjustStockInternal(db, sku, warehouseId, quantity, reason: reason, notes: notes);
     } catch (e) {
       return Result.error(ServerFailure(e.toString()));
+    }
+  }
+
+  Future<Result<bool>> _adjustStockInternal(DatabaseExecutor executor, String sku, String warehouseId, double quantity, {String? reason, String? notes}) async {
+    // 1. Get current TOTAL stock
+    final List<Map<String, dynamic>> results = await executor.query('inventory', where: 'sku = ?', whereArgs: [sku]);
+    if (results.isEmpty) return Result.error(ServerFailure('Product not found'));
+
+    final product = results.first;
+    final currentTotalStock = (product['stock'] as num).toDouble();
+    final newTotalStock = currentTotalStock + quantity;
+
+    // 2. Update Local Tables
+    await localDb.updateStockLevel(sku, warehouseId, quantity, executor: executor);
+
+    await executor.update(
+      'inventory',
+      {
+        'stock': newTotalStock,
+        'isLowStock': newTotalStock < 10 ? 1 : 0,
+      },
+      where: 'sku = ?',
+      whereArgs: [sku],
+    );
+
+    // 3. Record Movement (Audit Trail)
+    await localDb.saveStockMovement({
+      'id': 'MV-${DateTime.now().millisecondsSinceEpoch}',
+      'productSku': sku,
+      'productName': product['name'],
+      'warehouseId': warehouseId,
+      'quantity': quantity,
+      'reason': reason ?? (quantity > 0 ? 'Adjustment (+)' : 'Adjustment (-)'),
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+      'performedBy': 'System/Admin',
+      'notes': notes,
+    }, executor: executor);
+
+    // 4. Trigger Notification if Low Stock (Post-Transaction/Best Effort)
+    if (newTotalStock < 10) {
+      notificationService.showLocalAlert(
+        title: 'LOW STOCK ALERT',
+        body: '${results.first['name']} is running low (${newTotalStock.toStringAsFixed(0)} items remaining)',
+        path: '/inventory/$sku',
+      );
+    }
+
+    // 5. Update Cloud (Firebase) - Post-Transaction/Best Effort
+    _updateCloudStock(sku, newTotalStock, warehouseId, quantity);
+
+    return Result.success(true);
+  }
+
+  void _updateCloudStock(String sku, double newTotalStock, String warehouseId, double quantity) async {
+    try {
+      final breakdownResult = await getStockBreakdown(sku);
+      final breakdown = breakdownResult.getOrElse((_) => {});
+
+      await firebaseDb.updateData('inventory/$sku', {
+        'stock': newTotalStock,
+        'isLowStock': newTotalStock < 10,
+        'stocks': breakdown,
+      });
+
+      await firebaseDb.pushData('activities', {
+        'id': 'ADJ-$sku-${DateTime.now().millisecondsSinceEpoch}',
+        'title': 'Stock Adjusted',
+        'subtitle': '$sku quantity changed by ${quantity > 0 ? "+" : ""}$quantity in $warehouseId',
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+        'type': 'stockAdjustment',
+      });
+    } catch (e) {
+      Log.w('Firebase stock adjustment sync deferred: $e', name: 'Inventory');
     }
   }
 
@@ -446,13 +451,20 @@ class InventoryRepositoryImpl implements InventoryRepository {
   @override
   Future<Result<bool>> transferStock(StockTransfer transfer) async {
     try {
-      // 1. Subtract from source
-      await adjustStock(transfer.productSku, transfer.fromWarehouseId, -transfer.quantity, reason: 'Transfer Out', notes: 'To: ${transfer.toWarehouseId}');
-      // 2. Add to destination
-      await adjustStock(transfer.productSku, transfer.toWarehouseId, transfer.quantity, reason: 'Transfer In', notes: 'From: ${transfer.fromWarehouseId}');
+      if (kIsWeb) return Result.success(true);
+
+      final db = await localDb.database;
       
-      // 3. Record Movement Record
-      if (!kIsWeb) {
+      await db.transaction((txn) async {
+        // 1. Subtract from source
+        final res1 = await _adjustStockInternal(txn, transfer.productSku, transfer.fromWarehouseId, -transfer.quantity, reason: 'Transfer Out', notes: 'To: ${transfer.toWarehouseId}');
+        if (res1.isError) throw Exception(res1.failure?.message);
+
+        // 2. Add to destination
+        final res2 = await _adjustStockInternal(txn, transfer.productSku, transfer.toWarehouseId, transfer.quantity, reason: 'Transfer In', notes: 'From: ${transfer.fromWarehouseId}');
+        if (res2.isError) throw Exception(res2.failure?.message);
+
+        // 3. Record Movement Record
         await localDb.saveStockMovement({
           'id': transfer.id,
           'productSku': transfer.productSku,
@@ -464,10 +476,10 @@ class InventoryRepositoryImpl implements InventoryRepository {
           'timestamp': transfer.timestamp.millisecondsSinceEpoch,
           'performedBy': transfer.performedBy,
           'notes': transfer.notes,
-        });
-      }
+        }, executor: txn);
+      });
 
-      // 4. Record Activity
+      // 4. Record Activity (Cloud)
       await firebaseDb.pushData('activities', {
         'id': transfer.id,
         'title': 'Stock Transferred',
@@ -477,6 +489,59 @@ class InventoryRepositoryImpl implements InventoryRepository {
       });
       
       return Result.success(true);
+    } catch (e) {
+      Log.e('Stock Transfer Failed', error: e, name: 'Inventory');
+      return Result.error(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Result<bool>> createStockAudit(StockAudit audit) async {
+    try {
+      final model = StockAuditModel(
+        id: audit.id,
+        warehouseId: audit.warehouseId,
+        timestamp: audit.timestamp,
+        performedBy: audit.performedBy,
+        items: audit.items,
+        status: audit.status,
+        lastUpdated: DateTime.now().millisecondsSinceEpoch,
+      );
+
+      if (!kIsWeb) {
+        final List<Map<String, dynamic>> itemsJson = audit.items.map((i) => StockAuditItemModel.fromEntity(i).toJson()).toList();
+        await localDb.stockAudit.saveStockAudit(model.toJson(), itemsJson);
+      }
+
+      // Push to Cloud
+      try {
+        await firebaseDb.setData('stock_audits/${audit.id}', model.toJson());
+      } catch (e) {
+        Log.w('Firebase stock audit sync failed: $e', name: 'Inventory');
+      }
+
+      return Result.success(true);
+    } catch (e) {
+      return Result.error(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Result<List<StockAudit>>> getStockAudits() async {
+    try {
+      if (kIsWeb) {
+        final snapshot = await firebaseDb.getData('stock_audits');
+        if (!snapshot.exists || snapshot.value == null) return Result.success([]);
+        final Map<dynamic, dynamic> data = snapshot.value as Map<dynamic, dynamic>;
+        final List<StockAudit> audits = [];
+        data.forEach((key, value) {
+          audits.add(StockAuditModel.fromJson(Map<String, dynamic>.from(value as Map)));
+        });
+        return Result.success(audits);
+      }
+
+      final maps = await localDb.stockAudit.getStockAudits();
+      return Result.success(maps.map((m) => StockAuditModel.fromJson(m)).toList());
     } catch (e) {
       return Result.error(ServerFailure(e.toString()));
     }

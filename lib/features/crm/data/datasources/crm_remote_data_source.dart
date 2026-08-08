@@ -68,8 +68,8 @@ class CrmRemoteDataSourceImpl implements CrmRemoteDataSource {
   ];
 
   final List<Contact> _mockCustomers = [
-    Contact(id: 'C1', name: 'Rohan Construction', initials: 'RC', contact: '+91 98765 43210', gstin: '27AAACA1234A1Z5', balance: 45820.0, location: 'MIDC Area, Pune', type: ContactType.customer),
-    Contact(id: 'C2', name: 'Deshmukh Builders', initials: 'DB', contact: '+91 77777 66666', gstin: '27CCCCCC1234C1Z', balance: -12000.0, location: 'Hadapsar, Pune', type: ContactType.customer),
+    Contact(id: 'C1', name: 'Rohan Construction', initials: 'RC', contact: '+91 98765 43210', gstin: '27AAACA1234A1Z5', balance: 45820.0, location: 'MIDC Area, Pune', type: ContactType.customer, creditLimit: 50000.0),
+    Contact(id: 'C2', name: 'Deshmukh Builders', initials: 'DB', contact: '+91 77777 66666', gstin: '27CCCCCC1234C1Z', balance: -12000.0, location: 'Hadapsar, Pune', type: ContactType.customer, creditLimit: 10000.0),
   ];
 
   final List<LedgerEntry> _mockLedger = [

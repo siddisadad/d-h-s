@@ -236,6 +236,52 @@ class DatabaseSchema {
         await db.execute('ALTER TABLE purchases ADD COLUMN lastUpdated INTEGER DEFAULT 0');
       } catch (_) {}
     }
+    if (oldVersion < 13) {
+      Log.i('Migrating to v13: Hardening Database (Indexing & Audit Logs)', name: 'Database');
+
+      // 1. Audit Logs Table
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS audit_logs (
+          id TEXT PRIMARY KEY,
+          title TEXT NOT NULL,
+          subtitle TEXT NOT NULL,
+          timestamp INTEGER NOT NULL,
+          type TEXT NOT NULL,
+          metadata TEXT
+        )
+      ''');
+
+      // 2. Indexing for Performance
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_sales_date ON sales(date)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_purchases_date ON purchases(date)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_finance_date ON finance_entries(date)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_ledgers_date ON ledgers(date)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs(timestamp)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_ledgers_contact_date ON ledgers(contactId, date)');
+    }
+    if (oldVersion < 14) {
+      Log.i('Migrating to v14: Adding Stock Audit Tables', name: 'Database');
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS stock_audits (
+          id TEXT PRIMARY KEY,
+          warehouseId TEXT NOT NULL,
+          timestamp INTEGER NOT NULL,
+          performedBy TEXT NOT NULL,
+          status TEXT NOT NULL,
+          lastUpdated INTEGER NOT NULL
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS stock_audit_items (
+          auditId TEXT NOT NULL,
+          productSku TEXT NOT NULL,
+          productName TEXT NOT NULL,
+          systemQuantity REAL NOT NULL,
+          physicalQuantity REAL NOT NULL,
+          PRIMARY KEY (auditId, productSku)
+        )
+      ''');
+    }
   }
 
   static Future<void> _createTables(Database db) async {
@@ -401,6 +447,48 @@ class DatabaseSchema {
       )
     ''');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_movements_product ON stock_movements(productSku)');
+
+    // 13. Audit Logs Table
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        subtitle TEXT NOT NULL,
+        timestamp INTEGER NOT NULL,
+        type TEXT NOT NULL,
+        metadata TEXT
+      )
+    ''');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs(timestamp)');
+
+    // Performance Indices
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_sales_date ON sales(date)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_purchases_date ON purchases(date)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_finance_date ON finance_entries(date)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_ledgers_date ON ledgers(date)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_ledgers_contact_date ON ledgers(contactId, date)');
+
+    // 14. Stock Audit Tables
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS stock_audits (
+        id TEXT PRIMARY KEY,
+        warehouseId TEXT NOT NULL,
+        timestamp INTEGER NOT NULL,
+        performedBy TEXT NOT NULL,
+        status TEXT NOT NULL,
+        lastUpdated INTEGER NOT NULL
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS stock_audit_items (
+        auditId TEXT NOT NULL,
+        productSku TEXT NOT NULL,
+        productName TEXT NOT NULL,
+        systemQuantity REAL NOT NULL,
+        physicalQuantity REAL NOT NULL,
+        PRIMARY KEY (auditId, productSku)
+      )
+    ''');
   }
 
   static Future<void> _insertDefaultWarehouse(Database db) async {

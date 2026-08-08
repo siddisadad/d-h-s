@@ -24,34 +24,34 @@ class InventoryDao {
     return await db.query('stock_levels', where: 'productSku = ?', whereArgs: [sku]);
   }
 
-  Future<void> updateStockLevel(String sku, String warehouseId, double delta) async {
-    await db.transaction((txn) async {
-      final results = await txn.query(
+  Future<void> updateStockLevel(String sku, String warehouseId, double delta, {DatabaseExecutor? executor}) async {
+    final exec = executor ?? db;
+    final results = await exec.query(
+      'stock_levels',
+      where: 'productSku = ? AND warehouseId = ?',
+      whereArgs: [sku, warehouseId],
+    );
+
+    if (results.isEmpty) {
+      await exec.insert('stock_levels', {
+        'productSku': sku,
+        'warehouseId': warehouseId,
+        'quantity': delta,
+      });
+    } else {
+      final current = (results.first['quantity'] as num).toDouble();
+      await exec.update(
         'stock_levels',
+        {'quantity': current + delta},
         where: 'productSku = ? AND warehouseId = ?',
         whereArgs: [sku, warehouseId],
       );
-
-      if (results.isEmpty) {
-        await txn.insert('stock_levels', {
-          'productSku': sku,
-          'warehouseId': warehouseId,
-          'quantity': delta,
-        });
-      } else {
-        final current = (results.first['quantity'] as num).toDouble();
-        await txn.update(
-          'stock_levels',
-          {'quantity': current + delta},
-          where: 'productSku = ? AND warehouseId = ?',
-          whereArgs: [sku, warehouseId],
-        );
-      }
-    });
+    }
   }
 
-  Future<void> saveStockMovement(Map<String, dynamic> movement) async {
-    await db.insert('stock_movements', movement, conflictAlgorithm: ConflictAlgorithm.replace);
+  Future<void> saveStockMovement(Map<String, dynamic> movement, {DatabaseExecutor? executor}) async {
+    final exec = executor ?? db;
+    await exec.insert('stock_movements', movement, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<List<Map<String, dynamic>>> getStockMovements(String sku) async {

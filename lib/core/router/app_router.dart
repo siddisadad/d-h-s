@@ -13,6 +13,7 @@ import '../../features/inventory/presentation/screens/stock_adjustments_screen.d
 import '../../features/inventory/presentation/screens/categories_screen.dart';
 import '../../features/inventory/presentation/screens/warehouse_list_screen.dart';
 import '../../features/inventory/presentation/screens/stock_transfer_screen.dart';
+import '../../features/inventory/presentation/screens/stock_audit_screen.dart';
 import '../../features/sales/presentation/screens/sales_management_screen.dart';
 import '../../features/sales/presentation/screens/sales_invoice_screen.dart';
 import '../../features/sales/presentation/screens/sales_quotes_screen.dart';
@@ -164,6 +165,10 @@ GoRouter appRouterWidget(AppRouterWidgetRef ref) {
               GoRoute(
                 path: 'transfer',
                 builder: (context, state) => const StockTransferScreen(),
+              ),
+              GoRoute(
+                path: 'audit',
+                builder: (context, state) => const StockAuditScreen(),
               ),
               GoRoute(
                 path: 'warehouses',

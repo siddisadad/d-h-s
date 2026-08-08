@@ -13,6 +13,8 @@ import 'daos/sync_dao.dart';
 import 'daos/finance_dao.dart';
 import 'daos/employee_dao.dart';
 import 'daos/purchases_dao.dart';
+import 'daos/audit_dao.dart';
+import 'daos/stock_audit_dao.dart';
 
 class LocalDatabase {
   static final LocalDatabase _instance = LocalDatabase._internal();
@@ -28,6 +30,8 @@ class LocalDatabase {
   FinanceDao? _financeDao;
   EmployeeDao? _employeeDao;
   PurchasesDao? _purchasesDao;
+  AuditDao? _auditDao;
+  StockAuditDao? _stockAuditDao;
 
   Future<Database> get database async {
     if (kIsWeb) throw UnsupportedError('Local Database is not supported on Web');
@@ -45,6 +49,8 @@ class LocalDatabase {
     _financeDao = FinanceDao(db);
     _employeeDao = EmployeeDao(db);
     _purchasesDao = PurchasesDao(db);
+    _auditDao = AuditDao(db);
+    _stockAuditDao = StockAuditDao(db);
   }
 
   Future<Database> _initDatabase() async {
@@ -69,7 +75,7 @@ class LocalDatabase {
 
     return await openDatabase(
       path,
-      version: 12,
+      version: 14,
       onCreate: DatabaseSchema.create,
       onUpgrade: DatabaseSchema.upgrade,
     );
@@ -82,6 +88,8 @@ class LocalDatabase {
   SyncDao get sync => _syncDao!;
   FinanceDao get finance => _financeDao!;
   EmployeeDao get employee => _employeeDao!;
+  AuditDao get audit => _auditDao!;
+  StockAuditDao get stockAudit => _stockAuditDao!;
 
   // --- Delegated Methods (Backward Compatibility) ---
 
@@ -210,14 +218,14 @@ class LocalDatabase {
     return await _inventoryDao!.getStockLevels(sku);
   }
 
-  Future<void> updateStockLevel(String sku, String warehouseId, double delta) async {
+  Future<void> updateStockLevel(String sku, String warehouseId, double delta, {DatabaseExecutor? executor}) async {
     await database;
-    await _inventoryDao!.updateStockLevel(sku, warehouseId, delta);
+    await _inventoryDao!.updateStockLevel(sku, warehouseId, delta, executor: executor);
   }
 
-  Future<void> saveStockMovement(Map<String, dynamic> movement) async {
+  Future<void> saveStockMovement(Map<String, dynamic> movement, {DatabaseExecutor? executor}) async {
     await database;
-    await _inventoryDao!.saveStockMovement(movement);
+    await _inventoryDao!.saveStockMovement(movement, executor: executor);
   }
 
   Future<List<Map<String, dynamic>>> getStockMovements(String sku) async {

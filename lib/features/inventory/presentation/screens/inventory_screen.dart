@@ -51,6 +51,14 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           PermissionWrapper(
             requiredPermissions: const [AppPermission.adjustStock],
             child: IconButton(
+              tooltip: 'Physical Audit',
+              icon: const Icon(Icons.inventory_rounded),
+              onPressed: () => context.push('/inventory/audit'),
+            ),
+          ),
+          PermissionWrapper(
+            requiredPermissions: const [AppPermission.adjustStock],
+            child: IconButton(
               tooltip: AppStrings.stockMovementAudit,
               icon: const Icon(Icons.history_edu_rounded),
               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StockMovementScreen())),
