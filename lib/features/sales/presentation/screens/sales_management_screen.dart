@@ -7,6 +7,7 @@ import 'package:deshmukh_steel_e_r_p/core/providers/app_bar_provider.dart';
 import 'sales_invoice_screen.dart';
 import 'sales_quotes_screen.dart';
 import 'sales_returns_screen.dart';
+import 'sales_history_screen.dart';
 
 class SalesManagementScreen extends ConsumerStatefulWidget {
   const SalesManagementScreen({super.key});
@@ -21,7 +22,7 @@ class _SalesManagementScreenState extends ConsumerState<SalesManagementScreen> w
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -56,6 +57,7 @@ class _SalesManagementScreenState extends ConsumerState<SalesManagementScreen> w
             controller: _tabController,
             children: const [
               SalesInvoiceScreen(),
+              SalesHistoryScreen(),
               SalesQuotesScreen(),
               SalesReturnsScreen(),
             ],
@@ -77,7 +79,8 @@ class _SalesManagementScreenState extends ConsumerState<SalesManagementScreen> w
         indicatorSize: TabBarIndicatorSize.label,
         labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
         tabs: const [
-          Tab(text: 'INVOICES'),
+          Tab(text: 'NEW SALE'),
+          Tab(text: 'HISTORY'),
           Tab(text: 'QUOTATIONS'),
           Tab(text: 'RETURNS'),
         ],

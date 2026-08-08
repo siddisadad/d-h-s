@@ -132,6 +132,7 @@ class PurchaseRepositoryImpl implements PurchaseRepository {
 
             final Map<String, dynamic> updateMap = {
               'stock': newStock,
+              'costPrice': item.costPrice,
               'isLowStock': newStock < 10 ? 1 : 0,
             };
             if (item.hsnCode != null) {

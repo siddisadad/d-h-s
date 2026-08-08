@@ -19,6 +19,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   late TextEditingController _nameController;
   late TextEditingController _skuController;
   late TextEditingController _priceController;
+  late TextEditingController _costPriceController;
   late TextEditingController _stockController;
   late TextEditingController _hsnController;
   String _selectedCategory = 'Steel';
@@ -33,6 +34,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _nameController = TextEditingController(text: widget.product?.name);
     _skuController = TextEditingController(text: widget.product?.sku);
     _priceController = TextEditingController(text: widget.product?.price.toString());
+    _costPriceController = TextEditingController(text: widget.product?.costPrice.toString() ?? '0.0');
     _stockController = TextEditingController(text: widget.product?.stock.toString());
     _hsnController = TextEditingController(text: widget.product?.hsnCode);
 
@@ -51,6 +53,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _nameController.dispose();
     _skuController.dispose();
     _priceController.dispose();
+    _costPriceController.dispose();
     _stockController.dispose();
     _hsnController.dispose();
     super.dispose();
@@ -64,6 +67,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       sku: _skuController.text.trim(),
       category: _selectedCategory,
       price: double.tryParse(_priceController.text.trim()) ?? 0,
+      costPrice: double.tryParse(_costPriceController.text.trim()) ?? 0,
       stock: double.tryParse(_stockController.text.trim()) ?? 0,
       hsnCode: _hsnController.text.trim().isEmpty ? null : _hsnController.text.trim(),
       unit: _selectedUnit,
@@ -135,7 +139,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 children: [
                   Expanded(
                     child: CustomTextField(
-                      label: 'Price (₹)',
+                      label: 'Sale Price (₹)',
                       hint: '0.00',
                       controller: _priceController,
                       keyboardType: TextInputType.number,
@@ -144,14 +148,22 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: _buildDropdown(
-                      label: 'Unit',
-                      value: _selectedUnit,
-                      items: _units,
-                      onChanged: (val) => setState(() => _selectedUnit = val!),
+                    child: CustomTextField(
+                      label: 'Cost Price (₹)',
+                      hint: '0.00',
+                      controller: _costPriceController,
+                      keyboardType: TextInputType.number,
+                      validator: (val) => val == null || val.isEmpty ? 'Required' : null,
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 20),
+              _buildDropdown(
+                label: 'Unit',
+                value: _selectedUnit,
+                items: _units,
+                onChanged: (val) => setState(() => _selectedUnit = val!),
               ),
               const SizedBox(height: 20),
               CustomTextField(

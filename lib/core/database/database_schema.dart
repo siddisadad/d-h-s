@@ -303,6 +303,12 @@ class DatabaseSchema {
       // Indexing for closures
       await db.execute('CREATE INDEX IF NOT EXISTS idx_closings_date ON daily_closings(date)');
     }
+    if (oldVersion < 16) {
+      Log.i('Migrating to v16: Adding Cost Price to Inventory', name: 'Database');
+      try {
+        await db.execute('ALTER TABLE inventory ADD COLUMN costPrice REAL DEFAULT 0.0');
+      } catch (_) {}
+    }
   }
 
   static Future<void> _createTables(Database db) async {
@@ -312,6 +318,7 @@ class DatabaseSchema {
         name TEXT NOT NULL,
         category TEXT NOT NULL,
         price REAL NOT NULL,
+        costPrice REAL DEFAULT 0.0,
         stock REAL NOT NULL,
         unit TEXT NOT NULL,
         isLowStock INTEGER DEFAULT 0,

@@ -3,6 +3,7 @@ class Product {
   final String sku;
   final String category;
   final double price;
+  final double costPrice;
   final double stock;
   final String unit;
   final bool isLowStock;
@@ -16,6 +17,7 @@ class Product {
     required this.sku,
     required this.category,
     required this.price,
+    this.costPrice = 0.0,
     required this.stock,
     required this.unit,
     required this.isLowStock,

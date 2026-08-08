@@ -11,6 +11,7 @@ import '../../../sales/presentation/providers/sales_history_provider.dart';
 import '../../../inventory/presentation/providers/inventory_provider.dart';
 import '../widgets/profit_loss_card.dart';
 import '../widgets/performance_matrix_card.dart';
+import '../widgets/category_profitability_card.dart';
 import '../widgets/report_grid.dart';
 import '../providers/cash_flow_provider.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -64,6 +65,8 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                   ?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 1.2)),
           const SizedBox(height: 16),
           const ReportGrid(),
+          const SizedBox(height: 32),
+          const CategoryProfitabilityCard(),
           const SizedBox(height: 32),
           _buildInventoryInsights(context),
           const SizedBox(height: 32),
