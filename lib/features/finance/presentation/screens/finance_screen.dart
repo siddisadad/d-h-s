@@ -9,6 +9,7 @@ import '../../../sales/presentation/providers/sales_history_provider.dart';
 import '../../../purchases/presentation/providers/purchase_history_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:deshmukh_steel_e_r_p/core/providers/app_bar_provider.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/widgets/permission_wrapper.dart';
 import '../../../../core/security/permissions.dart';
 import '../../../../core/widgets/custom_button.dart';
@@ -28,6 +29,14 @@ class FinanceScreen extends ConsumerWidget {
       ref.read(appBarNotifierProvider.notifier).update(
             title: 'FINANCE & CASH BOOK',
             actions: [
+              PermissionWrapper(
+                requiredPermissions: const [AppPermission.manageTransactions],
+                child: IconButton(
+                  tooltip: 'Daily Closing',
+                  icon: const Icon(Icons.fact_check_rounded),
+                  onPressed: () => context.push('/finance/closing'),
+                ),
+              ),
               PermissionWrapper(
                 requiredPermissions: const [AppPermission.manageTransactions],
                 child: CustomButton(

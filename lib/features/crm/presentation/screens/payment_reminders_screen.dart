@@ -6,6 +6,7 @@ import '../../../../core/widgets/custom_card.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../domain/entities/contact.dart';
 import '../providers/crm_provider.dart';
+import '../../../../core/services/sharing_service.dart';
 
 class PaymentRemindersScreen extends ConsumerWidget {
   const PaymentRemindersScreen({super.key});
@@ -114,10 +115,18 @@ class _CustomerReminderCard extends ConsumerWidget {
                 variant: CustomButtonVariant.primary,
                 icon: Icons.notifications_active_outlined,
                 onPressed: () async {
+                  final message = 'Namaste ${customer.name},\n\nThis is a friendly reminder from *Deshmukh Hardware & Steel* regarding your outstanding balance of *${currency.format(customer.balance)}*.\n\nKindly arrange for the payment at your earliest convenience. You can pay via UPI or Bank Transfer.\n\nThank you for your business!';
+
+                  await ref.read(sharingServiceProvider.notifier).sendWhatsAppMessage(
+                    phone: customer.contact,
+                    message: message,
+                  );
+
                   final success = await ref.read(crmNotifierProvider(ContactType.customer).notifier).sendPaymentReminder(customer);
+
                   if (success && context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Payment reminder sent to ${customer.name}')),
+                      SnackBar(content: Text('Status updated for ${customer.name}')),
                     );
                   }
                 },

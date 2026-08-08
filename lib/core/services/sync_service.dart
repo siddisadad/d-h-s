@@ -17,6 +17,8 @@ import '../../features/employees/data/models/employee_model.dart';
 import '../../features/sales/data/models/invoice_model.dart';
 import '../../features/purchases/data/models/purchase_model.dart';
 import '../../features/finance/data/models/transaction_model.dart';
+import '../../features/inventory/data/models/stock_audit_model.dart';
+import '../../features/finance/data/models/cash_closing_model.dart';
 
 part 'sync_service.g.dart';
 
@@ -246,6 +248,35 @@ class SyncService extends _$SyncService {
         }
       });
       Log.d('✓ Ledgers synced from Cloud', name: 'Sync');
+    }));
+
+    // Sync Stock Audits
+    _subscriptions.add(firebaseDb.watchPath('stock_audits').listen((event) async {
+      final data = event.snapshot.value as Map?;
+      if (data == null) return;
+      if (kIsWeb) return;
+
+      data.forEach((key, value) async {
+        final Map<String, dynamic> auditMap = Map<String, dynamic>.from(value as Map);
+        final model = StockAuditModel.fromJson(auditMap);
+        final List<Map<String, dynamic>> itemsJson = model.items.map((i) => StockAuditItemModel.fromEntity(i).toJson()).toList();
+        await _localDb.stockAudit.saveStockAudit(model.toJson(), itemsJson);
+      });
+      Log.d('✓ Stock Audits synced from Cloud', name: 'Sync');
+    }));
+
+    // Sync Cash Closings
+    _subscriptions.add(firebaseDb.watchPath('closings').listen((event) async {
+      final data = event.snapshot.value as Map?;
+      if (data == null) return;
+      if (kIsWeb) return;
+
+      data.forEach((key, value) async {
+        final Map<String, dynamic> closeMap = Map<String, dynamic>.from(value as Map);
+        final model = CashClosingModel.fromJson(closeMap);
+        await _localDb.closing.saveClosing(model.toJson());
+      });
+      Log.d('✓ Cash Closings synced from Cloud', name: 'Sync');
     }));
     } catch (e) {
       Log.e('❌ Cloud Sync Initialization Failed', error: e, name: 'Sync');

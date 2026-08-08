@@ -59,6 +59,7 @@ class ProductModel extends Product {
       hsnCode: hsnCode,
       preferredSupplierId: preferredSupplierId,
       reorderPoint: reorderPoint,
+      lastUpdated: lastUpdated,
     );
   }
 }

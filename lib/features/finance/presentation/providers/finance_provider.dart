@@ -7,6 +7,7 @@ import '../../../../core/providers/firebase_providers.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/utils/logger.dart';
 import '../../data/models/transaction_model.dart';
+import '../../domain/entities/cash_closing.dart';
 import '../../../sales/presentation/providers/sales_history_provider.dart';
 import '../../../purchases/presentation/providers/purchase_history_provider.dart';
 
@@ -65,11 +66,13 @@ class FinanceNotifier extends _$FinanceNotifier {
     required String paymentMode,
   }) async {
     final model = TransactionModel(
+      id: 'FIN-${DateTime.now().millisecondsSinceEpoch}',
       title: title,
       category: category,
       amount: amount,
       date: DateTime.now(),
       paymentMode: paymentMode,
+      lastUpdated: DateTime.now().millisecondsSinceEpoch,
     );
 
     final repository = ref.read(financeRepositoryProvider);
@@ -78,24 +81,39 @@ class FinanceNotifier extends _$FinanceNotifier {
     result.fold(
       (failure) => Log.e('Failed to create transaction', error: failure.message, name: 'Finance'),
       (success) async {
-        // Sync to Firebase
-        try {
-           final firebaseDb = ref.read(firebaseDatabaseServiceProvider);
-           await firebaseDb.pushData('finance', model.toJson());
-           
-           // Record Activity
-           await firebaseDb.pushData('activities', {
-             'id': 'FIN-${DateTime.now().millisecondsSinceEpoch}',
-             'title': 'Finance Entry: $category',
-             'subtitle': '$title - ₹$amount',
-             'timestamp': DateTime.now().millisecondsSinceEpoch,
-             'type': category == 'Income' ? 'sale' : 'purchase',
-           });
-        } catch (e) {
-           Log.w('Firebase finance sync failed: $e', name: 'Finance');
-        }
         ref.invalidateSelf();
       },
     );
   }
+
+  Future<bool> performClosing({
+    required double openingBalance,
+    required double totalCashSales,
+    required double totalCashExpenses,
+    required double physicalCashCount,
+    String? notes,
+  }) async {
+    final closing = CashClosing(
+      id: 'CLOSE-${DateTime.now().millisecondsSinceEpoch}',
+      date: DateTime.now(),
+      openingBalance: openingBalance,
+      totalCashSales: totalCashSales,
+      totalCashExpenses: totalCashExpenses,
+      physicalCashCount: physicalCashCount,
+      notes: notes,
+      performedBy: 'Manager',
+    );
+
+    final repository = ref.read(financeRepositoryProvider);
+    final result = await repository.saveCashClosing(closing);
+
+    return result.isSuccess;
+  }
+}
+
+@riverpod
+Future<CashClosing?> lastCashClosing(LastCashClosingRef ref) async {
+  final repository = ref.read(financeRepositoryProvider);
+  final result = await repository.getLastClosing();
+  return result.fold((f) => null, (c) => c);
 }

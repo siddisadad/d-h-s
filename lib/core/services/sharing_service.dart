@@ -12,6 +12,21 @@ class SharingService extends _$SharingService {
   @override
   void build() {}
 
+  Future<void> sendWhatsAppMessage({required String phone, required String message}) async {
+    // Sanitize phone number (remove +, spaces, dashes)
+    final sanitizedPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    // Ensure Indian country code if missing (standard for this business)
+    final finalPhone = sanitizedPhone.length == 10 ? '91$sanitizedPhone' : sanitizedPhone;
+
+    final url = 'https://wa.me/$finalPhone?text=${Uri.encodeComponent(message)}';
+
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } else {
+      Log.e('Could not launch WhatsApp for $finalPhone', name: 'Sharing');
+    }
+  }
+
   Future<void> shareText(String text) async {
     // For now, using WhatsApp as primary text sharing channel for the business
     final url = 'whatsapp://send?text=${Uri.encodeComponent(text)}';

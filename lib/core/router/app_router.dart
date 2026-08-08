@@ -29,6 +29,7 @@ import '../../features/crm/presentation/screens/supplier_directory_screen.dart';
 import '../../features/crm/presentation/screens/payment_reminders_screen.dart';
 import '../../features/crm/domain/entities/contact.dart';
 import '../../features/finance/presentation/screens/finance_screen.dart';
+import '../../features/finance/presentation/screens/cash_closing_screen.dart';
 import '../../features/analytics/presentation/screens/analytics_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/settings/presentation/screens/sync_center_screen.dart';
@@ -259,6 +260,12 @@ GoRouter appRouterWidget(AppRouterWidgetRef ref) {
           GoRoute(
             path: '/finance',
             builder: (context, state) => const FinanceScreen(),
+            routes: [
+              GoRoute(
+                path: 'closing',
+                builder: (context, state) => const CashClosingScreen(),
+              ),
+            ],
           ),
           GoRoute(
             path: '/analytics',

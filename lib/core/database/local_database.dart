@@ -15,6 +15,7 @@ import 'daos/employee_dao.dart';
 import 'daos/purchases_dao.dart';
 import 'daos/audit_dao.dart';
 import 'daos/stock_audit_dao.dart';
+import 'daos/closing_dao.dart';
 
 class LocalDatabase {
   static final LocalDatabase _instance = LocalDatabase._internal();
@@ -32,6 +33,7 @@ class LocalDatabase {
   PurchasesDao? _purchasesDao;
   AuditDao? _auditDao;
   StockAuditDao? _stockAuditDao;
+  ClosingDao? _closingDao;
 
   Future<Database> get database async {
     if (kIsWeb) throw UnsupportedError('Local Database is not supported on Web');
@@ -51,6 +53,7 @@ class LocalDatabase {
     _purchasesDao = PurchasesDao(db);
     _auditDao = AuditDao(db);
     _stockAuditDao = StockAuditDao(db);
+    _closingDao = ClosingDao(db);
   }
 
   Future<Database> _initDatabase() async {
@@ -75,7 +78,7 @@ class LocalDatabase {
 
     return await openDatabase(
       path,
-      version: 14,
+      version: 15,
       onCreate: DatabaseSchema.create,
       onUpgrade: DatabaseSchema.upgrade,
     );
@@ -90,6 +93,7 @@ class LocalDatabase {
   EmployeeDao get employee => _employeeDao!;
   AuditDao get audit => _auditDao!;
   StockAuditDao get stockAudit => _stockAuditDao!;
+  ClosingDao get closing => _closingDao!;
 
   // --- Delegated Methods (Backward Compatibility) ---
 

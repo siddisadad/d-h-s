@@ -282,6 +282,27 @@ class DatabaseSchema {
         )
       ''');
     }
+    if (oldVersion < 15) {
+      Log.i('Migrating to v15: Adding Daily Cash Closing', name: 'Database');
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS daily_closings (
+          id TEXT PRIMARY KEY,
+          date INTEGER NOT NULL,
+          openingBalance REAL NOT NULL,
+          totalCashSales REAL NOT NULL,
+          totalCashExpenses REAL NOT NULL,
+          closingBalance REAL NOT NULL,
+          physicalCashCount REAL NOT NULL,
+          difference REAL NOT NULL,
+          notes TEXT,
+          performedBy TEXT NOT NULL,
+          lastUpdated INTEGER NOT NULL
+        )
+      ''');
+
+      // Indexing for closures
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_closings_date ON daily_closings(date)');
+    }
   }
 
   static Future<void> _createTables(Database db) async {
@@ -489,6 +510,24 @@ class DatabaseSchema {
         PRIMARY KEY (auditId, productSku)
       )
     ''');
+
+    // 15. Daily Cash Closing
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS daily_closings (
+        id TEXT PRIMARY KEY,
+        date INTEGER NOT NULL,
+        openingBalance REAL NOT NULL,
+        totalCashSales REAL NOT NULL,
+        totalCashExpenses REAL NOT NULL,
+        closingBalance REAL NOT NULL,
+        physicalCashCount REAL NOT NULL,
+        difference REAL NOT NULL,
+        notes TEXT,
+        performedBy TEXT NOT NULL,
+        lastUpdated INTEGER NOT NULL
+      )
+    ''');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_closings_date ON daily_closings(date)');
   }
 
   static Future<void> _insertDefaultWarehouse(Database db) async {
