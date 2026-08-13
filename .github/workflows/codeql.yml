@@ -1,0 +1,52 @@
+name: "CodeQL"
+
+on:
+  push:
+    branches:
+      - flutterflow
+      - dev
+  pull_request:
+    branches:
+      - flutterflow
+      - dev
+  schedule:
+    - cron: "0 3 * * 0"
+
+jobs:
+  analyze-swift:
+    name: Analyze (swift)
+    runs-on: macos-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: swift
+          build-mode: autobuild
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Generate Flutter iOS configuration
+        run: flutter pub get
+
+      - name: Install CocoaPods dependencies
+        run: pod install --project-directory=ios
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:swift"
