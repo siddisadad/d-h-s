@@ -6,7 +6,16 @@ pluginManagement {
             localPropertiesFile.withInputStream { properties.load(it) }
         }
         def flutterSdkPath = properties.getProperty("flutter.sdk") ?: System.getenv("FLUTTER_ROOT")
-        assert flutterSdkPath != null, "flutter.sdk not set in local.properties and FLUTTER_ROOT is not set"
+        if (flutterSdkPath == null) {
+            def flutterBinary = System.getenv("PATH")
+                ?.split(File.pathSeparator)
+                ?.collect { new File(it, "flutter") }
+                ?.find { it.exists() && it.canExecute() }
+            if (flutterBinary != null) {
+                flutterSdkPath = flutterBinary.parentFile.parentFile.absolutePath
+            }
+        }
+        assert flutterSdkPath != null, "flutter.sdk not set in local.properties, FLUTTER_ROOT is not set, and Flutter is not available on PATH"
         return flutterSdkPath
     }()
 
