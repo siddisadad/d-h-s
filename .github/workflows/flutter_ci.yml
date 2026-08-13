@@ -5,10 +5,12 @@ on:
     branches:
       - flutterflow
       - dev
+      - siddisadad-project-check
   pull_request:
     branches:
       - flutterflow
       - dev
+      - siddisadad-project-check
 
 jobs:
   build:
