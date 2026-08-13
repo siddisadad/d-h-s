@@ -5,7 +5,7 @@
 
 
     <application
-        android:label="Deshmukh Steel ERP"
+        android:label="@string/app_name"
         tools:replace="android:label"
         android:icon="@mipmap/ic_launcher"
         android:requestLegacyExternalStorage="true">

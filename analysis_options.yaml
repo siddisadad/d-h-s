@@ -1,7 +1,18 @@
-
-
+include: package:flutter_lints/flutter.yaml
 
 analyzer:
   exclude:
     - lib/custom_code/**
     - lib/flutter_flow/custom_functions.dart
+
+linter:
+  rules:
+    - prefer_const_constructors
+    - prefer_const_literals_to_create_immutables
+    - prefer_const_declarations
+    - avoid_print
+    - use_super_parameters
+    - avoid_unnecessary_containers
+    - prefer_single_quotes
+    - unnecessary_import
+    - unnecessary_this

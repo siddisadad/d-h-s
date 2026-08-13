@@ -205,9 +205,7 @@ class _RecentReportItemWidgetState extends State<RecentReportItemWidget> {
                           color: FlutterFlowTheme.of(context).primary,
                           size: 20.0,
                         ),
-                        onPressed: () {
-                          print('IconButton pressed ...');
-                        },
+                        onPressed: () {},
                       ),
                       FlutterFlowIconButton(
                         borderRadius: 8.0,
@@ -218,9 +216,7 @@ class _RecentReportItemWidgetState extends State<RecentReportItemWidget> {
                           color: FlutterFlowTheme.of(context).secondaryText,
                           size: 20.0,
                         ),
-                        onPressed: () {
-                          print('IconButton pressed ...');
-                        },
+                        onPressed: () {},
                       ),
                     ].divide(SizedBox(width: 4.0)),
                   ),

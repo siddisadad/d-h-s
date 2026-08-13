@@ -54,9 +54,7 @@ class _PurchaseManagementWidgetState extends State<PurchaseManagementWidget> {
         key: scaffoldKey,
         backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
         floatingActionButton: FloatingActionButton.extended(
-          onPressed: () {
-            print('FAB pressed ...');
-          },
+          onPressed: () {},
           backgroundColor: FlutterFlowTheme.of(context).primary,
           icon: Icon(
             Icons.add,
@@ -179,9 +177,7 @@ class _PurchaseManagementWidgetState extends State<PurchaseManagementWidget> {
                                     color: FlutterFlowTheme.of(context).primary,
                                     size: 24.0,
                                   ),
-                                  onPressed: () {
-                                    print('IconButton pressed ...');
-                                  },
+                                  onPressed: () {},
                                 ),
                               ],
                             ),

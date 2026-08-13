@@ -54,33 +54,43 @@ String? serializeParam(
     switch (paramType) {
       case ParamType.int:
         data = param.toString();
+        break;
       case ParamType.double:
         data = param.toString();
+        break;
       case ParamType.String:
         data = param;
+        break;
       case ParamType.bool:
         data = param ? 'true' : 'false';
+        break;
       case ParamType.DateTime:
         data = dateTimeToString(param as DateTime);
+        break;
       case ParamType.DateTimeRange:
         data = dateTimeRangeToString(param as DateTimeRange);
+        break;
       case ParamType.LatLng:
         data = (param as LatLng).serialize();
+        break;
       case ParamType.Color:
         data = (param as Color).toCssString();
+        break;
       case ParamType.FFPlace:
         data = placeToString(param as FFPlace);
+        break;
       case ParamType.FFUploadedFile:
         data = uploadedFileToString(param as FFUploadedFile);
+        break;
       case ParamType.JSON:
         data = json.encode(param);
-
+        break;
       default:
         data = null;
     }
     return data;
   } catch (e) {
-    print('Error serializing parameter: $e');
+    debugPrint('Error serializing parameter: $e');
     return null;
   }
 }
@@ -137,10 +147,9 @@ LatLng? latLngFromString(String? latLngStr) {
   if (pieces == null || pieces.length != 2) {
     return null;
   }
-  return LatLng(
-    double.parse(pieces.first.trim()),
-    double.parse(pieces.last.trim()),
-  );
+  final lat = double.tryParse(pieces.first.trim());
+  final lng = double.tryParse(pieces.last.trim());
+  return lat != null && lng != null ? LatLng(lat, lng) : null;
 }
 
 FFPlace placeFromString(String placeStr) {
@@ -234,7 +243,7 @@ dynamic deserializeParam<T>(
         return null;
     }
   } catch (e) {
-    print('Error deserializing parameter: $e');
+    debugPrint('Error deserializing parameter: $e');
     return null;
   }
 }

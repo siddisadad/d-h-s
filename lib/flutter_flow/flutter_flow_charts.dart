@@ -543,33 +543,20 @@ List<double?> _dataToDouble(List<dynamic> data) {
   if (data.isEmpty) {
     return [];
   }
-  if (data.first is double) {
-    return data.map((d) => d as double).toList();
-  }
-  if (data.first is int) {
-    return data.map((d) => (d as int).toDouble()).toList();
-  }
-  if (data.first is DateTime) {
-    return data
-        .map((d) => (d as DateTime).millisecondsSinceEpoch.toDouble())
-        .toList();
-  }
-  if (data.first is String) {
-    // First try to parse as doubles
-    if (double.tryParse(data.first as String) != null) {
-      return data.map((d) => double.tryParse(d as String)).toList();
+  return data.map((d) {
+    if (d == null) return null;
+    if (d is num) return d.toDouble();
+    if (d is DateTime) return d.millisecondsSinceEpoch.toDouble();
+    if (d is String) {
+      final doubleValue = double.tryParse(d);
+      if (doubleValue != null) return doubleValue;
+      final dateTimeValue = DateTime.tryParse(d);
+      if (dateTimeValue != null) {
+        return dateTimeValue.millisecondsSinceEpoch.toDouble();
+      }
     }
-    if (int.tryParse(data.first as String) != null) {
-      return data.map((d) => int.tryParse(d as String)?.toDouble()).toList();
-    }
-    if (DateTime.tryParse(data.first as String) != null) {
-      return data
-          .map((d) =>
-              DateTime.tryParse(d as String)?.millisecondsSinceEpoch.toDouble())
-          .toList();
-    }
-  }
-  return [];
+    return null;
+  }).toList();
 }
 
 FlTitlesData getTitlesData(

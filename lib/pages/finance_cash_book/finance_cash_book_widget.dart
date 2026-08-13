@@ -135,9 +135,7 @@ class _FinanceCashBookWidgetState extends State<FinanceCashBookWidget> {
                               Icons.search_rounded,
                               size: 24.0,
                             ),
-                            onPressed: () {
-                              print('IconButton pressed ...');
-                            },
+                            onPressed: () {},
                           ),
                         ],
                       ),

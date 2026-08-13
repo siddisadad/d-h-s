@@ -49,9 +49,9 @@ async function makeApiRequest({
     })
     .catch(function (error) {
       return {
-        statusCode: error.response.status,
-        headers: error.response.headers,
-        ...(returnBody && { body: error.response.data }),
+        statusCode: error.response ? error.response.status : 500,
+        headers: error.response ? error.response.headers : {},
+        ...(returnBody && error.response && { body: error.response.data }),
         error: error.message,
       };
     });

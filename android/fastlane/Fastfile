@@ -1,0 +1,21 @@
+default_platform(:android)
+
+platform :android do
+  desc "Build release App Bundle"
+  lane :build_aab do
+    sh("cd .. && flutter build appbundle --release")
+  end
+
+  desc "Upload to Play Store Internal track"
+  lane :deploy_internal do
+    build_aab
+    upload_to_play_store(
+      track: 'internal',
+      aab: '../build/app/outputs/bundle/release/app-release.aab',
+      skip_upload_apk: true,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+  end
+end
