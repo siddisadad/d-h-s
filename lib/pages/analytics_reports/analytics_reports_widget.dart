@@ -51,9 +51,7 @@ class _AnalyticsReportsWidgetState extends State<AnalyticsReportsWidget> {
         key: scaffoldKey,
         backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
         floatingActionButton: FloatingActionButton.extended(
-          onPressed: () {
-            print('FAB pressed ...');
-          },
+          onPressed: () {},
           backgroundColor: FlutterFlowTheme.of(context).secondary,
           icon: Icon(
             Icons.add_rounded,
@@ -169,9 +167,7 @@ class _AnalyticsReportsWidgetState extends State<AnalyticsReportsWidget> {
                                 color: FlutterFlowTheme.of(context).primaryText,
                                 size: 24.0,
                               ),
-                              onPressed: () {
-                                print('IconButton pressed ...');
-                              },
+                              onPressed: () {},
                             ),
                           ],
                         ),

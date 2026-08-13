@@ -136,9 +136,7 @@ class _MainDashboardWidgetState extends State<MainDashboardWidget> {
                               color: FlutterFlowTheme.of(context).primaryText,
                               size: 24.0,
                             ),
-                            onPressed: () {
-                              print('IconButton pressed ...');
-                            },
+                            onPressed: () {},
                           ),
                           Stack(
                             alignment: AlignmentDirectional(-1.0, -1.0),
@@ -153,9 +151,7 @@ class _MainDashboardWidgetState extends State<MainDashboardWidget> {
                                       FlutterFlowTheme.of(context).primaryText,
                                   size: 24.0,
                                 ),
-                                onPressed: () {
-                                  print('IconButton pressed ...');
-                                },
+                                onPressed: () {},
                               ),
                               Align(
                                 alignment: AlignmentDirectional(1.0, -1.0),

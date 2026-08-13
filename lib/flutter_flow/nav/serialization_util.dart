@@ -80,7 +80,7 @@ String? serializeParam(
     }
     return data;
   } catch (e) {
-    print('Error serializing parameter: $e');
+    debugPrint('Error serializing parameter: $e');
     return null;
   }
 }
@@ -137,10 +137,9 @@ LatLng? latLngFromString(String? latLngStr) {
   if (pieces == null || pieces.length != 2) {
     return null;
   }
-  return LatLng(
-    double.parse(pieces.first.trim()),
-    double.parse(pieces.last.trim()),
-  );
+  final lat = double.tryParse(pieces.first.trim());
+  final lng = double.tryParse(pieces.last.trim());
+  return lat != null && lng != null ? LatLng(lat, lng) : null;
 }
 
 FFPlace placeFromString(String placeStr) {
@@ -234,7 +233,7 @@ dynamic deserializeParam<T>(
         return null;
     }
   } catch (e) {
-    print('Error deserializing parameter: $e');
+    debugPrint('Error deserializing parameter: $e');
     return null;
   }
 }

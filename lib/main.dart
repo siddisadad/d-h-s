@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
@@ -15,7 +16,11 @@ void main() async {
   GoRouter.optionURLReflectsImperativeAPIs = true;
   usePathUrlStrategy();
 
-  await initFirebase();
+  try {
+    await initFirebase();
+  } catch (e) {
+    debugPrint('Error initializing Firebase: $e');
+  }
 
   await FlutterFlowTheme.initialize();
 
@@ -59,6 +64,8 @@ class _MyAppState extends State<MyApp> {
           .map((e) => getRoute(e))
           .toList();
   late Stream<BaseAuthUser> userStream;
+  StreamSubscription<BaseAuthUser>? _userStreamSubscription;
+  StreamSubscription<String?>? _tokenStreamSubscription;
 
   @override
   void initState() {
@@ -66,15 +73,22 @@ class _MyAppState extends State<MyApp> {
 
     _appStateNotifier = AppStateNotifier.instance;
     _router = createRouter(_appStateNotifier);
-    userStream = deshmukhSteelERPFirebaseUserStream()
-      ..listen((user) {
-        _appStateNotifier.update(user);
-      });
-    jwtTokenStream.listen((_) {});
+    userStream = deshmukhSteelERPFirebaseUserStream();
+    _userStreamSubscription = userStream.listen((user) {
+      _appStateNotifier.update(user);
+    });
+    _tokenStreamSubscription = jwtTokenStream.listen((_) {});
     Future.delayed(
       Duration(milliseconds: 1000),
       () => _appStateNotifier.stopShowingSplashImage(),
     );
+  }
+
+  @override
+  void dispose() {
+    _userStreamSubscription?.cancel();
+    _tokenStreamSubscription?.cancel();
+    super.dispose();
   }
 
   void setThemeMode(ThemeMode mode) => safeSetState(() {

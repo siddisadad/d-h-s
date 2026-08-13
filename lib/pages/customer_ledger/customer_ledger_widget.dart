@@ -104,9 +104,7 @@ class _CustomerLedgerWidgetState extends State<CustomerLedgerWidget> {
                                   color: FlutterFlowTheme.of(context).onPrimary,
                                   size: 24.0,
                                 ),
-                                onPressed: () {
-                                  print('IconButton pressed ...');
-                                },
+                                onPressed: () {},
                               ),
                               FlutterFlowIconButton(
                                 borderRadius: 8.0,
@@ -117,9 +115,7 @@ class _CustomerLedgerWidgetState extends State<CustomerLedgerWidget> {
                                   color: FlutterFlowTheme.of(context).onPrimary,
                                   size: 24.0,
                                 ),
-                                onPressed: () {
-                                  print('IconButton pressed ...');
-                                },
+                                onPressed: () {},
                               ),
                             ].divide(SizedBox(width: 8.0)),
                           ),
@@ -385,10 +381,7 @@ class _CustomerLedgerWidgetState extends State<CustomerLedgerWidget> {
                                                         .primary,
                                                     size: 24.0,
                                                   ),
-                                                  onPressed: () {
-                                                    print(
-                                                        'IconButton pressed ...');
-                                                  },
+                                                  onPressed: () {},
                                                 ),
                                                 Text(
                                                   'Statement',
@@ -449,10 +442,7 @@ class _CustomerLedgerWidgetState extends State<CustomerLedgerWidget> {
                                                         .success,
                                                     size: 24.0,
                                                   ),
-                                                  onPressed: () {
-                                                    print(
-                                                        'IconButton pressed ...');
-                                                  },
+                                                  onPressed: () {},
                                                 ),
                                                 Text(
                                                   'WhatsApp',
@@ -513,10 +503,7 @@ class _CustomerLedgerWidgetState extends State<CustomerLedgerWidget> {
                                                         .secondary,
                                                     size: 24.0,
                                                   ),
-                                                  onPressed: () {
-                                                    print(
-                                                        'IconButton pressed ...');
-                                                  },
+                                                  onPressed: () {},
                                                 ),
                                                 Text(
                                                   'Payment',
@@ -577,10 +564,7 @@ class _CustomerLedgerWidgetState extends State<CustomerLedgerWidget> {
                                                         .info,
                                                     size: 24.0,
                                                   ),
-                                                  onPressed: () {
-                                                    print(
-                                                        'IconButton pressed ...');
-                                                  },
+                                                  onPressed: () {},
                                                 ),
                                                 Text(
                                                   'Reminders',

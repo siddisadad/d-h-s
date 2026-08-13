@@ -133,9 +133,7 @@ class _ProductInventoryWidgetState extends State<ProductInventoryWidget> {
                               color: FlutterFlowTheme.of(context).onPrimary,
                               size: 24.0,
                             ),
-                            onPressed: () {
-                              print('IconButton pressed ...');
-                            },
+                            onPressed: () {},
                           ),
                         ],
                       ),

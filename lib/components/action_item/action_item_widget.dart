@@ -80,9 +80,7 @@ class _ActionItemWidgetState extends State<ActionItemWidget> {
               ),
               size: 28.0,
             ),
-            onPressed: () {
-              print('IconButton pressed ...');
-            },
+            onPressed: () {},
           ),
         ),
         Text(

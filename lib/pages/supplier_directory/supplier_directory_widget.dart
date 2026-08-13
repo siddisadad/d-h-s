@@ -50,9 +50,7 @@ class _SupplierDirectoryWidgetState extends State<SupplierDirectoryWidget> {
         key: scaffoldKey,
         backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
         floatingActionButton: FloatingActionButton.extended(
-          onPressed: () {
-            print('FAB pressed ...');
-          },
+          onPressed: () {},
           backgroundColor: FlutterFlowTheme.of(context).primary,
           icon: Icon(
             Icons.add_rounded,
@@ -163,9 +161,7 @@ class _SupplierDirectoryWidgetState extends State<SupplierDirectoryWidget> {
                               color: FlutterFlowTheme.of(context).primaryText,
                               size: 24.0,
                             ),
-                            onPressed: () {
-                              print('IconButton pressed ...');
-                            },
+                            onPressed: () {},
                           ),
                         ],
                       ),

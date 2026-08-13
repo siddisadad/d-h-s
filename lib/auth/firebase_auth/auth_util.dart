@@ -27,5 +27,5 @@ bool get currentUserEmailVerified => currentUser?.emailVerified ?? false;
 String? _currentJwtToken;
 final jwtTokenStream = FirebaseAuth.instance
     .idTokenChanges()
-    .map((user) async => _currentJwtToken = await user?.getIdToken())
+    .asyncMap((user) async => _currentJwtToken = await user?.getIdToken())
     .asBroadcastStream();

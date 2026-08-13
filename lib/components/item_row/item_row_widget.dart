@@ -117,9 +117,7 @@ class _ItemRowWidgetState extends State<ItemRowWidget> {
                           color: FlutterFlowTheme.of(context).error,
                           size: 20.0,
                         ),
-                        onPressed: () {
-                          print('IconButton pressed ...');
-                        },
+                        onPressed: () {},
                       ),
                     ].divide(SizedBox(width: 16.0)),
                   ),

@@ -159,19 +159,24 @@ T? castToType<T>(dynamic value) {
   if (value == null) {
     return null;
   }
-  switch (T) {
-    case double:
-      // Doubles may be stored as ints in some cases.
+  if (value is T) {
+    return value;
+  }
+  if (T == double) {
+    if (value is num) {
       return value.toDouble() as T;
-    case int:
-      // Likewise, ints may be stored as doubles. If this is the case
-      // (i.e. no decimal value), return the value as an int.
-      if (value is num && value.toInt() == value) {
-        return value.toInt() as T;
-      }
-      break;
-    default:
-      break;
+    }
+    if (value is String) {
+      return (double.tryParse(value) ?? 0.0) as T;
+    }
+  }
+  if (T == int) {
+    if (value is num) {
+      return value.toInt() as T;
+    }
+    if (value is String) {
+      return (int.tryParse(value) ?? 0) as T;
+    }
   }
   return value as T;
 }
@@ -273,6 +278,9 @@ void showSnackbar(
   bool loading = false,
   int duration = 4,
 }) {
+  if (!context.mounted) {
+    return;
+  }
   ScaffoldMessenger.of(context).hideCurrentSnackBar();
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
@@ -389,13 +397,11 @@ void fixStatusBarOniOS16AndBelow(BuildContext context) {
 }
 
 extension ColorOpacityExt on Color {
-  Color applyAlpha(double val) => withValues(alpha: val);
+  Color applyAlpha(double val) => withOpacity(val);
 }
 
-String roundTo(double value, int decimalPoints) {
-  final power = pow(10, decimalPoints);
-  return ((value * power).round() / power).toString();
-}
+String roundTo(double value, int decimalPoints) =>
+    value.toStringAsFixed(decimalPoints);
 
 double computeGradientAlignmentX(double evaluatedAngle) {
   evaluatedAngle %= 360;
