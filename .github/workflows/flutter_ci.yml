@@ -5,10 +5,12 @@ on:
     branches:
       - flutterflow
       - dev
+      - siddisadad-project-check
   pull_request:
     branches:
       - flutterflow
       - dev
+      - siddisadad-project-check
 
 jobs:
   build:
@@ -41,8 +43,7 @@ jobs:
         working-directory: android
         run: |
           printf 'flutter.sdk=%s\n' "$FLUTTER_ROOT" > local.properties
-          gradle wrapper --gradle-version 8.14
-
+          gradle wrapper --gradle-version 8.14 --distribution-type all
       - name: Analyze code
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
