@@ -31,12 +31,7 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: swift
-
-      - name: Generate Flutter iOS configuration
+      - name: Fetch Flutter dependencies
         run: flutter pub get
 
       - name: Ensure CocoaPods is available
@@ -47,7 +42,13 @@ jobs:
           pod --version
 
       - name: Install CocoaPods dependencies
-        run: pod install --project-directory=ios
+        working-directory: ios
+        run: pod install
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: swift
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v3
