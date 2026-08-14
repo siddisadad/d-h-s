@@ -1,0 +1,75 @@
+name: Android Build
+
+on:
+  workflow_call:
+    inputs:
+      build_type:
+        description: 'Type of build (apk or appbundle)'
+        required: true
+        type: string
+        default: 'appbundle'
+    secrets:
+      ANDROID_KEYSTORE_BASE64:
+        required: true
+      ANDROID_KEYSTORE_PASSWORD:
+        required: true
+      ANDROID_KEY_ALIAS:
+        required: true
+      ANDROID_KEY_PASSWORD:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Android
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Flutter Pub Get
+        run: flutter pub get
+
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
+
+      - name: Build Android
+        env:
+          ANDROID_KEYSTORE_PATH: "upload-keystore.jks"
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ "${{ inputs.build_type }}" == "apk" ]; then
+            flutter build apk --release
+            echo "ARTIFACT_PATH=build/app/outputs/flutter-apk/app-release.apk" >> $GITHUB_ENV
+          else
+            flutter build appbundle --release
+            echo "ARTIFACT_PATH=build/app/outputs/bundle/release/app-release.aab" >> $GITHUB_ENV
+          fi
+
+      - name: Clean up Keystore
+        if: always()
+        run: rm -f android/app/upload-keystore.jks
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-${{ inputs.build_type }}
+          path: ${{ env.ARTIFACT_PATH }}
+          retention-days: 14
