@@ -16,6 +16,7 @@ jobs:
   analyze-swift:
     name: Analyze (swift)
     runs-on: macos-latest
+    timeout-minutes: 45
     permissions:
       actions: read
       contents: read
@@ -49,8 +50,8 @@ jobs:
         with:
           languages: swift
 
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+      - name: Build iOS for analysis
+        run: flutter build ios --debug --simulator
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
