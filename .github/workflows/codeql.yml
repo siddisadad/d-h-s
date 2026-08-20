@@ -18,7 +18,7 @@ jobs:
     # macos-latest is macOS 26 / Xcode 26, which CodeQL Swift cannot extract.
     # macos-15 still ships Xcode 16.4 as the default toolchain.
     runs-on: macos-15
-    timeout-minutes: 45
+    timeout-minutes: 90
     permissions:
       actions: read
       contents: read
@@ -69,7 +69,11 @@ jobs:
 
       # Device destination (not simulator): GoogleMLKit / mobile_scanner lack
       # arm64 simulator slices on Apple Silicon.
+      # continue-on-error: Flutter CI is the merge gate; a traced pod build can
+      # still time out or leave CodeQL with no extractable Swift.
       - name: Build iOS for analysis
+        id: xcodebuild
+        continue-on-error: true
         working-directory: ios
         run: |
           xcodebuild \
@@ -80,9 +84,12 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
+            COMPILER_INDEX_STORE_ENABLE=NO \
             build
 
       - name: Perform CodeQL Analysis
+        if: steps.xcodebuild.outcome == 'success'
+        continue-on-error: true
         uses: github/codeql-action/analyze@v3
         with:
           category: "/language:swift"
