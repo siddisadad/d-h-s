@@ -13,7 +13,7 @@ This project follows **Clean Architecture** principles to ensure scalability, te
 
 ## 🚀 Tech Stack
 
-- **Frontend**: Flutter 3.22+ (Material 3)
+- **Frontend**: Flutter 3.47 (Material 3)
 - **State Management**: Riverpod (Generator)
 - **Networking**: Dio (with Auth & Logging Interceptors)
 - **Routing**: GoRouter (Reactive with Auth Guards)
@@ -32,7 +32,7 @@ This project follows **Clean Architecture** principles to ensure scalability, te
 ## 🛠️ Getting Started
 
 ### Prerequisites
-- Flutter SDK `^3.22.0`
+- Flutter SDK `3.47` stable
 - Spring Boot Backend (Running on `localhost:8080`)
 
 ### Local Development
@@ -69,7 +69,8 @@ The system implements **Role-Based Access Control (RBAC)**:
 ## CI/CD
 
 GitHub Actions runs dependency resolution, static analysis, tests, and Android
-and web builds for pushes and pull requests targeting `flutterflow` or `dev`.
+and web builds for pushes and pull requests targeting `dev` (and `flutterflow`).
+The **Flutter CI** workflow is the merge gate. Use Flutter **3.47** stable.
 
 Deployments are manually triggered through the **Deploy** workflow. Configure
 the following GitHub Actions secrets before releasing:

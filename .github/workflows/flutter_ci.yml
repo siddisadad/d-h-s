@@ -3,14 +3,12 @@ name: Flutter CI
 on:
   push:
     branches:
-      - flutterflow
       - dev
-      - siddisadad-project-check
+      - flutterflow
   pull_request:
     branches:
-      - flutterflow
       - dev
-      - siddisadad-project-check
+      - flutterflow
 
 permissions:
   contents: read
