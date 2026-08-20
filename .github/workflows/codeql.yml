@@ -32,6 +32,9 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Disable Swift Package Manager
+        run: flutter config --no-enable-swift-package-manager
+
       - name: Fetch Flutter dependencies
         run: flutter pub get
 
@@ -51,7 +54,7 @@ jobs:
           languages: swift
 
       - name: Build iOS for analysis
-        run: flutter build ios --debug --simulator
+        run: flutter build ios --debug --no-codesign
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
