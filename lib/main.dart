@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -16,15 +15,15 @@ import 'package:deshmukh_steel_e_r_p/features/authentication/presentation/provid
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  if (!kIsWeb) {
-    if (Platform.isWindows || Platform.isLinux) {
-      try {
-        debugPrint('🖥️ [Main] Initializing sqflite_ffi for Desktop');
-        sqfliteFfiInit();
-        databaseFactory = databaseFactoryFfi;
-      } catch (e) {
-        debugPrint('❌ [Main] sqflite_ffi initialization failed: $e');
-      }
+  if (!kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.windows ||
+          defaultTargetPlatform == TargetPlatform.linux)) {
+    try {
+      debugPrint('🖥️ [Main] Initializing sqflite_ffi for Desktop');
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+    } catch (e) {
+      debugPrint('❌ [Main] sqflite_ffi initialization failed: $e');
     }
   }
 

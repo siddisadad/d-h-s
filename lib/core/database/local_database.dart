@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -57,7 +56,8 @@ class LocalDatabase {
   }
 
   Future<Database> _initDatabase() async {
-    if (Platform.isWindows || Platform.isLinux) {
+    if (defaultTargetPlatform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.linux) {
       try {
         sqfliteFfiInit();
         databaseFactory = databaseFactoryFfi;
@@ -68,7 +68,9 @@ class LocalDatabase {
     }
 
     String path;
-    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    if (defaultTargetPlatform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.linux ||
+        defaultTargetPlatform == TargetPlatform.macOS) {
       final directory = await getApplicationSupportDirectory();
       path = join(directory.path, 'dci_erp_v1.db');
     } else {

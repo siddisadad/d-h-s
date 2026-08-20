@@ -1,11 +1,7 @@
-import 'dart:io';
 import 'package:excel/excel.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-// For web download support
-import 'dart:convert';
-import 'package:web/web.dart' as web;
+
+import '../utils/file_saver.dart';
 
 part 'excel_service.g.dart';
 
@@ -42,14 +38,7 @@ class ExcelService extends _$ExcelService {
 
     final fileBytes = excel.encode();
     if (fileBytes == null) return;
-
-    if (kIsWeb) {
-      _downloadWeb(fileBytes, 'Inventory_Stock.xlsx');
-    } else {
-      final directory = await getApplicationDocumentsDirectory();
-      final file = File('${directory.path}/Inventory_Stock.xlsx');
-      await file.writeAsBytes(fileBytes);
-    }
+    await saveBytes(fileBytes, 'Inventory_Stock.xlsx');
   }
 
   Future<void> exportSalesReport(List<dynamic> invoices) async {
@@ -78,14 +67,7 @@ class ExcelService extends _$ExcelService {
 
     final fileBytes = excel.encode();
     if (fileBytes == null) return;
-
-    if (kIsWeb) {
-      _downloadWeb(fileBytes, 'Sales_Report.xlsx');
-    } else {
-      final directory = await getApplicationDocumentsDirectory();
-      final file = File('${directory.path}/Sales_Report.xlsx');
-      await file.writeAsBytes(fileBytes);
-    }
+    await saveBytes(fileBytes, 'Sales_Report.xlsx');
   }
 
   Future<void> exportPurchaseReport(List<dynamic> purchases) async {
@@ -114,14 +96,7 @@ class ExcelService extends _$ExcelService {
 
     final fileBytes = excel.encode();
     if (fileBytes == null) return;
-
-    if (kIsWeb) {
-      _downloadWeb(fileBytes, 'Purchase_Report.xlsx');
-    } else {
-      final directory = await getApplicationDocumentsDirectory();
-      final file = File('${directory.path}/Purchase_Report.xlsx');
-      await file.writeAsBytes(fileBytes);
-    }
+    await saveBytes(fileBytes, 'Purchase_Report.xlsx');
   }
 
   Future<void> exportGstReport(List<dynamic> invoices) async {
@@ -164,21 +139,6 @@ class ExcelService extends _$ExcelService {
 
     final fileBytes = excel.encode();
     if (fileBytes == null) return;
-
-    if (kIsWeb) {
-      _downloadWeb(fileBytes, 'GST_Tax_Report.xlsx');
-    } else {
-      final directory = await getApplicationDocumentsDirectory();
-      final file = File('${directory.path}/GST_Tax_Report.xlsx');
-      await file.writeAsBytes(fileBytes);
-    }
-  }
-
-  void _downloadWeb(List<int> bytes, String fileName) {
-    final base64 = base64Encode(bytes);
-    final anchor = web.HTMLAnchorElement()
-      ..href = 'data:application/octet-stream;base64,$base64'
-      ..download = fileName;
-    anchor.click();
+    await saveBytes(fileBytes, 'GST_Tax_Report.xlsx');
   }
 }

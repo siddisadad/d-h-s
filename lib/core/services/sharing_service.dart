@@ -1,8 +1,7 @@
-import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../utils/file_saver.dart';
 import '../utils/logger.dart';
 
 part 'sharing_service.g.dart';
@@ -44,9 +43,7 @@ class SharingService extends _$SharingService {
     }
 
     try {
-      final directory = await getTemporaryDirectory();
-      final file = File('${directory.path}/$fileName');
-      await file.writeAsBytes(bytes);
+      await saveBytes(bytes, fileName, temporary: true);
 
       if (phoneNumber != null) {
         // WhatsApp with attachment is tricky without share_plus.
