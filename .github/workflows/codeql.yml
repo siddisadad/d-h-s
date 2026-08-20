@@ -34,9 +34,6 @@ jobs:
       - name: Fetch Flutter dependencies
         run: flutter pub get
 
-      - name: Generate iOS Flutter config
-        run: flutter build ios --config-only --no-codesign
-
       - name: Ensure CocoaPods is available
         run: |
           if ! command -v pod >/dev/null 2>&1; then
@@ -44,9 +41,8 @@ jobs:
           fi
           pod --version
 
-      - name: Install CocoaPods dependencies
-        working-directory: ios
-        run: pod install --repo-update
+      - name: Generate iOS Flutter config
+        run: flutter build ios --config-only --no-codesign
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
