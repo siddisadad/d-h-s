@@ -8,6 +8,7 @@
 .buildlog/
 .history
 .svn/
+migrate.log
 
 # IntelliJ related
 *.iml
@@ -56,6 +57,8 @@ __pycache__/
 **/android/build/
 **/android/captures/
 **/android/app/build/
+android/**/gradle-wrapper.jar
+android/GeneratedPluginRegistrant.java
 
 # iOS related
 **/ios/Pods/
@@ -64,9 +67,26 @@ __pycache__/
 **/ios/Flutter/flutter_export_environment.sh
 **/ios/ServiceDefinitions.json
 **/ios/Runner/GoogleService-Info.plist
+ios/Flutter/Generated.xcconfig
+ios/Flutter/App.podspec
+ios/.symlinks/
+ios/Runner/GeneratedPluginRegistrant.h
+ios/Runner/GeneratedPluginRegistrant.m
+/ios/Runner/Info.plist.bak
+/ios/Runner/Info.plist.bak2
 
 # Web related
 **/web/index.html.tmp
+
+# Fastlane
+**/fastlane/report.xml
+**/fastlane/Preview.html
+**/fastlane/screenshots/**/*.png
+**/fastlane/test_output
+
+# Executable for GNU/Linux
+/bin/cache/
+/bin/minify/
 
 # Coverage
 coverage/
