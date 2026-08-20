@@ -11,6 +11,9 @@ platform :ios do
       in_house: false
     )
 
+    # Inject Team ID into ExportOptions.plist
+    sh("sed -i '' 's/${APPLE_TEAM_ID}/#{ENV['TEAM_ID']}/g' ../ios/ExportOptions.plist")
+
     # Build from root directory
     sh("cd .. && flutter build ipa --release --export-options-plist=ios/ExportOptions.plist")
 

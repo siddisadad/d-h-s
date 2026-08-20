@@ -3,15 +3,20 @@ default_platform(:android)
 platform :android do
   desc "Build release App Bundle"
   lane :build_aab do
-    sh("flutter build appbundle --release")
+    sh("cd .. && flutter build appbundle --release")
   end
 
-  desc "Upload to Play Store Internal track"
-  lane :deploy_internal do
-    build_aab
+  desc "Upload to Play Store"
+  lane :deploy do |options|
+    track = options[:track] || 'internal'
     upload_to_play_store(
-      track: 'internal',
-      aab: '../build/app/outputs/bundle/release/app-release.aab'
+      track: track,
+      json_key: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_PATH"],
+      aab: '../build/app/outputs/bundle/release/app-release.aab',
+      skip_upload_apk: true,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
     )
   end
 end

@@ -12,3 +12,7 @@ linter:
     - prefer_const_declarations
     - avoid_print
     - use_super_parameters
+    - avoid_unnecessary_containers
+    - prefer_single_quotes
+    - unnecessary_import
+    - unnecessary_this
