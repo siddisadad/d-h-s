@@ -15,7 +15,9 @@ on:
 jobs:
   analyze-swift:
     name: Analyze (swift)
-    runs-on: macos-latest
+    # macos-latest is macOS 26 / Xcode 26, which CodeQL Swift cannot extract.
+    # macos-15 still ships Xcode 16.4 as the default toolchain.
+    runs-on: macos-15
     timeout-minutes: 45
     permissions:
       actions: read
@@ -25,6 +27,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Select Xcode 16
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "16.4"
+
+      - name: Confirm Xcode version
+        run: xcodebuild -version
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -45,6 +55,8 @@ jobs:
           fi
           pod --version
 
+      # Untraced: generate the Xcode workspace and install pods before CodeQL
+      # starts intercepting compiler invocations.
       - name: Generate iOS Flutter config
         run: flutter build ios --config-only --no-codesign
 
@@ -52,9 +64,23 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: swift
+          build-mode: manual
+          tools: latest
 
+      # Device destination (not simulator): GoogleMLKit / mobile_scanner lack
+      # arm64 simulator slices on Apple Silicon.
       - name: Build iOS for analysis
-        run: flutter build ios --debug --no-codesign
+        working-directory: ios
+        run: |
+          xcodebuild \
+            -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Debug \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
